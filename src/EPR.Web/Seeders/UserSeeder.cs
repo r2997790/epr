@@ -18,40 +18,35 @@ public class UserSeeder
 
     public async Task SeedAsync()
     {
-        // Check if admin user already exists
+        var adminPassword = "admin123";
+        var adminHash = BCrypt.Net.BCrypt.HashPassword(adminPassword);
+
         var adminUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Username == "admin" || u.Email == "admin@epr.local");
 
         if (adminUser == null)
         {
-            // Create admin user
             adminUser = new User
             {
                 Username = "admin",
                 Email = "admin@epr.local",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                PasswordHash = adminHash,
                 FirstName = "System",
                 LastName = "Administrator",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
-
             _context.Users.Add(adminUser);
             await _context.SaveChangesAsync();
-
-            Console.WriteLine("✅ Admin user created successfully!");
-            Console.WriteLine($"   Username: admin");
-            Console.WriteLine($"   Password: admin123");
+            Console.WriteLine("✅ Admin user created (admin / admin123)");
         }
         else
         {
-            Console.WriteLine("ℹ️  Admin user already exists in database.");
-            
-            // Optionally reset the password if needed
-            // Uncomment the following lines to reset the admin password:
-            // adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-            // await _context.SaveChangesAsync();
-            // Console.WriteLine("✅ Admin password has been reset to: admin123");
+            // Always ensure password is correct (fixes corruption, BCrypt version drift, etc.)
+            adminUser.PasswordHash = adminHash;
+            adminUser.IsActive = true;
+            await _context.SaveChangesAsync();
+            Console.WriteLine("✅ Admin user verified/reset (admin / admin123)");
         }
     }
 }

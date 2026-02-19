@@ -142,11 +142,18 @@ var connectionString = !string.IsNullOrEmpty(databaseUrl)
     ? databaseUrl
     : (builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db");
 
+// Ensure Railway PostgreSQL has SSL mode
+var isPostgres = !string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase);
+if (isPostgres && !connectionString.Contains("sslmode", StringComparison.OrdinalIgnoreCase))
+{
+    var separator = connectionString.Contains('?') ? "&" : "?";
+    connectionString = connectionString + separator + "sslmode=Require";
+}
+
 builder.Services.AddDbContext<EPRDbContext>(options =>
 {
-    if (!string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+    if (isPostgres)
     {
-        // Railway PostgreSQL: postgresql://user:password@host:port/database
         options.UseNpgsql(connectionString);
     }
     else
@@ -162,12 +169,15 @@ builder.Services.AddScoped<EPR.Data.Services.MaterialTaxonomyImportService>();
 builder.Services.AddScoped<EPR.Data.Services.PackagingLibraryImportService>();
 builder.Services.AddScoped<EPR.Web.Services.AsnParserService>();
 
-// Add session support
+// Session requires IDistributedCache - use in-memory for single instance
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
 // Register EmpauerLocal shared services
@@ -179,7 +189,6 @@ builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 
 // Seed admin user on startup if database is empty
-var isPostgres = !string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase);
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<EPRDbContext>();
@@ -695,12 +704,9 @@ using (var scope = app.Services.CreateScope())
         }
         } // end if (!isPostgres)
 
-            // Check if any users exist, if not, seed admin user
-            if (!await context.Users.AnyAsync())
-            {
-                var userSeeder = new UserSeeder(context);
-                await userSeeder.SeedAsync();
-            }
+            // Always ensure admin user exists with correct password
+            var userSeeder = new UserSeeder(context);
+            await userSeeder.SeedAsync();
             initDone = true;
         }
         catch (SqliteException ex) when (attempt == 0 && ex.Message.Contains("malformed", StringComparison.OrdinalIgnoreCase))
@@ -816,6 +822,17 @@ using (var seedScope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Console.WriteLine($"⚠ Product–packaging link seed: {ex.Message}");
+    }
+
+    // Ensure admin user exists (fallback if init block didn't run)
+    try
+    {
+        var userSeeder = new UserSeeder(seedContext);
+        await userSeeder.SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠ Admin user seed: {ex.Message}");
     }
 }
 
