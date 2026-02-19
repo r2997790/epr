@@ -1,0 +1,3 @@
+-- schema_v4.sql
+-- No structural changes from v3.
+-- Default Sankey blueprints are seeded at install time from JSON.

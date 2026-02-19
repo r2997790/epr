@@ -1,0 +1,16 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "dotnet src/EPR.Web/bin/Release/net8.0/publish/EPR.Web.dll"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+
+
+
+
+
+
+
+

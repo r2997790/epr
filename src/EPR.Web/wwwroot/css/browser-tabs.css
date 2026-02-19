@@ -1,0 +1,212 @@
+/* Browser-style Tab System */
+body.has-tabs {
+    padding-top: 0;
+}
+
+/* When any tab is open, hide the main content area (prevents home page showing below tab content) */
+body.has-tabs main {
+    display: none !important;
+}
+
+body:not(.has-tabs) {
+    padding-top: 56px;
+}
+
+body:not(.has-tabs) main {
+    padding-top: 20px;
+}
+
+/* Fixed navbar */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
+    background: white;
+    height: 56px;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+header .navbar {
+    height: 56px;
+    min-height: 56px;
+    max-height: 56px;
+    box-sizing: border-box;
+    margin-bottom: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Browser tabs container */
+#browserTabsContainer {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    z-index: 1029;
+    display: none;
+    align-items: center;
+    height: 40px;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    flex-direction: row;
+}
+
+/* Scroll buttons - shown when many tabs */
+.browser-tabs-scroll-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    min-width: 30px;
+    height: 40px;
+    background: #f8f9fa;
+    border: none;
+    border-left: 1px solid #dee2e6;
+    cursor: pointer;
+    color: #495057;
+    flex-shrink: 0;
+    z-index: 2;
+    transition: background-color 0.2s;
+}
+.browser-tabs-scroll-btn:hover {
+    background: #e9ecef;
+    color: #212529;
+}
+.browser-tabs-scroll-btn i {
+    font-size: 16px;
+}
+#browserTabsScrollLeft {
+    border-left: none;
+    border-right: 1px solid #dee2e6;
+}
+#browserTabsScrollRight {
+    border-right: none;
+    border-left: 1px solid #dee2e6;
+}
+
+/* Scroll container for tabs */
+#browserTabsScroll {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: 1;
+    min-width: 0;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    height: 100%;
+}
+
+#browserTabsScroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Browser tab */
+.browser-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #e9ecef;
+    border-right: 1px solid #dee2e6;
+    cursor: pointer;
+    white-space: nowrap;
+    min-width: 150px;
+    max-width: 250px;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    color: #495057;
+}
+
+.browser-tab:hover {
+    background: #dee2e6;
+}
+
+.browser-tab.active {
+    background: white;
+    border-bottom: 2px solid #28a745;
+    color: #000;
+    font-weight: 500;
+}
+
+.browser-tab i {
+    font-size: 0.875rem;
+}
+
+.browser-tab-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.browser-tab-close {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.browser-tab-close:hover {
+    opacity: 1;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 3px;
+}
+
+.browser-tab-content {
+    margin-top: 96px;
+    padding-top: 30px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 50px;
+    min-height: calc(100vh - 96px);
+}
+
+/* Prevent duplicate menu/header/footer inside tab content (injected pages) */
+#browserTabContent > header,
+#browserTabContent > nav,
+#browserTabContent > .navbar,
+#browserTabContent > .footer,
+#browserTabContent > footer {
+    display: none !important;
+}
+
+.loading-spinner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border: 0.25em solid #28a745;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
+.spinner-text {
+    margin-top: 1rem;
+    color: #6c757d;
+}

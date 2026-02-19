@@ -1,0 +1,93 @@
+﻿.multi-steps {
+	list-style: none;
+	display: table;
+	table-layout: fixed;
+	width: 100%;
+    margin-top: 10px;
+}
+
+	.multi-steps .icon {
+		font-size: 14px;
+	}
+
+	.multi-steps li {
+		display: table-cell;
+	}
+
+		.multi-steps li a {
+			color: #000000;
+			display: block;
+			background: linear-gradient(to right, #e0e0e0, #f0f0f0);
+			text-decoration: none;
+			position: relative;
+			height: 40px;
+			line-height: 40px;
+			padding: 0 10px 0 5px;
+			text-align: center;
+			margin-right: 30px;
+		}
+
+		.multi-steps li.lc-stage--inprogress a {
+			background: linear-gradient(to right, #70B117, #e0e0e0);
+		}
+
+        .multi-steps li.lc-stage--completed a, .multi-steps li.lc-stage--selected a {
+            background: #70B117;
+            color: #FFF;
+        }
+
+        .multi-steps li.lc-stage--completed a:before, .multi-steps li.lc-stage--selected a:before {
+            border-color: #70B117;
+            border-left-color: transparent;
+        }
+
+		.multi-steps li.lc-stage--inprogress a:before {
+			border-color: #70B117;
+			border-left-color: transparent;
+		}
+
+        .multi-steps li.lc-stage--completed a:after, .multi-steps li.lc-stage--completed a:after {
+            border-left-color: #70B117;
+            color: #FFF;
+        }
+
+		.multi-steps li.lc-stage--inprogress a:after {
+			border-left-color: #e0e0e0;
+			color: #FFF;
+		}
+
+		.multi-steps li a:before, .multi-steps li a:after {
+			content: "";
+			position: absolute;
+			top: 0;
+			border: 0 solid #e0e0e0;
+			border-width: 20px 10px;
+			width: 0;
+			height: 0;
+		}
+
+		.multi-steps li a:before {
+			left: -20px;
+			border-left-color: transparent;
+		}
+
+		.multi-steps li.lc-stage--completed a:before {
+			border-color: #70B117;
+			border-left-color: transparent;
+			color: #FFF;
+		}
+
+		.multi-steps li a:after {
+			left: 100%;
+			border-color: transparent;
+			border-left-color: #f0f0f0;
+		}
+
+        .multi-steps li.lc-stage--completed a:after, .multi-steps li.lc-stage--selected a:after {
+            border-left-color: #70B117;
+            color: #FFF;
+        }
+
+		.multi-steps li a:hover {
+			opacity: .7;
+		}

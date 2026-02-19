@@ -1,0 +1,113 @@
+﻿@using System.Web.UI.WebControls
+@using Selerant.DevEx.WebControls
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement.Shared
+@using ToolbarMenu = Selerant.DevEx.WebMvcModules.Helpers.Menu
+@using MenuItem = Selerant.DevEx.WebMvcModules.Helpers.MenuItem
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<InputsGridTabModel>
+@{
+	Model.SetLogicId("InputsGridTabPartial");
+
+	const string partialViewJSTypeFinder = "DX.Ctrl.findParentControlOfType(this, DX.DIRModule.AssessmentNavigator.ResourceManagement.Shared.InputsGridTab)";
+
+	var inputCategoryToolbar = ToolbarMenu.New("inputCategoryToolbar").SetKnownSkin(ToolbarMenu.KnownSkins.SkNormalMenu)
+								.AddMenuItem(new MenuItem("NewCategory", @ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("InputsGridTab_AddNewCategory"),
+														  partialViewJSTypeFinder + ".ShowNewCategory()"))
+								.AddMenuItem(new MenuItem("AddExistingCategory", @ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("InputsGridTab_AddExistingCategory"),
+														  partialViewJSTypeFinder + ".ShowAddExistingCategory()"));
+
+	var addCategoryToolbar = ToolbarMenu.New("addCategoryToolbar").SetKnownSkin(ToolbarMenu.KnownSkins.SkNormalMenu)
+								.AddMenuItem(new MenuItem("Ok", ResText.Controls.GetString("DlgOk"), partialViewJSTypeFinder + ".AddExistingCategory()").SetCssClass("btn-confirm"))
+								.AddMenuItem(new MenuItem("Cancel", ResText.Controls.GetString("DlgCancel"), partialViewJSTypeFinder + ".CancelAddExistingCategory()"));
+
+	var createCategoryToolbar = ToolbarMenu.New("createCategoryToolbar").SetKnownSkin(ToolbarMenu.KnownSkins.SkNormalMenu)
+								.AddMenuItem(new MenuItem("Ok", ResText.Controls.GetString("DlgOk"), partialViewJSTypeFinder + ".NewCategory()").SetCssClass("btn-confirm"))
+								.AddMenuItem(new MenuItem("Cancel", ResText.Controls.GetString("DlgCancel"), partialViewJSTypeFinder + ".CancelNewCategory()"));
+
+	ListOfValuesControlIndexModel categoryType = Html.ListOfValuesControl("lovCategoryType")
+			.SetDescriptor(SystemListType.NotSet, null, (decimal)DxPhraseTypeCategory.ListOfValuesAttributes, "99510", true)
+			.SetToolTip(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("InputsGridTab_CategoryTypeToolTip"))
+			.SetLabelLogicId("lblCategoryType")
+			.SetWidth(System.Web.UI.WebControls.Unit.Percentage(100))
+			.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm);
+	categoryType.Populate();
+}
+
+@using (Model.BeginRendering(Html))
+{
+	<div class="res-mgmt-partial-input-tab">
+		@if (Model.SecurityObject.CanEditOrDelete)
+		{
+			<div class="container-fluid  category-section-padding">
+
+				<div id="panelCategoryButtons" class="row">
+					<div class="col-12">
+						@(inputCategoryToolbar.Render())
+					</div>
+				</div>
+
+				<div id="panelSelectExistingCategory" class="row" style="display: none;">
+					<div class="col-6">
+						<div class="row">
+							<div class="col-3 padding-top-3px">
+								@(Html.LabelControl("lblSelectExistingCategory").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("InputsGridTab_AddCategory"))
+												.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm).SetStyle("margin-right", "-8px").Render())
+							</div>
+							<div class="col-5 padding-top-3px">
+								@(Html.ListOfValuesExtendedControl("lovExistingCategory")
+												.SetKnownSkin(ListOfValuesExtendedControlIndexModel.KnownSkins.SkForm)
+												.AddItems(Model.GetInputCategories())
+												.SetIsMultiValue(false)
+												.SetShowFooterPlaceholder(false)
+												.SetLabelLogicId("lblSelectExistingCategory")
+												.SetValidationSettings(new TextValidationSettings() { IsRequired = true })
+												.SetWidth(System.Web.UI.WebControls.Unit.Percentage(100))
+												.Render())
+							</div>
+							<div class="col-4">
+								@(addCategoryToolbar.Render())
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div id="panelCreateCategory" class="row" style="display: none;">
+					<div class="col-6">
+						<div class="row">
+							<div class="col-1 padding-top-3px">
+								@(Html.LabelControl("lblCreateCategory").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("InputsGridTab_Title")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm).Render())
+							</div>
+							<div class="col-3 padding-top-3px">
+								@(Html.TextControl("txbCreateCategory")
+												.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+												.SetValidationSettings(new TextValidationSettings() { IsRequired = true })
+												.SetLabelLogicId("lblCreateCategory")
+												.SetWidth(Unit.Percentage(100))
+												.Render())
+							</div>
+							<div class="col-1 padding-top-3px">
+								@(Html.LabelControl("lblCategoryType").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("Type")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm).Render())
+							</div>
+							<div class="col-3 padding-top-3px">
+								@categoryType.Render()
+							</div>
+							<div class="col-4">
+								@(createCategoryToolbar.Render())
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		}
+
+		<div class="input-grid row">
+			<div class="col-12">
+				@(Model.CreateJqGrid().Render())
+			</div>
+			@*@(Html.EmptyDataBlock(Model.GridEmptyBlockID, Model.EmptyGridMessage, false))*@
+		</div>
+	</div>
+	@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.ResourceNote, Model.Notes)
+
+}

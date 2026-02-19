@@ -1,0 +1,45 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Views
+@using Selerant.DevEx.Modules.DIRModule.Configuration.Resources
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement
+
+@inherits NavigatorPanelView<ResourceManagementModel>
+@{
+	var tabstrip = Tabstrip.New("tabStripResourcesGrids")
+					.SetKnownSkin(Tabstrip.KnownSkins.SkNormal)
+					.SetIsNamingContainer(false)
+					.AddTab(GridTab.TAB_INPUTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabInputs"))
+					.AddTab(GridTab.TAB_DESTINATIONS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabDestinations"))
+					.AddTab(GridTab.TAB_NON_FOOD_DESTINATIONS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabNonFoodDestinations"))
+					.AddTab(GridTab.TAB_OUTPUTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabOutputs"))
+					.AddTab(GridTab.TAB_BUSINESS_COSTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabBusinessCosts"))
+					.SelectTab(GridTab.TAB_INPUTS);
+	tabstrip.LoadTabsOnDemand = true;
+}
+
+@using (tabstrip.BeginRendering(Html))
+{
+	using (tabstrip.WithPanel(GridTab.TAB_INPUTS).BeginRendering(Html))
+	{
+		@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.InputsGridTab, Model.InputsGridTabModel)
+	}
+
+	using (tabstrip.WithPanel(GridTab.TAB_DESTINATIONS).BeginRendering(Html))
+	{
+		@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.DestinationsGridTab, Model.DestinationsGridTabModel)
+	}
+
+	using (tabstrip.WithPanel(GridTab.TAB_NON_FOOD_DESTINATIONS).BeginRendering(Html))
+	{
+		@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.DestinationsGridTab, Model.NonFoodDestinationsGridTabModel)
+	}
+
+	using (tabstrip.WithPanel(GridTab.TAB_OUTPUTS).BeginRendering(Html))
+	{
+		@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.OutputsGridTab, Model.OutputsGridTabModel)
+	}
+
+	using (tabstrip.WithPanel(GridTab.TAB_BUSINESS_COSTS).BeginRendering(Html))
+	{
+		@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.BusinessCostGridTab, Model.BusinessCostGridTabModel)
+	}
+}

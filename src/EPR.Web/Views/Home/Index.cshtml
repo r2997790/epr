@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Home";
+    var totalProducts = ViewBag.TotalProducts as int? ?? 0;
+    var productsByType = ViewBag.ProductsByType as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var packagingByWeight = ViewBag.PackagingByWeight as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var distributionCount = ViewBag.DistributionCount as int? ?? 0;
+}
+
+<div class="container-fluid home-page">
+    <div class="home-grid">
+        <a href="@Url.Action("Index", "PackagingManagement")" class="home-card" onclick="if(window.browserTabs) { window.browserTabs.addTab('@Url.Action("Index", "PackagingManagement")', 'Packaging', 'bi-box-seam', 'Packaging'); return false; }">
+            <div class="home-card-icon"><i class="bi bi-box-seam" style="font-size: 3rem;"></i></div>
+            <h3 class="home-card-title">Packaging</h3>
+            <p class="home-card-description">Manage raw materials, packaging items, and packaging groups in one place</p>
+        </a>
+
+        <a href="@Url.Action("Index", "Products")" class="home-card" onclick="if(window.browserTabs) { window.browserTabs.addTab('@Url.Action("Index", "Products")', 'Products', 'bi-bag', 'Products'); return false; }">
+            <div class="home-card-icon"><i class="bi bi-bag" style="font-size: 3rem;"></i></div>
+            <h3 class="home-card-title">Products</h3>
+            <p class="home-card-description">Manage product SKUs and associate packaging units</p>
+        </a>
+
+        <a href="/distribution" class="home-card" onclick="if(window.browserTabs) { window.browserTabs.addTab('/distribution', 'Distribution', 'bi-truck', 'Distribution'); return false; }">
+            <div class="home-card-icon"><i class="bi bi-truck" style="font-size: 3rem;"></i></div>
+            <h3 class="home-card-title">Distribution</h3>
+            <p class="home-card-description">Track product distribution to locations and geographies</p>
+        </a>
+
+        <a href="@Url.Action("Dashboard", "Reporting")" class="home-card" data-no-tab="true">
+            <div class="home-card-icon"><i class="bi bi-graph-up-arrow" style="font-size: 3rem;"></i></div>
+            <h3 class="home-card-title">Reporting</h3>
+            <p class="home-card-description">View comprehensive reports, charts, and analytics for packaging and products</p>
+        </a>
+    </div>
+
+    <!-- Dashboard Overview -->
+    <div class="dashboard-overview-section mt-5">
+        <div class="dashboard-overview-header mb-4">
+            <h2 class="mb-1" style="font-size: 1.5rem; color: var(--dark-text);"><i class="bi bi-graph-up"></i> <span data-translate="Dashboard Overview">Dashboard Overview</span></h2>
+            <p class="text-muted mb-0 small"><span data-translate="Key statistics from your packaging and product data">Key statistics from your packaging and product data</span></p>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-number" style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">@totalProducts</div>
+                        <div class="stat-label text-muted small text-uppercase"><span data-translate="Total Products">Total Products</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-number" style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">@(productsByType?.Count() ?? 0)</div>
+                        <div class="stat-label text-muted small text-uppercase"><span data-translate="Product Categories">Product Categories</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-number" style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">@(packagingByWeight?.Count() ?? 0)</div>
+                        <div class="stat-label text-muted small text-uppercase"><span data-translate="Packaging Types">Packaging Types</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-number" style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">@distributionCount</div>
+                        <div class="stat-label text-muted small text-uppercase"><span data-translate="Distribution Records">Distribution Records</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 home-dashboard-tables">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-pie-chart"></i> <span data-translate="Products by Type">Products by Type</span></div>
+                    <div class="card-body">
+                        @if (productsByType != null && productsByType.Any())
+                        {
+                            var maxCat = 0;
+                            foreach (var i in productsByType) { var c = (int)i.Count; if (c > maxCat) { maxCat = c; } }
+                            if (maxCat == 0) { maxCat = 1; }
+                            foreach (var item in productsByType)
+                            {
+                                var count = (int)item.Count;
+                                var pct = maxCat > 0 ? (count * 100.0 / maxCat) : 0;
+                                <div class="d-flex justify-content-between align-items-center mb-2 home-overview-row">
+                                    <div class="flex-grow-1 me-2">
+                                        <div class="home-overview-label">@item.Type</div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" style="width: @pct.ToString("F0")%; background: var(--primary-color);"></div>
+                                        </div>
+                                    </div>
+                                    <span class="home-overview-value">@count</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-3 mb-0 small"><span data-translate="No product type data">No product type data</span></p>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-bar-chart"></i> <span data-translate="Packaging Type by Weight">Packaging Type by Weight</span> (tonnes)</div>
+                    <div class="card-body">
+                        @if (packagingByWeight != null && packagingByWeight.Any())
+                        {
+                            double maxW = 0;
+                            foreach (var i in packagingByWeight) { var w = (double)i.TotalWeight / 1_000_000.0; if (w > maxW) { maxW = w; } }
+                            if (maxW == 0) { maxW = 1; }
+                            foreach (var item in packagingByWeight)
+                            {
+                                var weightTonnes = (double)item.TotalWeight / 1_000_000.0;
+                                var pct = maxW > 0 ? (weightTonnes * 100.0 / maxW) : 0;
+                                <div class="d-flex justify-content-between align-items-center mb-2 home-overview-row">
+                                    <div class="flex-grow-1 me-2">
+                                        <div class="home-overview-label">@item.PackagingType</div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" style="width: @pct.ToString("F0")%; background: var(--primary-color);"></div>
+                                        </div>
+                                    </div>
+                                    <span class="home-overview-value">@(weightTonnes.ToString("N4")) t</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center py-3 mb-0 small"><span data-translate="No packaging weight data">No packaging weight data</span></p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 text-center">
+            <a href="@Url.Action("Dashboard", "Reporting")" class="btn btn-primary" data-no-tab="true"><i class="bi bi-graph-up-arrow"></i> <span data-translate="View full Reporting Dashboard">View full Reporting Dashboard</span></a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,23 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Views
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.GeneralPanel;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using System.Web.UI.WebControls;
+@using Selerant.DevEx.WebControls;
+@using MainMenuItem = Selerant.DevEx.WebMvcModules.Helpers;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers
+@inherits NavigatorPanelView<GeneralPanelModel>
+
+@{
+    Model.HtmlMenu
+        .AddMenuItem(
+           new MainMenuItem.MenuItem("Edit", ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("Edit"))
+                .SetVisible(Model.SecurityObject.CanEdit))
+            .AddMenuItem(
+            new MainMenuItem.MenuItem("Export", ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ExportToExcel"))
+                .SetEnabled(Model.SecurityObject.CanView));
+
+    Model.StandardPanelButtons.EditSettings = false;
+    Model.GeneralModelPartial.SetLogicId("GeneralPanelPartial");
+}
+
+@Html.Partial(DIRModuleInfo.Instance, GeneralPanelModel.ASSESMENT_GENERAL_PARTIAL, Model.GeneralModelPartial)

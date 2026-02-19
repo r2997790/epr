@@ -1,0 +1,27 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation;
+@using System.Web.UI.WebControls;
+@using Selerant.DevEx.Infrastructure.Modules
+@using Selerant.DevEx.Modules.DIRModule.ModuleBlocks._ThisProject
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<IndexModel>
+@{
+	Model.ContainerStyle.SetCssClasses("dir-dialog-content");
+}
+
+<div @Html.AttributeLogicId("CreateNewAssessmentPanel") class="newAssessmentWizardDialog">
+	<div id="ErrorsNotificationPanel"></div>
+	@*First dialog*@
+	@{
+		Html.RenderPartial(ModuleInfoHelper.ToModulePath(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.CreateAssessmentDialog.Views.FirstCreateAssessmentDialog), Model.FirstStepModel);
+	}
+	@*Second dialog*@
+	@{
+		Html.RenderPartial(ModuleInfoHelper.ToModulePath(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.CreateAssessmentDialog.Views.SecondCreateAssessmentDialog), Model.SecondStepModel);
+	}
+	<div class="editable-required-footnote">
+		@(Html.LabelControl("lblRequiredFootnote")
+				.SetText(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("CreateAssessmentDlg_RequiredFootnote"))
+				.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm))
+	</div>
+</div>

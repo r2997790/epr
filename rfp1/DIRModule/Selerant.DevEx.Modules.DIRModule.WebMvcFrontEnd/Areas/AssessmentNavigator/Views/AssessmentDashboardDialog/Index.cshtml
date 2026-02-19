@@ -1,0 +1,231 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls;
+@using Selerant.DevEx.WebModules.LCIAScenarioManager.LCIAScenarioNavigator;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Menu;
+@using MenuItems = Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Menu.Items;
+@using Selerant.DevEx.Modules.DIRModule.Configuration.Resources;
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.AssessmentResults;
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.AssessmentDashboardDialog;
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<IndexModel>
+@{
+    var tabstrip = Tabstrip.New("tabStripAssessmentDashboard")
+        .SetKnownSkin(Tabstrip.KnownSkins.SkNormal)
+        .SetIsNamingContainer(false)
+        .AddTab(AssessmentDashboardTab.TAB_TRUE_COST, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_TabTrueCost"))
+        .AddTab(AssessmentDashboardTab.TAB_FOOD_LOSSES, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_TabFoodLosses"))
+        .SelectTab(AssessmentDashboardTab.TAB_TRUE_COST);
+
+    var chartColorScheme = new string[] {
+        "#6cc043", "#0076ce", "#a63b99", "#f44a81", "#22b1e6", "#d384c9",
+        "#DD824E", "#339177", "#00D479", "#FF9200", "#6BBF43", "#025F82",
+        "#B258A7", "#005699", "#EA004B", "#4FAB22", "#780F6C", "#07A3DF"
+    };
+
+    string noResultsGridLabel = ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("GridNoResults");
+
+    string hotSpotEmptyBlockId = "GridDataEmpty_HotSpot";
+    string productionRatiosEmptyBlockId = "GridDataEmpty_ProductionRatios";
+    string finantialIndicatorsEmptyBlockId = "GridDataEmpty_KeyFinantialIndicators";
+    string costOfWasteEmptyBlockId = "GridDataEmpty_CostOfWaste";
+
+    var hotspotChart = Html.ChartControl("HotSpotBarChart").SetChartType("GroupedBarChart")
+        .SetData(Model.GetHotSpotChartData(HotSpotValueType.COST).Cast<object>().ToList())
+        .SetColors(chartColorScheme)
+        .SetWidth(680)
+        .SetHeight(403)
+        .SetShowDialog(false)
+        .SetMargin(70, 80, 90, 70)
+        .SetLegendPanelAbsoluteSize(170)
+        .SetLegendText(Model.GetAssessmentNames().ToArray())
+        .SetShowLegend(true)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_HotSpot"))
+        .SetYAxisLabel(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_YAxisTitleHotspotCost"));
+
+    var hotSpotGrid = Html.DX().jqGrid(Model.HotSpotGridId)
+        .setLogicId(Model.HotSpotGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.GetHotSpotGridData(null, null, string.Join(IndexModel.IDENTIFIABLE_STRING_SEPARATOR.ToString(), Model.AssessmentIdentifibleStrings), HotSpotValueType.COST.ToString())))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setEmptyBlock(hotSpotEmptyBlockId);
+
+    var logicIdRadioButton = new Dictionary<string, object>();
+    logicIdRadioButton.Add("data-dxlogicid", "logicIdRadioButtonHotSpot");
+
+    var spiderChartCostOfWaste = Html.ChartControl("SpiderChartCostOfWaste").SetChartType("SpiderChart")
+        .SetColors(chartColorScheme)
+        .SetShowLegend(true)
+        .SetLegendPanelSize(20)
+        .SetData(Model.GetCostOfWasteChartData().Cast<object>().ToList())
+        .SetShowDialog(false)
+        .SetWidth(680).SetHeight(425)
+        .SetMargin(120, 70, 80, 50)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_CostOfWaste"))
+        .AddExtraParameter("useRectTypeLegendItem", true);
+
+    var costOfWasteGrid = Html.DX().jqGrid(Model.CostOfWasteGridId)
+        .setLogicId(Model.CostOfWasteGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.GetCostOfWasteGridData(null, null, string.Join(IndexModel.IDENTIFIABLE_STRING_SEPARATOR.ToString(), Model.AssessmentIdentifibleStrings))))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setEmptyBlock(costOfWasteEmptyBlockId);
+
+    var productionRatiosChart = Html.ChartControl("ProductionRatiosChart").SetChartType("HorizontalGroupedBarChart")
+        .SetColors(chartColorScheme)
+        .SetShowLegend(true)
+        .SetData(Model.GetResultsChartData(AssessmentResultType.MASS).Cast<object>().ToList())
+        .SetWidth(680)
+        .SetHeight(600)
+        .SetLegendPanelAbsoluteSize(170)
+        .SetShowDialog(false)
+        .SetMargin(60, 80, 90, 180)
+        .SetXAxisLabel("%")
+        .SetPosition(new string[] { "240px", "0px" })
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsProdRatiosChartTitleNoDate"));
+
+    var productionRatiosGrid = Html.DX().jqGrid(Model.ProductionRatiosGridId)
+        .setLogicId(Model.ProductionRatiosGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.GetResultsGridData(null, null, string.Join(IndexModel.IDENTIFIABLE_STRING_SEPARATOR.ToString(), Model.AssessmentIdentifibleStrings), AssessmentResultType.MASS)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setEmptyBlock(finantialIndicatorsEmptyBlockId);
+
+    var financialIndicatorsChart = Html.ChartControl("KeyFinantialIndicatorsChart").SetChartType("HorizontalGroupedBarChart")
+        .SetColors(chartColorScheme)
+        .SetShowLegend(true)
+        .SetData(Model.GetResultsChartData(AssessmentResultType.PERCENTAGE).Cast<object>().ToList())
+        .SetWidth(680)
+        .SetHeight(600)
+        .SetLegendPanelAbsoluteSize(170)
+        .SetShowDialog(false)
+        .SetXAxisLabel("%")
+        .SetMargin(60, 80, 90, 180)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsFinIndChartTitleNoDate"));
+
+    var financialIndicatorsGrid = Html.DX().jqGrid(Model.KeyFinantialIndicatorsGridId)
+        .setLogicId(Model.KeyFinantialIndicatorsGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.GetResultsGridData(null, null, string.Join(IndexModel.IDENTIFIABLE_STRING_SEPARATOR.ToString(), Model.AssessmentIdentifibleStrings), AssessmentResultType.PERCENTAGE)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setEmptyBlock(finantialIndicatorsEmptyBlockId);
+
+    Model.FoodLossesNotIncludedInedibleParts.SetLogicId("FoodLossesNotIncludedInediblePartsPartial");
+    Model.FoodLossesInediblePartsOnly.SetLogicId("FoodLossesInediblePartsOnlyPartial");
+}
+
+<div @Html.AttributeLogicId("AssessmentDashboardDialog") style="width: 100%; height: 50px; background-color: white;">
+    <div id="notificationContainer"></div>
+    <div class="chartMenuContainer float-right" style="display: inline-block; margin-right: 15px;">
+        @(Menu.New("DashboardMenu").SetKnownSkin(Menu.KnownSkins.SkNormalMenu)
+            .AddMenuItem(new MenuItem("Assessments", ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("Assessments")))
+                .AddSubMenuItems(
+                    new MenuItem("AddAssessment", ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("Add Assessment(s)")).SetImageUrl("~/Images/Icons/16x16/CheckBoxTrue.gif").SetCssClass("checked")
+                )
+            .AddMenuItem(Model.RemoveGroup)
+            .AddMenuItem(new MenuItem("Export", ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ExportToExcel")))
+            .SetStyle("width", "100%")
+            .Render())
+    </div>
+    <div class="AssessmentDashboardDialog">
+        @using (tabstrip.BeginRendering(Html))
+        {
+            using (tabstrip.WithPanel(AssessmentDashboardTab.TAB_TRUE_COST).BeginRendering(Html))
+            {
+                <div class="row dir-module-bus-nav-assessment-dashboard-row">
+                    <div class="col-6" @Html.AutoId("hotspotChart")>
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2 class="dir-module-bus-nav-assessment-dashboard-chart-title" id="hotspotChartTitle">@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_CostHotspotTitle")</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                <div class="dir-module-bus-nav-assessment-dashboard-hotspot-chart-radioButton" style="padding-top: 5px;">
+                                    <label>
+                                        @Html.RadioButton("Buttonradio", "MASS", false, logicIdRadioButton)
+                                        @ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_HotSpot_Mass")
+                                    </label>
+                                    <label>
+                                        @Html.RadioButton("Buttonradio", "COST", true, logicIdRadioButton)
+                                        @ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDashboard_HotSpot_Cost")
+                                    </label>
+                                </div>
+                                @hotspotChart.Render()
+                                @hotSpotGrid.Render()
+                                @(Html.EmptyDataBlock(hotSpotEmptyBlockId, noResultsGridLabel, false))
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6" style="position: relative;" @Html.AutoId("spiderChartCostOfWaste")>
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2 class="dir-module-bus-nav-assessment-dashboard-chart-title">@spiderChartCostOfWaste.ChartTitle</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                @spiderChartCostOfWaste.Render()
+                                @costOfWasteGrid.Render()
+                                @(Html.EmptyDataBlock(costOfWasteEmptyBlockId, noResultsGridLabel, false))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row dir-module-bus-nav-assessment-dashboard-row">
+                    <div class="col-6" @Html.AutoId("productionRatiosChart")>
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2 class="dir-module-bus-nav-assessment-dashboard-chart-title">@productionRatiosChart.ChartTitle</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                @productionRatiosChart.Render()
+                                @productionRatiosGrid.Render()
+                                @(Html.EmptyDataBlock(productionRatiosEmptyBlockId, noResultsGridLabel, false))
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6" @Html.AutoId("finantialIndicatorsChart")>
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2 class="dir-module-bus-nav-assessment-dashboard-chart-title">@financialIndicatorsChart.ChartTitle</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                @financialIndicatorsChart.Render()
+                                @financialIndicatorsGrid.Render()
+                                @(Html.EmptyDataBlock(finantialIndicatorsEmptyBlockId, noResultsGridLabel, false))
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            using (tabstrip.WithPanel(AssessmentDashboardTab.TAB_FOOD_LOSSES).BeginRendering(Html))
+            {
+                <div class="row dir-module-bus-nav-assessment-dashboard-row">
+                    <div class="col-12">
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2>@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsPyramidChartFoodDestination")</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                @Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.Views.FoodLosses.FoodLossesContainer, Model.FoodLossesNotIncludedInedibleParts)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row dir-module-bus-nav-assessment-dashboard-row">
+                    <div class="col-12">
+                        <div class="dir-module-panel">
+                            <div class="dir-module-panel-heading">
+                                <h2>@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsPyramidChartInediblePartsOnlyPerDestination")</h2>
+                            </div>
+                            <div class="dir-module-panel-body">
+                                @Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.Views.FoodLosses.FoodLossesContainer, Model.FoodLossesInediblePartsOnly)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

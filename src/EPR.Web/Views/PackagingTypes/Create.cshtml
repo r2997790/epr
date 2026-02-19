@@ -1,0 +1,107 @@
+@model EPR.Domain.Entities.PackagingType
+@{
+    ViewData["Title"] = "Create Packaging Type";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between mb-4">
+        <h1><i class="bi bi-tags"></i> Create Packaging Type</h1>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Packaging Type Details</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Name *</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Height" class="form-label">Height (cm)</label>
+                                    <input asp-for="Height" type="number" step="0.01" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Weight" class="form-label">Weight (kg)</label>
+                                    <input asp-for="Weight" type="number" step="0.01" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Depth" class="form-label">Depth (cm)</label>
+                                    <input asp-for="Depth" type="number" step="0.01" class="form-control" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Volume" class="form-label">Volume (L)</label>
+                                    <input asp-for="Volume" type="number" step="0.01" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Image</label>
+                            <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Packaging Type
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Associate Raw Materials</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Select raw materials used in this packaging type. Associating with a sub-category automatically associates with parent categories.</p>
+                    <div id="material-selection">
+                        <p class="text-center text-muted">Material selection coming soon...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+

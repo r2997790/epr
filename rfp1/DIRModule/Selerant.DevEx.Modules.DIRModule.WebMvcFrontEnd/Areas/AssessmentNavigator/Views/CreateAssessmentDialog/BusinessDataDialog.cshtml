@@ -1,0 +1,54 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation;
+@using System.Web.Mvc
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement.Shared
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<BusinessDataDialogModel>
+@{
+    Tabstrip tabstrip = Tabstrip.New("tabStripResourcesGrids")
+            .SetKnownSkin(Tabstrip.KnownSkins.SkNormal)
+            .SetIsNamingContainer(false)
+            .AddTab(GridTab.TAB_INPUTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabInputs")) 
+            .AddTab(GridTab.TAB_DESTINATIONS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabDestinations"))
+            .AddTab(GridTab.TAB_NON_FOOD_DESTINATIONS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabNonFoodDestinations"))
+            .AddTab(GridTab.TAB_OUTPUTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabOutputs"))
+            .AddTab(GridTab.TAB_BUSINESS_COSTS, ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMngmt_TabBusinessCosts"))
+            .SelectTab(GridTab.TAB_INPUTS);
+
+    Model.LcStageSteps.SetLogicId("LcStageStepsPartial");
+}
+
+<div @Html.AttributeLogicId("BusinessDataMainDialog") class="">
+    <div class="container-fluid dialog-form-content" style="padding: 10px 11px;">
+        <div id="lc-stage-timeline">
+            @Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.CreateAssessmentDialog.Views.Shared.LCStageSteps, Model.LcStageSteps)
+        </div>
+		<div class="resource-tabs">
+			@using (tabstrip.BeginRendering(Html))
+			{
+				using (tabstrip.WithPanel(GridTab.TAB_INPUTS).BeginRendering(Html))
+				{
+					Html.RenderAction("InputTabPartial", "ResourceManagement", new { area = "AssessmentNavigator", assessmentId = Model.Assessment.Code, lcStageId = Model.InitialLcStage, viewMode = Model.ViewMode });
+				}
+
+				using (tabstrip.WithPanel(GridTab.TAB_DESTINATIONS).BeginRendering(Html))
+				{
+					Html.RenderAction("DestinationsTabPartial", "ResourceManagement", new { area = "AssessmentNavigator", assessmentId = Model.Assessment.Code, lcStageId = Model.InitialLcStage, isFood = "Food", viewMode = Model.ViewMode });
+				}
+
+				using (tabstrip.WithPanel(GridTab.TAB_NON_FOOD_DESTINATIONS).BeginRendering(Html))
+				{
+					Html.RenderAction("DestinationsTabPartial", "ResourceManagement", new { area = "AssessmentNavigator", assessmentId = Model.Assessment.Code, lcStageId = Model.InitialLcStage, isFood = "NonFood", viewMode = Model.ViewMode });
+				}
+
+                using (tabstrip.WithPanel(GridTab.TAB_OUTPUTS).BeginRendering(Html))
+                {
+                    Html.RenderAction("OutputTabPartial", "ResourceManagement", new { area = "AssessmentNavigator", assessmentId = Model.Assessment.Code, lcStageId = Model.InitialLcStage, viewMode = Model.ViewMode });
+                }
+
+                using (tabstrip.WithPanel(GridTab.TAB_BUSINESS_COSTS).BeginRendering(Html))
+                {
+                    Html.RenderAction("BusinessCostTabPartial", "ResourceManagement", new { area = "AssessmentNavigator", assessmentId = Model.Assessment.Code, lcStageId = Model.InitialLcStage, viewMode = Model.ViewMode });
+                }
+            }
+		</div>
+    </div>
+</div>

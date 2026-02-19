@@ -1,0 +1,18 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation.Shared
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<LCStageStepsModel>
+
+@using (Model.BeginRendering(Html))
+{
+<div id="MultiSteps" class="row" style="margin-left:20px">
+	<div class="col-11">
+		<ul id="DIR-lc-stages-list" class="multi-steps"></ul>
+	</div>	
+	<div class="col-1">
+		<div id="ManageLcStages" class="align-middle" style="cursor: pointer; margin-top:20px;">
+			<img id="Img1" src="../../../../Images/Icons/16x16/DxGearMediumGrey.svg" title = "@(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ManageAssessmentLCStages"))"/>
+		</div>
+	</div>
+</div>
+
+}

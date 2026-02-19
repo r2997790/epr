@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sh:despatchAdviceMessage xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
+                          xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+    <sh:StandardBusinessDocumentHeader>
+        <sh:HeaderVersion>1.0</sh:HeaderVersion>
+        <sh:Sender>
+            <sh:Identifier>1234567890010</sh:Identifier>
+        </sh:Sender>
+        <sh:Receiver>
+            <sh:Identifier>1234567890011</sh:Identifier>
+        </sh:Receiver>
+        <sh:DocumentIdentification>
+            <sh:Standard>GS1</sh:Standard>
+            <sh:TypeVersion>3.3</sh:TypeVersion>
+            <sh:InstanceIdentifier>ASN-NEST-004</sh:InstanceIdentifier>
+            <sh:Type>despatchAdvice</sh:Type>
+            <sh:CreationDateAndTime>2026-02-08T10:00:00Z</sh:CreationDateAndTime>
+        </sh:DocumentIdentification>
+    </sh:StandardBusinessDocumentHeader>
+    
+    <despatchAdvice>
+        <creationDateTime>2026-02-08T10:00:00Z</creationDateTime>
+        <documentStatusCode>ORIGINAL</documentStatusCode>
+        <despatchAdviceIdentification>
+            <entityIdentification>ASN-NEST-004</entityIdentification>
+            <contentOwner>
+                <gln>1234567890010</gln>
+            </contentOwner>
+        </despatchAdviceIdentification>
+        
+        <shipper>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890010</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Tech Manufacturing Corp</organisationName>
+            <address>
+                <streetAddressOne>456 Tech Park Drive</streetAddressOne>
+                <city>Cambridge</city>
+                <postalCode>CB2 1TN</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipper>
+        
+        <receiver>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890011</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Electronics Distribution Network</organisationName>
+        </receiver>
+        
+        <shipTo>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890011</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Electronics Distribution Network</organisationName>
+            <address>
+                <streetAddressOne>300 Distribution Avenue</streetAddressOne>
+                <city>Milton Keynes</city>
+                <postalCode>MK9 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipTo>
+        
+        <logisticServiceProvider>
+            <organisationName>Secure Transport Ltd</organisationName>
+        </logisticServiceProvider>
+        
+        <despatchAdviceLogisticUnit>
+            <logisticUnitIdentification>
+                <sscc>376123456789012380</sscc>
+            </logisticUnitIdentification>
+            <packageTypeCode>PLT</packageTypeCode>
+            <despatchAdviceLineItem>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched>50</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678955</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Smartphone Model X Pro</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>SERIAL-BATCH-2026-001</batchNumber>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <despatchAdviceLineItem>
+                <lineItemNumber>2</lineItemNumber>
+                <quantityDespatched>100</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678962</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Wireless Earbuds Pro</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-EARBUDS-001</batchNumber>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <logisticUnitGrossWeight>
+                <value>125.0</value>
+                <measurementUnitCode>KGM</measurementUnitCode>
+            </logisticUnitGrossWeight>
+        </despatchAdviceLogisticUnit>
+        
+        <totalGrossWeight>
+            <value>125.0</value>
+            <measurementUnitCode>KGM</measurementUnitCode>
+        </totalGrossWeight>
+        
+        <estimatedDeliveryDateTime>2026-02-09T14:00:00Z</estimatedDeliveryDateTime>
+        <actualShipDateTime>2026-02-08T10:00:00Z</actualShipDateTime>
+        <despatchInformation>
+            <referenceNumber>PO-2026-TECH-004</referenceNumber>
+        </despatchInformation>
+    </despatchAdvice>
+</sh:despatchAdviceMessage>

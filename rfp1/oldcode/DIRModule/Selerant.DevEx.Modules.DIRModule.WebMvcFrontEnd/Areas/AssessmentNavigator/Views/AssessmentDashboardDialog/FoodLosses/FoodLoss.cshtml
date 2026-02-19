@@ -1,0 +1,41 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.AssessmentDashboardDialog
+@using Selerant.DevEx.WebModules.LCIAScenarioManager.LCIAScenarioNavigator.Base
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<FoodLossModel>
+
+@{ 
+    string gridEmptyBlockId = "GridDataEmpty_FoodLoss" + Model.ModelLogicIdSuffix;
+    string noResultsGridLabel = ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("GridNoResults");
+
+    string[] noDataColors = { "#808080" };
+    List<object> noData = new List<object>
+    {
+        new NameValueChartData("N/A", 100)
+    };
+
+    var chart = Html.ChartControl(Model.ChartId).SetChartType("PyramidChart")
+        .SetColors(Model.ChartItemColors.Count > 0 ? Model.ChartItemColors.ToArray() : noDataColors)
+        .SetData(Model.ChartData.Count > 0 ? Model.ChartData.Cast<object>().ToList() : noData)
+        .SetWidth(335)
+        .SetHeight(350)
+        .SetMargin(0)
+        .SetPosition(new string[] { "0px", "0px" });
+
+    var grid = Html.DX().jqGrid(FoodLossModel.GRID_NAME, Model.GridId)
+        .setLogicId(Model.GridId)
+        .initJqGrid(null)
+        .setDataType(Selerant.DevEx.WebMvcModules.Helpers.jqGrid.DataType.jsonstring)
+        .setDataStr(Model.GetJsonGridData())
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setPager(null)
+        .setEmptyBlock(gridEmptyBlockId);
+}
+
+@using (Model.BeginRendering(Html))
+{
+    <h3 style="text-align: center;">@AssessmentDashboardDataStore.GetAssessmentTitle(Model.Assessment)</h3>
+    @(chart)
+    @(grid)
+    @(Html.EmptyDataBlock(gridEmptyBlockId, noResultsGridLabel, false))    
+}

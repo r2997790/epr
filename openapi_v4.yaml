@@ -1,0 +1,12 @@
+
+openapi: 3.0.3
+info:
+  title: EPR Prototype API (v4)
+  version: "1.2"
+paths:
+  /flow-blueprints/seed-defaults:
+    post:
+      summary: Seed default Sankey blueprints
+      description: Loads default_sankey_blueprints.json into flow_blueprints, nodes and edges.
+      responses:
+        "200": { description: Defaults seeded }

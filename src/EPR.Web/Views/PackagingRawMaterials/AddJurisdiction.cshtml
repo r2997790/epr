@@ -1,0 +1,135 @@
+@model EPR.Domain.Entities.MaterialJurisdiction
+@{
+    ViewData["Title"] = "Add Jurisdiction Fee";
+    var material = ViewBag.Material as EPR.Domain.Entities.PackagingRawMaterial;
+    var jurisdictions = ViewBag.Jurisdictions as List<EPR.Domain.Entities.Jurisdiction> ?? new List<EPR.Domain.Entities.Jurisdiction>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between mb-4">
+        <h1><i class="bi bi-globe"></i> Add Jurisdiction Fee</h1>
+        <a href="@Url.Action("Edit", new { id = Model.MaterialId })" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Material: @material?.Name</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AddJurisdiction" method="post">
+                        <input type="hidden" asp-for="MaterialId" />
+
+                        <div class="form-group">
+                            <label asp-for="JurisdictionId" class="form-label">Jurisdiction *</label>
+                            <select asp-for="JurisdictionId" class="form-select" required>
+                                <option value="">-- Select Jurisdiction --</option>
+                                @foreach (var jur in jurisdictions)
+                                {
+                                    <option value="@jur.Id">@jur.Name (@jur.Code)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="JurisdictionId" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="FeePerTonne" class="form-label">Fee Per Tonne *</label>
+                                    <input asp-for="FeePerTonne" type="number" step="0.01" class="form-control" required />
+                                    <span asp-validation-for="FeePerTonne" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Currency" class="form-label">Currency</label>
+                                    <select asp-for="Currency" class="form-select">
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="AUD">AUD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="EffectiveFrom" class="form-label">Effective From *</label>
+                                    <input asp-for="EffectiveFrom" type="date" class="form-control" required />
+                                    <span asp-validation-for="EffectiveFrom" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="EffectiveTo" class="form-label">Effective To</label>
+                                    <input asp-for="EffectiveTo" type="date" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ReferenceDocument" class="form-label">Reference Document</label>
+                            <input asp-for="ReferenceDocument" class="form-control" placeholder="URL or document reference" />
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="PresidingBody" class="form-label">Presiding Body</label>
+                            <input asp-for="PresidingBody" class="form-control" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ReportingFrequency" class="form-label">Reporting Frequency</label>
+                                    <select asp-for="ReportingFrequency" class="form-select">
+                                        <option value="">-- Select --</option>
+                                        <option value="Monthly">Monthly</option>
+                                        <option value="Quarterly">Quarterly</option>
+                                        <option value="Annually">Annually</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="SubmissionType" class="form-label">Submission Type</label>
+                                    <select asp-for="SubmissionType" class="form-select">
+                                        <option value="">-- Select --</option>
+                                        <option value="Self Audit">Self Audit</option>
+                                        <option value="Third-Party">Third-Party</option>
+                                        <option value="Exception">Exception</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ReportingFormat" class="form-label">Reporting Format</label>
+                            <input asp-for="ReportingFormat" class="form-control" placeholder="e.g., Excel, PDF, Online Form" />
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Add Jurisdiction Fee
+                            </button>
+                            <a href="@Url.Action("Edit", new { id = Model.MaterialId })" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sh:despatchAdviceMessage xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
+                          xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+    <sh:StandardBusinessDocumentHeader>
+        <sh:HeaderVersion>1.0</sh:HeaderVersion>
+        <sh:Sender>
+            <sh:Identifier>1234567890008</sh:Identifier>
+        </sh:Sender>
+        <sh:Receiver>
+            <sh:Identifier>1234567890009</sh:Identifier>
+        </sh:Receiver>
+        <sh:DocumentIdentification>
+            <sh:Standard>GS1</sh:Standard>
+            <sh:TypeVersion>3.3</sh:TypeVersion>
+            <sh:InstanceIdentifier>ASN-NEST-003</sh:InstanceIdentifier>
+            <sh:Type>despatchAdvice</sh:Type>
+            <sh:CreationDateAndTime>2026-02-07T09:00:00Z</sh:CreationDateAndTime>
+        </sh:DocumentIdentification>
+    </sh:StandardBusinessDocumentHeader>
+    
+    <despatchAdvice>
+        <creationDateTime>2026-02-07T09:00:00Z</creationDateTime>
+        <documentStatusCode>ORIGINAL</documentStatusCode>
+        <despatchAdviceIdentification>
+            <entityIdentification>ASN-NEST-003</entityIdentification>
+            <contentOwner>
+                <gln>1234567890008</gln>
+            </contentOwner>
+        </despatchAdviceIdentification>
+        
+        <shipper>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890008</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Global Food Distributors</organisationName>
+            <address>
+                <streetAddressOne>789 Global Trade Center</streetAddressOne>
+                <city>London</city>
+                <postalCode>E1 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipper>
+        
+        <receiver>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890009</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Metro Retail Chain HQ</organisationName>
+        </receiver>
+        
+        <shipTo>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890009</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Metro Retail Chain HQ</organisationName>
+            <address>
+                <streetAddressOne>200 Retail Boulevard</streetAddressOne>
+                <city>London</city>
+                <postalCode>SW1A 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipTo>
+        
+        <logisticServiceProvider>
+            <organisationName>National Express Logistics</organisationName>
+        </logisticServiceProvider>
+        
+        <!-- Pallet 1: Going to Store A -->
+        <despatchAdviceLogisticUnit>
+            <logisticUnitIdentification>
+                <sscc>376123456789012370</sscc>
+            </logisticUnitIdentification>
+            <packageTypeCode>PLT</packageTypeCode>
+            <despatchAdviceLineItem>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched>200</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678931</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Premium Olive Oil 500ml</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-OIL-001</batchNumber>
+                    <bestBeforeDate>2026-10-15</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <logisticUnitGrossWeight>
+                <value>150.0</value>
+                <measurementUnitCode>KGM</measurementUnitCode>
+            </logisticUnitGrossWeight>
+        </despatchAdviceLogisticUnit>
+        
+        <!-- Pallet 2: Going to Store B -->
+        <despatchAdviceLogisticUnit>
+            <logisticUnitIdentification>
+                <sscc>376123456789012371</sscc>
+            </logisticUnitIdentification>
+            <packageTypeCode>PLT</packageTypeCode>
+            <despatchAdviceLineItem>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched>150</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678931</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Premium Olive Oil 500ml</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-OIL-001</batchNumber>
+                    <bestBeforeDate>2026-10-15</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <despatchAdviceLineItem>
+                <lineItemNumber>2</lineItemNumber>
+                <quantityDespatched>100</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678948</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Artisan Pasta 500g</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-PASTA-001</batchNumber>
+                    <bestBeforeDate>2027-01-20</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <logisticUnitGrossWeight>
+                <value>175.5</value>
+                <measurementUnitCode>KGM</measurementUnitCode>
+            </logisticUnitGrossWeight>
+        </despatchAdviceLogisticUnit>
+        
+        <!-- Pallet 3: Going to Store C -->
+        <despatchAdviceLogisticUnit>
+            <logisticUnitIdentification>
+                <sscc>376123456789012372</sscc>
+            </logisticUnitIdentification>
+            <packageTypeCode>PLT</packageTypeCode>
+            <despatchAdviceLineItem>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched>100</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678948</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Artisan Pasta 500g</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-PASTA-001</batchNumber>
+                    <bestBeforeDate>2027-01-20</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            <logisticUnitGrossWeight>
+                <value>75.0</value>
+                <measurementUnitCode>KGM</measurementUnitCode>
+            </logisticUnitGrossWeight>
+        </despatchAdviceLogisticUnit>
+        
+        <totalGrossWeight>
+            <value>400.5</value>
+            <measurementUnitCode>KGM</measurementUnitCode>
+        </totalGrossWeight>
+        
+        <estimatedDeliveryDateTime>2026-02-08T12:00:00Z</estimatedDeliveryDateTime>
+        <actualShipDateTime>2026-02-07T09:00:00Z</actualShipDateTime>
+        <despatchInformation>
+            <referenceNumber>PO-2026-GFD-003</referenceNumber>
+        </despatchInformation>
+    </despatchAdvice>
+</sh:despatchAdviceMessage>

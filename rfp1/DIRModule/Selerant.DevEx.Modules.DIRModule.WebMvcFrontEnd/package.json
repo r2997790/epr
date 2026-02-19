@@ -1,0 +1,21 @@
+{
+	"version": "1.0.0",
+	"name": "selerant-devex-module-dirmodule",
+	"private": true,
+	"scripts": {
+		"echosomething": "echo something",
+		"ts-lint": "..\\..\\..\\..\\Tools\\NodeJS\\Selerant.DevEx.TsLint\\bin\\run.bat -p \"%cd%\"",
+		"ts-compile": "..\\..\\..\\..\\Tools\\NodeJS\\Selerant.DevEx.TsCompiler\\bin\\compile.bat \"%cd%\"",
+		"ts-compile-and-watch": "..\\..\\..\\..\\Tools\\NodeJS\\Selerant.DevEx.TsCompiler\\bin\\compile_and_watch.bat \"%cd%\"",
+		"sass-compile": "..\\..\\..\\..\\Tools\\NodeJS\\Selerant.DevEx.SassCompiler\\bin\\compile.bat -p \"%cd%\"",
+		"sass-watch": "..\\..\\..\\..\\Tools\\NodeJS\\Selerant.DevEx.SassCompiler\\bin\\watch.bat -p \"%cd%\"",
+		"viewscompiler-compile": "dotnet ..\\..\\..\\..\\Tools\\ViewsCompiler\\Selerant.ViewsCompiler\\bin\\netcoreapp2.1\\Selerant.ViewsCompiler.dll compile -p \"%cd%\" -o \"%cd%\\compileviewsoutput\"",
+		"viewscompiler-restore": "dotnet ..\\..\\..\\..\\Tools\\ViewsCompiler\\Selerant.ViewsCompiler\\bin\\netcoreapp2.1\\Selerant.ViewsCompiler.dll restore -p \"%cd%\""
+	},
+	"devDependencies": {
+		"selerant-devex-devdependencies": "0.0.3"
+	},
+	"dependencies": {
+		"selerant-devex-dependencies": "0.0.2"
+	}
+}

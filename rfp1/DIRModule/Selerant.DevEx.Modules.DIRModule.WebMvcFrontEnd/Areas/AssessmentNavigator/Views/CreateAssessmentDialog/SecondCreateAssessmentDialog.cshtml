@@ -1,0 +1,140 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation;
+@using System.Web.UI.WebControls;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using System.Web.UI.WebControls;
+
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.GeneralPanel.GeneralModelPartial>
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<SecondCreateAssessmentModel>
+@{
+    Model.ContainerStyle.SetCssClasses("dir-dialog-content");
+}
+
+<div id="Step2nd" class="container-fluid dx-step-panel dx-step-panel-hidden">
+    <div class="row">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentOrgStructure")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentOrgStructure"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentOrgStructureTT"))
+            )
+        </div>
+		<div class="col-7">
+			@(Html.TextControl("AssessmentOrgStructure")
+					.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+					.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true, MaxLength = 32 })
+					.SetLabelLogicId("lblAssessmentOrgStructure")
+					.SetWidth(Unit.Percentage(100))
+					.SetReadOnly(false))
+		</div>
+    </div>
+    <div class="row">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentLocation")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentLocation"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentLocationTT"))
+            )
+        </div>
+        <div class="col-7">
+            @(Html.ObjectReferenceControl("AssessmentLocation")
+					.SetKnownSkin(ObjectReferenceControlIndexModel.KnownSkins.SkForm)
+					.SetScope(DxAttributeScope.COUNTRY)
+					.SetValidationSettings(new Selerant.DevEx.WebControls.ObjectReferenceValidationSettings() { IsRequired = true })
+					.SetLabelLogicId("lblAssessmentLocation")
+					.SetWidth(Unit.Percentage(100))
+					.SetReadOnly(false)
+            )
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentWasteDestination")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentWasteDestination"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentWasteDestinationTT"))
+            )
+        </div>
+        <div class="col-7">
+            @(Html.ListOfValuesExtendedControl("AssessmentWasteDestination")
+					.SetKnownSkin(ListOfValuesExtendedControlIndexModel.KnownSkins.SkForm)
+					.SetIsMultiValue(true)
+					.SetCheckAllOptionAllowed(true)
+					.SetClearSelectionOptionAllowed(true)
+					.SetShowFooterPlaceholder(false)
+					.FillWithSelectListItems(Model.GetWasteDestinationsList())
+					.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+					.SetLabelLogicId("lblAssessmentWasteDestination")
+					.SetWidth(Unit.Percentage(100))
+					.SetReadOnly(false)
+            )
+        </div>
+    </div>
+    <div class="row" style="display: none;">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentIndustry")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentIndustry"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentIndustryTT"))
+            )
+        </div>
+        <div class="col-7">
+            @(Html.ListOfValuesControl("AssessmentIndustry")
+					.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm)
+					.SetIsMultiValue(false)
+					.FillWithSelectListItems(Model.GetAssessmentTypeList())
+					.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+					.SetLabelLogicId("lblAssessmentIndustry")
+					.SetWidth(Unit.Percentage(100))
+					.SetReadOnly(true)
+            )
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentLifecycleStages")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentLifecycleStages"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentLifecycleStagesTT"))
+            )
+        </div>
+        <div class="col-7">
+            @(Html.ListOfValuesExtendedControl("AssessmentLifecycleStages")
+					.SetKnownSkin(ListOfValuesExtendedControlIndexModel.KnownSkins.SkForm)
+					.SetIsMultiValue(true)
+					.SetCheckAllOptionAllowed(true)
+					.SetClearSelectionOptionAllowed(true)
+					.SetShowFooterPlaceholder(false)
+					.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+					.SetLabelLogicId("lblAssessmentLifecycleStages")
+					.FillWithSelectListItems(Model.FillLifecycleStages())
+					.SetWidth(Unit.Percentage(100))
+					.SetReadOnly(false)
+            )
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-5">
+            @(Html.LabelControl("lblAssessmentDataQuality")
+                    .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentDataQuality"))
+                    .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                    .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentDataQualityTT"))
+            )
+        </div>
+        <div class="col-7">
+            @(Html.ListOfValuesControl("AssessmentDataQuality")
+					.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm)
+					.SetIsMultiValue(false)
+					.AddItems(Model.GetDataQualityList())
+					.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+					.SetLabelLogicId("lblAssessmentDataQuality")
+					.SetWidth(Unit.Percentage(100))
+					.SetValue(Model.DataQuality)
+					.SetDefaultPlaceholder()
+            )
+        </div>
+    </div>
+</div>

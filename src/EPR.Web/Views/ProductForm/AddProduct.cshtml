@@ -1,0 +1,2225 @@
+@{
+    ViewData["Title"] = "Add Product - GS1 Compliant Product Form";
+}
+
+<div class="container-fluid">
+    <h1 class="mb-0 mb-2" id="addProductTitle"><i class="bi bi-plus-circle"></i> <span id="addProductTitleText">Add Product</span></h1>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="add-product-view-switcher btn-group btn-group-sm" role="group" aria-label="View mode">
+            <button type="button" class="btn btn-outline-secondary active" id="viewFormTabsBtn" data-view="form-tabs" aria-pressed="true" title="Form in tabs (one section at a time)">
+                <i class="bi bi-grid-3x3-gap"></i> <span class="d-none d-sm-inline">Form Tabs</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="viewFormSingleBtn" data-view="form-single" aria-pressed="false" title="Form on single scrollable page">
+                <i class="bi bi-list-ul"></i> <span class="d-none d-sm-inline">Form Single View</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="viewVisualBtn" data-view="visual" aria-pressed="false" title="Visual editor">
+                <i class="bi bi-diagram-3"></i> <span class="d-none d-sm-inline">Visual View</span>
+            </button>
+        </div>
+        <div class="d-flex flex-wrap gap-1">
+            <button type="button" class="btn btn-outline-primary" id="btnImportGS1">
+                <i class="bi bi-cloud-upload"></i> Import GS1
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnImport">
+                <i class="bi bi-upload"></i> Import
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnExport">
+                <i class="bi bi-download"></i> Export
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="btnPrint">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button type="button" class="btn btn-outline-warning" id="btnClear">
+                <i class="bi bi-x-circle"></i> Clear Form
+            </button>
+        </div>
+    </div>
+
+    <!-- Form view: tabbed (default) or single-page -->
+    <div id="formView" class="product-form-view-panel section-tabbed-mode">
+        <div id="sectionTabsBar" class="mb-3">
+            <ul class="nav nav-tabs" id="sectionTabs" role="tablist">
+                <li class="nav-item" role="presentation"><button class="nav-link active" id="sectionTab1" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel1" data-section="1" aria-controls="sectionPanel1" aria-selected="true">1. Product ID</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="sectionTab2" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel2" data-section="2" aria-controls="sectionPanel2" aria-selected="false">2. Packaging</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="sectionTab3" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel3" data-section="3" aria-controls="sectionPanel3" aria-selected="false">3. Retailer</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="sectionTab4" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel4" data-section="4" aria-controls="sectionPanel4" aria-selected="false">4. Environmental</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="sectionTab5" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel5" data-section="5" aria-controls="sectionPanel5" aria-selected="false">5. Related</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" id="sectionTab6" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#sectionPanel6" data-section="6" aria-controls="sectionPanel6" aria-selected="false">6. Notes</button></li>
+            </ul>
+        </div>
+        <form id="productForm" method="post" action="/ProductForm/AddProduct" novalidate>
+        <div class="tab-content" id="productFormSectionContent">
+        <!-- SECTION 1: PRODUCT IDENTIFICATION -->
+        <div class="card mb-4 section-pane tab-pane fade show active" id="sectionPanel1" role="tabpanel" aria-labelledby="sectionTab1" data-section="1">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section1" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 1: Product Identification
+                    <span class="badge bg-danger ms-2">Required</span>
+                </h5>
+            </div>
+            <div class="collapse show" id="section1">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Identify the product with name, brand, codes and classification. Required fields are marked with *.</p>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2">Basic info</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productName" name="productName" required placeholder="e.g. Organic Strawberries 250g">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Brand <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="brand" name="brand" required placeholder="Brand or supplier name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">Identifiers</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">GTIN / UPC / EAN <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="gtin" name="gtin" pattern="[0-9]{8,14}" maxlength="14" required placeholder="8–14 digits">
+                                <div class="invalid-feedback">GTIN must be 8, 12, 13, or 14 digits</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">SKU / Internal Code</label>
+                                <input type="text" class="form-control" id="skuCode" name="skuCode" placeholder="Your internal code">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">Category</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Product Category <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <select class="form-select" id="productCategory" name="productCategory" required>
+                                        <option value="">Select category...</option>
+                                        <option value="Berries">Berries</option>
+                                        <option value="Citrus">Citrus</option>
+                                        <option value="Leafy Greens">Leafy Greens</option>
+                                        <option value="Root Vegetables">Root Vegetables</option>
+                                        <option value="Stone Fruit">Stone Fruit</option>
+                                        <option value="Tropical Fruit">Tropical Fruit</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div class="input-group-text p-0 border-0 bg-transparent flex-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary quick-category" data-value="Berries">Berries</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary quick-category" data-value="Citrus">Citrus</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary quick-category" data-value="Leafy Greens">Leafy Greens</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Sub-category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productSubCategory" name="productSubCategory" required>
+                                    <option value="">Select sub-category...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">Content & size</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Net Weight <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-quick-entry">
+                                    <input type="number" class="form-control" id="productWeight" name="productWeight" step="0.01" placeholder="e.g. 250" required>
+                                    <select class="form-select" id="productWeightUnit" name="productWeightUnit" style="max-width: 100px;">
+                                        <option value="g">g</option>
+                                        <option value="kg">kg</option>
+                                    </select>
+                                    <div class="input-group-text input-group-quick-btns p-0 border-start bg-light align-items-stretch flex-nowrap">
+                                        <button type="button" class="btn btn-outline-secondary quick-weight rounded-0 border-0 border-end" data-value="125">125g</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-weight rounded-0 border-0 border-end" data-value="250">250g</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-weight rounded-0 border-0 border-end" data-value="500">500g</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-weight rounded-0 border-0" data-value="1000">1kg</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Net Volume</label>
+                                <div class="input-group input-group-quick-entry">
+                                    <input type="number" class="form-control" id="productVolume" name="productVolume" step="0.01" placeholder="e.g. 500">
+                                    <select class="form-select" id="productVolumeUnit" name="productVolumeUnit" style="max-width: 100px;">
+                                        <option value="ml">ml</option>
+                                        <option value="L">L</option>
+                                    </select>
+                                    <div class="input-group-text input-group-quick-btns p-0 border-start bg-light align-items-stretch flex-nowrap">
+                                        <button type="button" class="btn btn-outline-secondary quick-volume rounded-0 border-0 border-end" data-value="250">250ml</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-volume rounded-0 border-0 border-end" data-value="500">500ml</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-volume rounded-0 border-0 border-end" data-value="1000">1L</button>
+                                        <button type="button" class="btn btn-outline-secondary quick-volume rounded-0 border-0" data-value="2000">2L</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Units per Package</label>
+                                <input type="number" class="form-control" id="unitsPerPackage" name="unitsPerPackage" min="1" placeholder="e.g. 6">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">Origin & hierarchy</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Country of Origin <span class="text-danger">*</span></label>
+                                <select class="form-select" id="countryOfOrigin" name="countryOfOrigin" required>
+                                    <option value="">Select country...</option>
+                                    <option value="AU">Australia (AU)</option>
+                                    <option value="NZ">New Zealand (NZ)</option>
+                                    <option value="US">United States (US)</option>
+                                    <option value="MX">Mexico (MX)</option>
+                                    <option value="ES">Spain (ES)</option>
+                                    <option value="IT">Italy (IT)</option>
+                                    <option value="CL">Chile (CL)</option>
+                                    <option value="ZA">South Africa (ZA)</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                                <input type="text" class="form-control mt-2" id="countryOfOriginOther" name="countryOfOriginOther" placeholder="Enter country code" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Parent Unit GTIN</label>
+                                <input type="text" class="form-control" id="parentUnitGtin" name="parentUnitGtin" pattern="[0-9]{8,14}" maxlength="14" placeholder="For multi-level packaging only">
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">Photos</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Product Photos</label>
+                        <input type="file" class="form-control" id="productPhotos" name="productPhotos" accept="image/jpeg,image/png" multiple>
+                        <small class="form-text text-muted">JPEG/PNG, max 5MB each</small>
+                        <div id="photoPreview" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: PACKAGING SPECIFICATION -->
+        <div class="card mb-4 section-pane tab-pane fade" id="sectionPanel2" role="tabpanel" aria-labelledby="sectionTab2" data-section="2" aria-hidden="true">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section2" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 2: Packaging Specification
+                    <span class="badge bg-danger ms-2">Required</span>
+                </h5>
+            </div>
+            <div class="collapse show" id="section2">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Describe the packaging level, type, weight and components. Add components to auto-calculate total weight.</p>
+                    <!-- 2A: Packaging Dimensions & Specifications -->
+                    <h6 class="text-secondary border-bottom pb-1 mb-2">2A: Dimensions & type</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Packaging Level <span class="text-danger">*</span></label>
+                                <select class="form-select" id="packagingLevel" name="packagingLevel" required>
+                                    <option value="">Select level...</option>
+                                    <option value="Consumer Unit">Consumer Unit (Level 1)</option>
+                                    <option value="Retail Unit">Retail Unit (Level 2)</option>
+                                    <option value="Consignment Unit">Consignment Unit (Level 3)</option>
+                                </select>
+                                <small class="form-text text-muted">GS1 Packaging Hierarchy</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Packaging Type/Style <span class="text-danger">*</span></label>
+                                <select class="form-select" id="packagingType" name="packagingType" required>
+                                    <option value="">Select type...</option>
+                                    <option value="Open mouth bag">Open mouth bag</option>
+                                    <option value="Stand-up pouch">Stand-up pouch</option>
+                                    <option value="Pillow pack">Pillow pack</option>
+                                    <option value="Folding carton">Folding carton</option>
+                                    <option value="Rigid box">Rigid box</option>
+                                    <option value="Corrugated case">Corrugated case</option>
+                                    <option value="Rigid punnet">Rigid punnet</option>
+                                    <option value="Thermoform tray">Thermoform tray</option>
+                                    <option value="Hinged clamshell">Hinged clamshell</option>
+                                    <option value="Flow-wrap">Flow-wrap</option>
+                                    <option value="Shrink wrap">Shrink wrap</option>
+                                    <option value="Glass bottle">Glass bottle</option>
+                                    <option value="Returnable crate">Returnable crate</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <small class="form-text text-muted">GS1 Package Type Code</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Packaging Configuration <span class="text-danger">*</span></label>
+                                <select class="form-select" id="packagingConfiguration" name="packagingConfiguration" required>
+                                    <option value="">Select configuration...</option>
+                                    <option value="Single component">Single component</option>
+                                    <option value="Multi-component">Multi-component</option>
+                                    <option value="Assembly">Assembly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Total Packaging Weight (g) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="totalPackagingWeight" name="totalPackagingWeight" step="0.01" required>
+                                <small class="form-text text-muted">GS1 Packaging Weight (auto-calculated from components or manual)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Packaging Components</label>
+                        <button type="button" class="btn btn-sm btn-primary" id="btnAddComponent">
+                            <i class="bi bi-plus-circle"></i> Add Packaging Component
+                        </button>
+                        <div id="packagingComponentsList" class="mt-3"></div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">2B: Closures & fixings</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Closure Type <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Self-sealing" id="closureSelfSealing">
+                                    <label class="form-check-label" for="closureSelfSealing">Self-sealing</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Adhesive" id="closureAdhesive">
+                                    <label class="form-check-label" for="closureAdhesive">Adhesive</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Staples" id="closureStaples">
+                                    <label class="form-check-label" for="closureStaples">Staples</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Clips" id="closureClips">
+                                    <label class="form-check-label" for="closureClips">Clips</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Heat-seal" id="closureHeatSeal">
+                                    <label class="form-check-label" for="closureHeatSeal">Heat-seal</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="closureTypes" value="Zip-lock" id="closureZipLock">
+                                    <label class="form-check-label" for="closureZipLock">Zip-lock</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Package Closure Code</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3" id="adhesiveTypeGroup" style="display: none;">
+                                <label class="form-label">Adhesive Type</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="adhesiveType" value="Water-based" id="adhesiveWater">
+                                    <label class="form-check-label" for="adhesiveWater">Water-based</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="adhesiveType" value="Hot-melt" id="adhesiveHotMelt">
+                                    <label class="form-check-label" for="adhesiveHotMelt">Hot-melt</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="adhesiveType" value="Pressure-sensitive" id="adhesivePressure">
+                                    <label class="form-check-label" for="adhesivePressure">Pressure-sensitive</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="adhesiveType" value="None" id="adhesiveNone">
+                                    <label class="form-check-label" for="adhesiveNone">None</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Adhesive Type</small>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="tamperEvidence" name="tamperEvidence">
+                                    <label class="form-check-label" for="tamperEvidence">Tamper-Evidence</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Tamper-Evidence Feature</small>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="resealable" name="resealable">
+                                    <label class="form-check-label" for="resealable">Resealable</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Resealable Feature</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-1 mb-2 mt-3">2C: Labeling & marking</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Label Type <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="labelTypes" value="Pressure-sensitive" id="labelPressure">
+                                    <label class="form-check-label" for="labelPressure">Pressure-sensitive</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="labelTypes" value="In-mold" id="labelInMold">
+                                    <label class="form-check-label" for="labelInMold">In-mold</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="labelTypes" value="Direct print" id="labelDirect">
+                                    <label class="form-check-label" for="labelDirect">Direct print</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="labelTypes" value="Sleeve" id="labelSleeve">
+                                    <label class="form-check-label" for="labelSleeve">Sleeve</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="labelTypes" value="Wrap" id="labelWrap">
+                                    <label class="form-check-label" for="labelWrap">Wrap</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Label Type Code</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Label Material</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="labelMaterial" value="Paper" id="labelMatPaper">
+                                    <label class="form-check-label" for="labelMatPaper">Paper</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="labelMaterial" value="Plastic (PET)" id="labelMatPET">
+                                    <label class="form-check-label" for="labelMatPET">Plastic (PET)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="labelMaterial" value="Plastic (PP)" id="labelMatPP">
+                                    <label class="form-check-label" for="labelMatPP">Plastic (PP)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="labelMaterial" value="Plastic (PE)" id="labelMatPE">
+                                    <label class="form-check-label" for="labelMatPE">Plastic (PE)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="labelMaterial" value="Foil" id="labelMatFoil">
+                                    <label class="form-check-label" for="labelMatFoil">Foil</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Label Material Composition</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Legal/Regulatory Marks <span class="text-danger">*</span></label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="Country of Origin" id="legalOrigin">
+                                    <label class="form-check-label" for="legalOrigin">Country of Origin</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="Allergen" id="legalAllergen">
+                                    <label class="form-check-label" for="legalAllergen">Allergen</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="Nutrition" id="legalNutrition">
+                                    <label class="form-check-label" for="legalNutrition">Nutrition</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="Organic certification" id="legalOrganic">
+                                    <label class="form-check-label" for="legalOrganic">Organic certification</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="ARL/PREP Label Present" id="legalARL">
+                                    <label class="form-check-label" for="legalARL">ARL/PREP Label Present</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="legalMarks" value="On-Pack Recycling Label (OPRL)" id="legalOPRL">
+                                    <label class="form-check-label" for="legalOPRL">On-Pack Recycling Label (OPRL)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">GS1 Mandatory Markings</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: RETAILER & DISTRIBUTION -->
+        <div class="card mb-4 section-pane tab-pane fade" id="sectionPanel3" role="tabpanel" aria-labelledby="sectionTab3" data-section="3" aria-hidden="true">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section3" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 3: Retailer & Distribution
+                    <span class="badge bg-danger ms-2">Required</span>
+                </h5>
+            </div>
+            <div class="collapse show" id="section3">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Where and how the product is sold. Select retailers, format and distribution regions.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Primary Retailer(s) <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Coles" id="retailerColes">
+                                    <label class="form-check-label" for="retailerColes">Coles</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Woolworths" id="retailerWoolworths">
+                                    <label class="form-check-label" for="retailerWoolworths">Woolworths</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Aldi" id="retailerAldi">
+                                    <label class="form-check-label" for="retailerAldi">Aldi</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="IGA" id="retailerIGA">
+                                    <label class="form-check-label" for="retailerIGA">IGA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Costco" id="retailerCostco">
+                                    <label class="form-check-label" for="retailerCostco">Costco</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Harris Farm" id="retailerHarrisFarm">
+                                    <label class="form-check-label" for="retailerHarrisFarm">Harris Farm</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="primaryRetailers" value="Other" id="retailerOther">
+                                    <label class="form-check-label" for="retailerOther">Other</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Selling Party/Trade Party</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Retail Format <span class="text-danger">*</span></label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="retailFormat" value="Prepacked" id="formatPrepacked">
+                                    <label class="form-check-label" for="formatPrepacked">Prepacked</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="retailFormat" value="Loose/Bulk" id="formatLoose">
+                                    <label class="form-check-label" for="formatLoose">Loose/Bulk</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="retailFormat" value="Both" id="formatBoth">
+                                    <label class="form-check-label" for="formatBoth">Both</label>
+                                </div>
+                                <small class="form-text text-muted">How the product is sold at point of sale</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Most Common Pack Size</label>
+                                <input type="text" class="form-control" id="mostCommonPackSize" name="mostCommonPackSize" placeholder="e.g., 250g punnet most common">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="isPrivateLabel" name="isPrivateLabel">
+                                    <label class="form-check-label" for="isPrivateLabel">Private Label</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Selling Party Attribute</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Geographic Distribution <span class="text-danger">*</span></label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="NSW" id="geoNSW">
+                                    <label class="form-check-label" for="geoNSW">NSW</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="VIC" id="geoVIC">
+                                    <label class="form-check-label" for="geoVIC">VIC</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="QLD" id="geoQLD">
+                                    <label class="form-check-label" for="geoQLD">QLD</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="WA" id="geoWA">
+                                    <label class="form-check-label" for="geoWA">WA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="SA" id="geoSA">
+                                    <label class="form-check-label" for="geoSA">SA</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="TAS" id="geoTAS">
+                                    <label class="form-check-label" for="geoTAS">TAS</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="ACT" id="geoACT">
+                                    <label class="form-check-label" for="geoACT">ACT</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="NT" id="geoNT">
+                                    <label class="form-check-label" for="geoNT">NT</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="National" id="geoNational">
+                                    <label class="form-check-label" for="geoNational">National</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="geographicDistribution" value="Export" id="geoExport">
+                                    <label class="form-check-label" for="geoExport">Export</label>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">GS1 Distribution Territory</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: ENVIRONMENTAL & COMPLIANCE -->
+        <div class="card mb-4 section-pane tab-pane fade" id="sectionPanel4" role="tabpanel" aria-labelledby="sectionTab4" data-section="4" aria-hidden="true">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section4" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 4: Environmental & Compliance
+                </h5>
+            </div>
+            <div class="collapse show" id="section4">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Shelf life, EPR, certifications and sustainability. Optional but useful for reporting.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="shelfLifeExtension" name="shelfLifeExtension">
+                                    <label class="form-check-label" for="shelfLifeExtension">Packaging Shelf Life Extension</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Shelf Life Value</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Estimated Shelf Life (Days)</label>
+                                <input type="number" class="form-control" id="estimatedShelfLifeDays" name="estimatedShelfLifeDays" min="1">
+                                <small class="form-text text-muted">GS1 Shelf Life Value</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Food Waste Reduction Impact</label>
+                        <textarea class="form-control" id="foodWasteReductionImpact" name="foodWasteReductionImpact" rows="3"></textarea>
+                        <small class="form-text text-muted">Qualitative description of waste reduction impact</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="eprSchemeApplicable" name="eprSchemeApplicable">
+                                    <label class="form-check-label" for="eprSchemeApplicable">EPR Scheme Applicable</label>
+                                </div>
+                                <small class="form-text text-muted">Extended Producer Responsibility</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3" id="eprCategoryGroup" style="display: none;">
+                                <label class="form-label">EPR Category</label>
+                                <select class="form-select" id="eprCategory" name="eprCategory">
+                                    <option value="">Select category...</option>
+                                    <option value="Plastic Packaging">Plastic Packaging</option>
+                                    <option value="Paper Packaging">Paper Packaging</option>
+                                    <option value="Glass Packaging">Glass Packaging</option>
+                                    <option value="Metal Packaging">Metal Packaging</option>
+                                    <option value="Composite Packaging">Composite Packaging</option>
+                                </select>
+                                <small class="form-text text-muted">EPR Material Classification</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="apcoSignatory" name="apcoSignatory">
+                                    <label class="form-check-label" for="apcoSignatory">APCO Packaging Covenant Signatory</label>
+                                </div>
+                                <small class="form-text text-muted">Australian Packaging Compliance</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Sustainability Certification</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sustainabilityCertifications" value="FSC" id="certFSC">
+                                    <label class="form-check-label" for="certFSC">FSC</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sustainabilityCertifications" value="PEFC" id="certPEFC">
+                                    <label class="form-check-label" for="certPEFC">PEFC</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sustainabilityCertifications" value="B-Corp" id="certBCorp">
+                                    <label class="form-check-label" for="certBCorp">B-Corp</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="sustainabilityCertifications" value="Carbon Neutral" id="certCarbon">
+                                    <label class="form-check-label" for="certCarbon">Carbon Neutral</label>
+                                </div>
+                                <small class="form-text text-muted">GS1 Sustainability Attributes</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: RELATED PRODUCTS -->
+        <div class="card mb-4 section-pane tab-pane fade" id="sectionPanel5" role="tabpanel" aria-labelledby="sectionTab5" data-section="5" aria-hidden="true">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section5" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 5: Related Products
+                </h5>
+            </div>
+            <div class="collapse show" id="section5">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Link this product to a family or other SKUs. Optional.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Product Family</label>
+                                <input type="text" class="form-control" id="productFamily" name="productFamily" placeholder="e.g., Organic Strawberry Range">
+                                <small class="form-text text-muted">GS1 Product Grouping</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Associated Product SKUs</label>
+                                <select class="form-select" id="associatedSkus" name="associatedSkus" multiple size="5">
+                                    <option value="">Loading products...</option>
+                                </select>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd for multiple selection. GS1 Related Product Reference</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Packaging Variant Reason</label>
+                        <select class="form-select" id="variantReason" name="variantReason">
+                            <option value="">Select reason...</option>
+                            <option value="Size variant">Size variant</option>
+                            <option value="Seasonal">Seasonal</option>
+                            <option value="Retail-specific">Retail-specific</option>
+                            <option value="Sustainability initiative">Sustainability initiative</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: NOTES & DOCUMENTATION -->
+        <div class="card mb-4 section-pane tab-pane fade" id="sectionPanel6" role="tabpanel" aria-labelledby="sectionTab6" data-section="6" aria-hidden="true">
+            <div class="card-header" data-bs-toggle="collapse" data-bs-target="#section6" style="cursor: pointer;">
+                <h5 class="mb-0">
+                    <i class="bi bi-chevron-down"></i> Section 6: Notes & Documentation
+                </h5>
+            </div>
+            <div class="collapse show" id="section6">
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Free-text notes, packaging rationale and improvement plans.</p>
+                    <div class="mb-3">
+                        <label class="form-label">General Notes</label>
+                        <textarea class="form-control" id="generalNotes" name="generalNotes" rows="3"></textarea>
+                        <small class="form-text text-muted">GS1 Descriptive Text</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Packaging Rationale</label>
+                        <textarea class="form-control" id="packagingRationale" name="packagingRationale" rows="3"></textarea>
+                        <small class="form-text text-muted">Why this packaging was chosen (barrier properties, cost, sustainability, etc.)</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Known Issues</label>
+                        <textarea class="form-control" id="knownIssues" name="knownIssues" rows="3"></textarea>
+                        <small class="form-text text-muted">Customer complaints, recycling challenges, durability issues</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Improvement Plans</label>
+                        <textarea class="form-control" id="improvementPlans" name="improvementPlans" rows="3"></textarea>
+                        <small class="form-text text-muted">Planned packaging changes or optimizations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div><!-- end tab-content -->
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="/Products" class="btn btn-secondary">
+                <i class="bi bi-x-circle"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-circle"></i> Create Product
+            </button>
+        </div>
+    </form>
+    </div>
+
+    <!-- Visual View (hidden by default) -->
+    <div id="visualView" class="product-form-view-panel" style="display: none;">
+            <!-- Visual Editor Container - Complete Visual Editor Structure -->
+            <div id="epr-visual-editor" class="product-form-visual-editor">
+                <!-- Project Header -->
+                <div class="epr-project-header">
+                    <div class="epr-project-name-section">
+                        <input type="text" id="eprProjectName" class="form-control epr-project-name-input" placeholder="Enter product name..." value="Untitled Product" style="border: none; background: transparent; font-weight: 600; font-size: 18px !important; padding: 0.25rem 0.5rem; cursor: text; display: inline-block; width: auto; min-width: 200px;" />
+                        <span id="eprAutosaveTimestamp" class="epr-autosave-timestamp" style="display: none; font-size: 12px !important; margin-left: 0.15rem;"></span>
+                    </div>
+                    <div class="epr-header-actions">
+                        <button class="btn btn-sm btn-danger" id="eprClearCanvasBtn" title="Clear Canvas" data-no-tab="true">
+                            <i class="bi bi-x-circle"></i> <span>Clear Canvas</span>
+                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Visibility Options" data-no-tab="true">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <ul class="dropdown-menu" id="eprVisibilityDropdown" data-no-tab="true">
+                                <li>
+                                    <label class="dropdown-item-text">
+                                        <input type="checkbox" id="eprVisibilityNodeNotes" checked class="me-2"> Node Notes
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="dropdown-item-text">
+                                        <input type="checkbox" id="eprVisibilityContents" checked class="me-2"> Contents (nested list)
+                                    </label>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <label class="dropdown-item-text">
+                                        <input type="checkbox" id="eprVisibilityTransportNodes" checked class="me-2"> Transport Nodes
+                                    </label>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <label class="dropdown-item-text">
+                                        <input type="checkbox" id="eprVisibilityToolbars" checked class="me-2"> Toolbars
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="dropdown-item-text">
+                                        <input type="checkbox" id="eprVisibilityPalettes" checked class="me-2"> Palettes
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="eprSaveProjectBtn" data-no-tab="true">
+                            <i class="bi bi-save"></i> Save Project
+                        </button>
+                        <label class="btn btn-sm btn-secondary" style="margin-right: 0.5rem; cursor: pointer;" data-no-tab="true">
+                            <input type="checkbox" id="eprAutosaveCheckbox" class="me-2" style="cursor: pointer;"> Autosave
+                        </label>
+                        <button class="btn btn-sm btn-secondary" id="eprLoadProjectBtn" data-no-tab="true">
+                            <i class="bi bi-folder-open"></i> Load Project
+                        </button>
+                        <button class="btn btn-sm btn-warning" id="eprNewProjectBtn" data-no-tab="true">
+                            <i class="bi bi-file-plus"></i> New Project
+                        </button>
+                        <button class="btn btn-sm btn-success" id="eprSaveElementBtn" title="Save selected element(s) and all related components" data-no-tab="true">
+                            <i class="bi bi-bookmark"></i> Save Element(s)
+                        </button>
+                        <button class="btn btn-sm btn-info" id="eprLoadElementBtn" title="Load previously saved element(s)" data-no-tab="true">
+                            <i class="bi bi-bookmark-fill"></i> Load Element(s)
+                        </button>
+                        <button class="btn btn-sm btn-secondary" id="eprSaveLayoutBtn" title="Save current toolbar/palette layout" data-no-tab="true">
+                            <i class="bi bi-layout-sidebar"></i> Save Layout
+                        </button>
+                        <button class="btn btn-sm btn-secondary" id="eprResetLayoutBtn" title="Reset toolbar/palette layout to saved position" data-no-tab="true">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset Layout
+                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Align/Distribute Selected Nodes" data-no-tab="true">
+                                <i class="bi bi-align-middle"></i> Align/Distribute
+                            </button>
+                            <ul class="dropdown-menu" id="eprAlignDistributeDropdown" style="z-index: 10001 !important;" data-no-tab="true">
+                                <li><a class="dropdown-item" href="#" id="eprAlignLeftBtn"><i class="bi bi-align-start"></i> Align Left</a></li>
+                                <li><a class="dropdown-item" href="#" id="eprAlignRightBtn"><i class="bi bi-align-end"></i> Align Right</a></li>
+                                <li><a class="dropdown-item" href="#" id="eprAlignCenterBtn"><i class="bi bi-align-center"></i> Align Center</a></li>
+                                <li><a class="dropdown-item" href="#" id="eprAlignTopBtn"><i class="bi bi-align-top"></i> Align Top</a></li>
+                                <li><a class="dropdown-item" href="#" id="eprAlignBottomBtn"><i class="bi bi-align-bottom"></i> Align Bottom</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="eprDistributeHorizontallyBtn"><i class="bi bi-arrows-collapse"></i> Distribute Horizontally</a></li>
+                                <li><a class="dropdown-item" href="#" id="eprDistributeVerticallyBtn"><i class="bi bi-arrows-collapse-vertical"></i> Distribute Vertically</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Toolbar -->
+                <div id="eprActionsToolbar" class="epr-floating-toolbar epr-actions-toolbar">
+                    <div class="epr-toolbar-header">
+                        <span>Actions</span>
+                        <div class="epr-toolbar-header-actions">
+                            <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
+                                <i class="bi bi-unlock"></i>
+                            </button>
+                            <button class="epr-btn-close-toolbar" title="Minimize">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <button class="epr-toolbar-btn" id="eprDragModeBtn" title="Drag Mode">
+                            <i class="bi bi-arrows-move"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprZoomInBtn" title="Zoom In">
+                            <i class="bi bi-zoom-in"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprZoomOutBtn" title="Zoom Out">
+                            <i class="bi bi-zoom-out"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprUndoBtn" title="Undo">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprFitToCanvasBtn" title="Fit to Canvas">
+                            <i class="bi bi-arrows-angle-contract"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprArrangeBtn" title="Arrange Nodes">
+                            <i class="bi bi-diagram-3"></i>
+                        </button>
+                        <div class="epr-toolbar-divider"></div>
+                        <button class="epr-toolbar-btn active" id="eprSelectToolBtn" title="Select Tool (Click to select, drag to multi-select)">
+                            <i class="bi bi-cursor"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprToggleGridBtn" title="Show/Hide Grid">
+                            <i class="bi bi-grid"></i>
+                        </button>
+                        <button class="epr-toolbar-btn" id="eprSnapToGridBtn" title="Snap to Grid">
+                            <i class="bi bi-magnet"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Types Toolbar (Unified) -->
+                <div id="eprTypesToolbar" class="epr-floating-toolbar epr-types-toolbar">
+                    <div class="epr-toolbar-header">
+                        <span>Types</span>
+                        <div class="epr-toolbar-header-actions">
+                            <button class="epr-btn-split-toolbar" id="eprSplitTypesBtn" title="Split Toolbars">
+                                <i class="bi bi-columns"></i>
+                            </button>
+                            <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
+                                <i class="bi bi-unlock"></i>
+                            </button>
+                            <button class="epr-btn-close-toolbar" title="Minimize">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <!-- Raw Materials Section -->
+                        <div class="epr-toolbar-section" data-section="raw-materials">
+                            <h6 class="epr-section-title">Raw Materials</h6>
+                            <div id="eprRawMaterialsButtons" class="epr-material-buttons">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Packaging Library Section -->
+                        <div class="epr-toolbar-section" data-section="packaging">
+                            <h6 class="epr-section-title">Packaging Library</h6>
+                            <div class="epr-toolbar-controls">
+                                <select id="eprPackagingLibraryDropdown" class="form-select form-select-sm">
+                                    <option value="">Select packaging...</option>
+                                </select>
+                                <button class="btn btn-sm btn-primary" id="eprAddPackagingBtn">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                                <button class="btn btn-sm btn-success" id="eprNewPackagingBtn">
+                                    <i class="bi bi-plus-circle"></i> New
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Packaging Groups Section -->
+                        <div class="epr-toolbar-section" data-section="packaging-groups">
+                            <h6 class="epr-section-title">Packaging Groups</h6>
+                            <div class="epr-toolbar-controls">
+                                <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
+                                    <i class="bi bi-collection"></i> Add Group
+                                </button>
+                                <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtn" style="width: 100%;">
+                                    <i class="bi bi-folder-open"></i> Load Group
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Product Library Section -->
+                        <div class="epr-toolbar-section" data-section="products">
+                            <h6 class="epr-section-title">Product Library</h6>
+                            <div class="epr-toolbar-controls">
+                                <select id="eprProductLibraryDropdown" class="form-select form-select-sm">
+                                    <option value="">Select product...</option>
+                                </select>
+                                <button class="btn btn-sm btn-primary" id="eprAddProductBtn">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                                <button class="btn btn-sm btn-success" id="eprNewProductBtn">
+                                    <i class="bi bi-plus-circle"></i> New
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Distribution Groups Section -->
+                        <div class="epr-toolbar-section" data-section="distribution-groups">
+                            <h6 class="epr-section-title">Distribution Groups</h6>
+                            <div class="epr-toolbar-controls">
+                                <button class="btn btn-sm btn-info" id="eprAddDistributionGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
+                                    <i class="bi bi-collection"></i> Add Network Distribution
+                                </button>
+                                <button class="btn btn-sm btn-success" id="eprLoadDistributionGroupBtn" style="width: 100%;">
+                                    <i class="bi bi-folder-open"></i> Load Network Distribution
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Distribution Section -->
+                        <div class="epr-toolbar-section" data-section="distribution">
+                            <h6 class="epr-section-title">Distribution</h6>
+                            <div class="epr-toolbar-controls">
+                                <select id="eprCountryDropdown" class="form-select form-select-sm">
+                                    <option value="">Select location...</option>
+                                </select>
+                                <select id="eprRegionDropdown" class="form-select form-select-sm" style="display: none;">
+                                    <option value="">Select region...</option>
+                                </select>
+                                <button class="btn btn-sm btn-primary" id="eprAddDistributionBtn">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                                <button class="btn btn-sm btn-success" id="eprNewLocationBtn">
+                                    <i class="bi bi-plus-circle"></i> New
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div class="epr-toolbar-section" data-section="notes">
+                            <h6 class="epr-section-title">Notes</h6>
+                            <div class="epr-toolbar-controls">
+                                <button class="btn btn-sm btn-secondary" id="eprAddNoteBtn" style="width: 100%;">
+                                    <i class="bi bi-sticky-fill"></i> Add Note
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Split Types Toolbar Panels (Hidden by default) -->
+                <div id="eprTypesPanelRawMaterials" class="epr-types-panel epr-types-panel-raw-materials" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Raw Materials</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div id="eprRawMaterialsButtonsSplit" class="epr-material-buttons"></div>
+                    </div>
+                </div>
+                
+                <div id="eprTypesPanelPackaging" class="epr-types-panel epr-types-panel-packaging" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Packaging Library</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div class="epr-toolbar-controls">
+                            <select id="eprPackagingLibraryDropdownSplit" class="form-select form-select-sm">
+                                <option value="">Select packaging...</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" id="eprAddPackagingBtnSplit">
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                            <button class="btn btn-sm btn-success" id="eprNewPackagingBtnSplit">
+                                <i class="bi bi-plus-circle"></i> New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="eprTypesPanelProducts" class="epr-types-panel epr-types-panel-products" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Product Library</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div class="epr-toolbar-controls">
+                            <select id="eprProductLibraryDropdownSplit" class="form-select form-select-sm">
+                                <option value="">Select product...</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" id="eprAddProductBtnSplit">
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                            <button class="btn btn-sm btn-success" id="eprNewProductBtnSplit">
+                                <i class="bi bi-plus-circle"></i> New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="eprTypesPanelDistribution" class="epr-types-panel epr-types-panel-distribution" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Distribution</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div class="epr-toolbar-controls">
+                            <select id="eprCountryDropdownSplit" class="form-select form-select-sm">
+                                <option value="">Select location...</option>
+                            </select>
+                            <select id="eprRegionDropdownSplit" class="form-select form-select-sm" style="display: none;">
+                                <option value="">Select region...</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" id="eprAddDistributionBtnSplit">
+                                <i class="bi bi-plus"></i> Add
+                            </button>
+                            <button class="btn btn-sm btn-success" id="eprNewLocationBtnSplit">
+                                <i class="bi bi-plus-circle"></i> New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="eprTypesPanelPackagingGroups" class="epr-types-panel epr-types-panel-packaging-groups" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Packaging Groups</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div class="epr-toolbar-controls">
+                            <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtnSplit" style="width: 100%; margin-bottom: 0.25rem;">
+                                <i class="bi bi-collection"></i> Add Group
+                            </button>
+                            <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtnSplit" style="width: 100%;">
+                                <i class="bi bi-folder-open"></i> Load Group
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="eprTypesPanelDistributionGroups" class="epr-types-panel epr-types-panel-distribution-groups" style="display: none;">
+                    <div class="epr-toolbar-header">
+                        <span>Distribution Groups</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div class="epr-toolbar-controls">
+                            <button class="btn btn-sm btn-info" id="eprAddDistributionGroupBtnSplit" style="width: 100%; margin-bottom: 0.25rem;">
+                                <i class="bi bi-collection"></i> Add Network Distribution
+                            </button>
+                            <button class="btn btn-sm btn-success" id="eprLoadDistributionGroupBtnSplit" style="width: 100%;">
+                                <i class="bi bi-folder-open"></i> Load Network Distribution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parameters Panel -->
+                <div id="eprParametersPanel" class="epr-floating-toolbar epr-parameters-panel">
+                    <div class="epr-toolbar-header">
+                        <span>Parameters</span>
+                        <button class="epr-btn-close-toolbar" title="Minimize">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                    </div>
+                    <div class="epr-toolbar-content">
+                        <div id="eprParametersContent">
+                            <p class="text-muted small">Select a node to view/edit parameters</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Canvas -->
+                <div id="eprCanvasContainer" class="epr-canvas-container">
+                    <div id="eprCanvas" class="epr-canvas">
+                        <svg id="eprConnectionsLayer" class="epr-connections-layer"></svg>
+                        <div id="eprNodesLayer" class="epr-nodes-layer"></div>
+                        <div id="eprCanvasPlaceholder" class="epr-canvas-placeholder">
+                            <i class="bi bi-diagram-3" style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                            <p style="color: #6c757d; font-size: 1.1rem; margin-bottom: 0.5rem;">Drag items from the toolbar to start building</p>
+                            <p style="color: #9ca3af; font-size: 0.9rem;">or click buttons to add items to the canvas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Editor Modals -->
+<div class="modal fade" id="eprNewPackagingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Packaging Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="eprNewPackagingName" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="eprNewPackagingDescription"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewPackagingBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eprNewProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px; width: 400px; margin: auto;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-control" id="eprNewProductSku" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="eprNewProductName" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="eprNewProductDescription"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewProductBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eprNewLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Distribution Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Unique Location Code</label>
+                        <input type="text" class="form-control" id="eprNewLocationUniqueLocationCode" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="eprNewLocationCompanyName" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Site Name</label>
+                        <input type="text" class="form-control" id="eprNewLocationSiteName" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Street Address</label>
+                        <input type="text" class="form-control" id="eprNewLocationStreetAddress" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Postcode/Zip Code</label>
+                        <input type="text" class="form-control" id="eprNewLocationPostcode" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" id="eprNewLocationCity" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">County/State/Province</label>
+                        <input type="text" class="form-control" id="eprNewLocationState" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Country <span style="color: red;">*</span></label>
+                        <input type="text" class="form-control" id="eprNewLocationCountry" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="eprNewLocationType">
+                            <option value="">Select type...</option>
+                            <option value="Hub">Hub</option>
+                            <option value="Warehouse">Warehouse</option>
+                            <option value="Store">Store</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Local Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationLocalAuthority" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Regional Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationRegionalAuthority" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Industry Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationIndustryAuthority" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewLocationBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Loading Saved Elements -->
+<div class="modal fade" id="eprLoadElementModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Saved Element(s)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="eprSavedElementsList" style="max-height: 400px; overflow-y: auto;">
+                    <p class="text-muted">Loading saved elements...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Packaging Component Modal -->
+<div class="modal fade" id="componentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Packaging Component</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="componentForm">
+                    <div class="mb-3">
+                        <label class="form-label">Raw Material Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="componentMaterialType" required>
+                            <option value="">Select material...</option>
+                            <option value="Plastics">Plastics</option>
+                            <option value="Paper">Paper</option>
+                            <option value="Cardboard">Cardboard</option>
+                            <option value="Molded Fiber">Molded Fiber</option>
+                            <option value="Metals">Metals</option>
+                            <option value="Glass">Glass</option>
+                            <option value="Natural/Bio-based">Natural/Bio-based</option>
+                            <option value="Composite">Composite</option>
+                        </select>
+                        <small class="form-text text-muted">GS1 Material Code/Composition</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Component Weight (g) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="componentWeight" step="0.01" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Height (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="componentHeight" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Width (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="componentWidth" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Depth (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="componentDepth" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Volume Capacity</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="componentVolume" step="0.01">
+                            <select class="form-select" id="componentVolumeUnit" style="max-width: 100px;">
+                                <option value="ml">ml</option>
+                                <option value="L">L</option>
+                            </select>
+                        </div>
+                        <small class="form-text text-muted">Auto-calculated from dimensions or manual</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnSaveComponent">Add Component</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ---------- Readability: darker helper text and labels ---------- */
+    #formView .form-text.text-muted,
+    #formView small.form-text {
+        color: #5a6268 !important;
+        font-size: 0.8125rem;
+    }
+    /* Form/Visual view buttons in header */
+    .add-product-view-switcher .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        color: var(--secondary-color);
+        border-color: #dee2e6;
+    }
+    .add-product-view-switcher .btn:hover {
+        color: var(--secondary-color);
+        background-color: #f8f9fa;
+        border-color: #adb5bd;
+    }
+    .add-product-view-switcher .btn.active {
+        font-weight: 600;
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        background-color: rgba(40, 167, 69, 0.08);
+    }
+    #sectionTabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    #sectionTabs .nav-link.active {
+        color: #212529;
+        font-weight: 600;
+    }
+    #sectionTabs .nav-link:not(.active):hover {
+        color: #212529;
+    }
+    #btnClear.btn-outline-warning {
+        color: #856404;
+        border-color: #ffc107;
+    }
+    #btnClear.btn-outline-warning:hover {
+        color: #533f03;
+        background-color: #ffc107;
+        border-color: #ffc107;
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+    .card-header:hover {
+        background-color: #e9ecef;
+    }
+    .card-header h5 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        color: #212529;
+        font-weight: 600;
+    }
+    .card-header .bi-chevron-down,
+    .card-header .bi-chevron-up {
+        margin-right: 0.5rem;
+        transition: transform 0.3s;
+    }
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #212529;
+    }
+    /* Quick-entry buttons: same height as input, integrated, readable */
+    .input-group-quick-entry .input-group-quick-btns {
+        display: flex;
+        align-items: stretch;
+        padding: 0;
+        background: #e9ecef !important;
+        border-radius: 0 0.375rem 0.375rem 0;
+    }
+    .input-group-quick-entry .quick-weight,
+    .input-group-quick-entry .quick-volume,
+    .input-group-quick-entry .quick-category {
+        height: 100%;
+        min-height: 38px;
+        margin: 0;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        background: #e9ecef;
+        color: #212529;
+        flex-shrink: 0;
+    }
+    .input-group-quick-entry .quick-weight:hover,
+    .input-group-quick-entry .quick-volume:hover,
+    .input-group-quick-entry .quick-category:hover {
+        background: #dee2e6;
+        color: #000;
+    }
+    .input-group-quick-entry .quick-weight.active,
+    .input-group-quick-entry .quick-volume.active {
+        background: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+        box-shadow: inset 0 0 0 1px #28a745;
+    }
+    .quick-category {
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+        color: #212529;
+        background: #e9ecef;
+    }
+    .quick-category:hover {
+        background: #dee2e6;
+        color: #000;
+    }
+    #packagingComponentsList table {
+        font-size: 0.9rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    /* Tidy: spacing and hierarchy */
+    #formView .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    #formView .card-body {
+        padding: 1.25rem 1.5rem;
+    }
+    #formView .row + .row {
+        margin-top: 0.25rem;
+    }
+    .container-fluid .d-flex.justify-content-between.mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    #sectionTabsBar {
+        margin-bottom: 1rem;
+    }
+    #sectionTabs {
+        border-bottom-width: 2px;
+    }
+    /* Section panes: tabbed mode uses Bootstrap .tab-pane and .show */
+    #formView.section-tabbed-mode .tab-pane {
+        display: none !important;
+    }
+    #formView.section-tabbed-mode .tab-pane.show {
+        display: block !important;
+    }
+    #formView.section-single-mode #sectionTabsBar {
+        display: none;
+    }
+    #formView.section-single-mode .tab-pane {
+        display: block !important;
+    }
+    .container-fluid .d-flex.justify-content-between .text-muted {
+        color: #5a6268 !important;
+    }
+    
+    /* Visual View Styles - Complete Visual Editor Styling */
+    /* Hide footer when Visual View tab is active - Use JavaScript fallback for browsers without :has() support */
+    body.visual-view-active .footer {
+        display: none !important;
+    }
+    
+    /* Hide main container padding when Visual View is active (body class set by JS) */
+    body.visual-view-active .container-fluid {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    body.visual-view-active main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    #visualView {
+        padding: 0;
+        position: relative;
+        height: calc(100vh - 96px);
+        min-height: calc(100vh - 96px);
+        overflow: hidden;
+    }
+    
+    /* Visual Editor Container - Adapted for tab context */
+    .product-form-visual-editor {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        background: #f5f5f5;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Project Header - Positioned relative to tab */
+    .product-form-visual-editor .epr-project-header {
+        position: relative;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: white;
+        border-bottom: 2px solid #dee2e6;
+        z-index: 200;
+        flex-shrink: 0;
+    }
+    
+    .product-form-visual-editor .epr-project-name-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-project-name-section input {
+        min-width: 300px;
+        font-size: 18px !important;
+        font-weight: 600;
+    }
+    
+    .product-form-visual-editor .epr-autosave-timestamp {
+        font-size: 12px !important;
+        color: #6c757d;
+        font-weight: normal;
+        margin-left: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn,
+    .product-form-visual-editor .epr-header-actions label.btn {
+        background: transparent !important;
+        border: 1px solid #dee2e6;
+        color: #495057;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn:hover,
+    .product-form-visual-editor .epr-header-actions label.btn:hover {
+        background: #28a745 !important;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-danger {
+        color: #dc3545;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-danger:hover {
+        background: #dc3545 !important;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-warning {
+        color: #ffc107;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-warning:hover {
+        background: #ffc107 !important;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-success {
+        color: #28a745;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .epr-header-actions .btn-success:hover {
+        background: #28a745 !important;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-info {
+        color: #17a2b8;
+    }
+    
+    .product-form-visual-editor .epr-header-actions .btn-info:hover {
+        background: #17a2b8 !important;
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    /* Floating Toolbars - Positioned relative to tab container */
+    .product-form-visual-editor .epr-floating-toolbar {
+        position: absolute !important;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000 !important;
+        min-width: 200px;
+        max-height: calc(100vh - 300px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto !important;
+        transition: height 0.3s ease, max-height 0.3s ease;
+    }
+    
+    .product-form-visual-editor .epr-floating-toolbar * {
+        pointer-events: auto !important;
+    }
+    
+    .product-form-visual-editor .epr-floating-toolbar.minimized {
+        height: auto;
+        max-height: 40px;
+        overflow: hidden;
+    }
+    
+    .product-form-visual-editor .epr-floating-toolbar.minimized .epr-toolbar-content {
+        display: none;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        cursor: move;
+        font-weight: 600;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        user-select: none; /* Prevent text selection when dragging */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-header * {
+        user-select: none; /* Prevent text selection in header elements */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-header button,
+    .product-form-visual-editor .epr-toolbar-header i {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .product-form-visual-editor .epr-btn-close-toolbar,
+    .product-form-visual-editor .epr-btn-split-toolbar,
+    .product-form-visual-editor .epr-btn-lock-toolbar {
+        background: none;
+        border: none;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+    
+    .product-form-visual-editor .epr-btn-close-toolbar:hover,
+    .product-form-visual-editor .epr-btn-split-toolbar:hover,
+    .product-form-visual-editor .epr-btn-lock-toolbar:hover {
+        color: #495057;
+    }
+    
+    .product-form-visual-editor .epr-btn-split-toolbar.active {
+        color: #28a745;
+    }
+    
+    .product-form-visual-editor .epr-btn-lock-toolbar.locked {
+        color: #28a745;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-content {
+        padding: 0.75rem;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* Actions Toolbar */
+    .product-form-visual-editor .epr-actions-toolbar {
+        top: 60px;
+        left: 20px;
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+    }
+    
+    .product-form-visual-editor .epr-actions-toolbar .epr-toolbar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 1rem;
+        padding: 0;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-btn:hover {
+        background: #f8f9fa;
+        border-color: #28a745;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-btn.active {
+        background: #28a745;
+        color: white;
+        border-color: #218838;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-divider {
+        height: 1px;
+        background: #dee2e6;
+        margin: 0.25rem 0;
+    }
+    
+    /* Types Toolbar */
+    .product-form-visual-editor .epr-types-toolbar {
+        top: 60px;
+        left: 90px;
+        width: 220px;
+        max-height: calc(100vh - 300px);
+    }
+    
+    .product-form-visual-editor .epr-types-toolbar .epr-toolbar-section[data-section="raw-materials"] {
+        width: 100%;
+    }
+    
+    .product-form-visual-editor .epr-types-toolbar .epr-material-buttons {
+        width: 100%;
+    }
+    
+    .product-form-visual-editor .epr-types-toolbar.split-mode {
+        display: none;
+    }
+    
+    .product-form-visual-editor .epr-types-panel {
+        position: absolute !important;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000 !important;
+        width: 220px;
+        max-height: calc(100vh - 300px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto !important;
+    }
+    
+    .product-form-visual-editor .epr-types-panel-raw-materials {
+        width: 320px !important; /* Wider to show full button labels */
+    }
+    
+    .product-form-visual-editor .epr-types-panel * {
+        pointer-events: auto !important;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .product-form-visual-editor .epr-section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .product-form-visual-editor .epr-material-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, auto);
+        gap: 0.5rem;
+        align-content: flex-start;
+    }
+    
+    .product-form-visual-editor .epr-material-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        user-select: none;
+        pointer-events: auto !important;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .product-form-visual-editor .epr-material-btn:hover {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+    
+    .product-form-visual-editor .epr-material-btn.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+    }
+    
+    .product-form-visual-editor .epr-material-btn i {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .product-form-visual-editor .epr-material-btn span {
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-toolbar-controls .btn {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    /* Parameters Panel */
+    .product-form-visual-editor .epr-parameters-panel {
+        top: 60px;
+        right: 20px;
+        width: 300px;
+        max-height: calc(100vh - 300px);
+    }
+    
+    /* Canvas Container */
+    .product-form-visual-editor .epr-canvas-container {
+        flex: 1;
+        position: relative;
+        overflow: auto;
+        background: #f5f5f5;
+        z-index: 1;
+        min-height: 0;
+        margin-top: 50px;
+        pointer-events: auto;
+    }
+    
+    .product-form-visual-editor .epr-canvas {
+        position: relative;
+        width: 100%;
+        min-height: 100%;
+        background: white;
+        z-index: 1;
+        pointer-events: auto;
+        cursor: default;
+        min-width: 100%;
+    }
+    
+    .product-form-visual-editor .epr-canvas.drag-over {
+        background: #e8f5e9;
+        border: 2px dashed #28a745;
+    }
+    
+    .product-form-visual-editor .epr-canvas-placeholder {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .product-form-visual-editor .epr-canvas-placeholder.hidden {
+        display: none;
+    }
+    
+    .product-form-visual-editor .epr-canvas.grid-visible {
+        background-image: 
+            linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    
+    .product-form-visual-editor .epr-connections-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: stroke;
+        z-index: 1;
+        overflow: visible;
+    }
+    
+    .product-form-visual-editor .epr-nodes-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+        min-height: 100%;
+    }
+    
+    .product-form-visual-editor .epr-nodes-layer > * {
+        pointer-events: all;
+    }
+    
+    /* Canvas Nodes */
+    .product-form-visual-editor .epr-canvas-node {
+        position: absolute;
+        min-width: 150px;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #28a745;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        cursor: move;
+        z-index: 10;
+        transition: box-shadow 0.2s;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .product-form-visual-editor .epr-canvas-node.selected {
+        border-color: #218838;
+        border-width: 3px;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        z-index: 20;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node.dragging {
+        opacity: 0.7;
+        z-index: 30;
+    }
+    
+    .product-form-visual-editor .epr-node-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-node-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .product-form-visual-editor .epr-node-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        flex: 1;
+    }
+    
+    .product-form-visual-editor .epr-node-delete {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+    
+    .product-form-visual-editor .epr-node-delete:hover {
+        opacity: 1;
+    }
+    
+    .product-form-visual-editor .epr-node-lock {
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+    
+    .product-form-visual-editor .epr-node-lock:hover {
+        opacity: 1;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node[data-locked="true"] {
+        border-color: #ffc107 !important;
+        border-width: 3px;
+    }
+    
+    .product-form-visual-editor .epr-node-type {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    /* Node Type Colors */
+    .product-form-visual-editor .epr-canvas-node[data-type="raw-material"] {
+        border-color: #17a2b8;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node[data-type="packaging"] {
+        border-color: #28a745;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node[data-type="product"] {
+        border-color: #ffc107;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node[data-type="distribution"] {
+        border-color: #6f42c1;
+    }
+    
+    /* Transport nodes should be hidden when displayed as boxes on connection lines */
+    .product-form-visual-editor .epr-canvas-node[data-type="transport"][data-transport-on-connection="true"],
+    .product-form-visual-editor .epr-canvas-node[data-type="transport"].epr-transport-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+    
+    /* Connection Lines */
+    .product-form-visual-editor .epr-connection-line {
+        stroke: #6c757d;
+        stroke-width: 2;
+        fill: none;
+        pointer-events: stroke;
+        cursor: pointer;
+    }
+    
+    .product-form-visual-editor .epr-connection-line:hover {
+        stroke: #28a745;
+        stroke-width: 3;
+    }
+    
+    /* Ensure all interactive elements work properly */
+    .product-form-visual-editor .epr-floating-toolbar button,
+    .product-form-visual-editor .epr-types-panel button,
+    .product-form-visual-editor .epr-project-header button,
+    .product-form-visual-editor .epr-header-actions button,
+    .product-form-visual-editor .epr-toolbar-header button {
+        pointer-events: auto;
+        position: relative;
+    }
+    
+    /* Ensure dropdowns are clickable */
+    .product-form-visual-editor .dropdown-menu {
+        pointer-events: auto;
+        z-index: 10500;
+    }
+    
+    .product-form-visual-editor .epr-canvas-node[data-type="distribution"] {
+        border-color: #6f42c1;
+    }
+    
+</style>
+
+<script>
+(function() {
+    function initSectionTabs() {
+        var sectionTabs = document.getElementById('sectionTabs');
+        if (!sectionTabs || typeof bootstrap === 'undefined' || !bootstrap.Tab) return;
+        sectionTabs.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tabEl) {
+            new bootstrap.Tab(tabEl);
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSectionTabs);
+    } else {
+        initSectionTabs();
+    }
+})();
+</script>
+@section Scripts {
+    @* Visual editor CSS and scripts are loaded in _Layout so Add Product works in browser tabs too. *@
+}

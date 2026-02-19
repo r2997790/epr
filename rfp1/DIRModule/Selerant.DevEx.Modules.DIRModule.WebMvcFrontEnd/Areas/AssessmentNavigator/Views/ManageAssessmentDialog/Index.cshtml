@@ -1,0 +1,90 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using System.Web.UI.WebControls;
+@using Selerant.DevEx.WebControls;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers;
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Dialogs.ManageAssessment;
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<ManageAssessmentDialogModel>
+
+<style>
+	.dir-module-listbox-btn {
+		margin-top: 10px;
+	}
+
+	.dir-module-row {
+		display: flex;
+	}
+</style>
+<div class="container-fluid">
+	<div class="dir-module-row">
+		<div class="col">
+			<div>
+				@(Html.LabelControl("Available")
+			.SetText(Model.SpecificViewData.AvailableListboxTitle)
+			.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+			.SetText(Model.SpecificViewData.AvailableListboxTitle)
+				)
+			</div>
+			<div>
+				@(Html.ListBoxFor(x => x.SpecificViewData.AvailableListboxItems,
+			Model.SpecificViewData.AvailableListboxItems,
+			new { @id = "AvailableListbox", @style = "width: 100%;", @size = 12, @title = "Available" }))
+			</div>
+			<div class="dir-module-listbox-btn">
+				@(Html.ButtonControl("btnAdd")
+			.SetText(@ResText.Controls.GetString("Add"))
+			.SetKnownSkin(ButtonControlIndexModel.KnownSkins.SkNormal)
+			.SetSkin("dx-btn")
+			.Render())
+
+			</div>
+		</div>
+		<div class="col">
+			<div>
+				@(Html.LabelControl("Used")
+			.SetText(Model.SpecificViewData.UsedListboxTitle)
+			.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+			.SetText(Model.SpecificViewData.UsedListboxTitle)
+				)
+			</div>
+			<div>
+				@(Html.ListBoxFor(x => x.SpecificViewData.UsedListBoxItems,
+			Model.SpecificViewData.UsedListBoxItems,
+			new { @id = "UsedListbox", @style = "width: 100%;", @size = 12, @title = "Used" }))
+
+			</div>
+			<div class="dir-module-listbox-btn">
+				@(Html.ButtonControl("btnRemove")
+			.SetText(@ResText.Controls.GetString("Remove"))
+			.SetKnownSkin(ButtonControlIndexModel.KnownSkins.SkNormal)
+			.SetSkin("dx-btn")
+			.Render())
+			</div>
+		</div>
+	</div>
+</div>
+
+@if (Model.SpecificViewData.EntityType == EntityType.Destination)
+{
+	<div class="container-fluid">
+		<div class=" dir-module-row" style="margin-top: 30px">
+			<div class="col-auto">
+				<p style="font-size: 11px">@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("MaterialDestinationsFooter")</p>
+			</div>
+		</div>
+		<div class="dir-module-row" style="margin-top: 10px">
+			<div class="col-auto">
+				<p style="font-size: 11px">@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ManageDialog_SelectedMaterialDestinations")</p>
+			</div>
+		</div>
+	</div>
+}
+else
+{
+	<div class="container-fluid">
+		<div class=" dir-module-row" style="margin-top: 30px">
+			<div class="col-auto">
+				<p style="color:red; font-size:11px">@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ManageLcStageFooter")</p>
+			</div>
+		</div>
+	</div>
+}

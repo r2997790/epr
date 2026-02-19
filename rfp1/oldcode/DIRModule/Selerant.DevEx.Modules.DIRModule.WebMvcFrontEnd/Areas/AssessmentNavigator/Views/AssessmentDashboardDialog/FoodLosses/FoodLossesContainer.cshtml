@@ -1,0 +1,19 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.AssessmentDashboardDialog
+@using Selerant.DevEx.WebModules.LCIAScenarioManager.LCIAScenarioNavigator.Base
+@using Selerant.DevEx.Infrastructure.Modules
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<FoodLossesContainerModel>
+
+@using (Model.BeginRendering(Html))
+{
+    <div class="row">
+        @foreach (var foodLoss in Model.FoodLosses)
+        {
+            <div class="col-3" style="position: relative">
+                @{
+                    Html.RenderPartial(ModuleInfoHelper.ToModulePath(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.AssessmentDashboardDialog.Views.FoodLosses.FoodLoss), foodLoss);
+                }
+            </div>
+        }
+    </div>
+}

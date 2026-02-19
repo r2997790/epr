@@ -1,0 +1,443 @@
+@{
+    ViewData["Title"] = "Reporting Dashboard";
+    var totalProducts = ViewBag.TotalProducts as int? ?? 0;
+    var totalPackagingTypes = ViewBag.TotalPackagingTypes as int? ?? 0;
+    var totalAsnShipments = ViewBag.TotalAsnShipments as int? ?? 0;
+    var totalProductForms = ViewBag.TotalProductForms as int? ?? 0;
+    var totalWeightTonnes = ViewBag.TotalWeightTonnes as decimal? ?? 0m;
+    var totalCompanies = ViewBag.TotalCompanies as int? ?? 0;
+    var avgCostPerUnit = ViewBag.AvgCostPerUnit as decimal? ?? 0m;
+    var complianceRate = ViewBag.ComplianceRate as decimal? ?? 0m;
+    var sustainabilityScore = ViewBag.SustainabilityScore as int? ?? 0;
+    var productsByCategory = ViewBag.ProductsByCategory as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var packagingByType = ViewBag.PackagingByType as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var packagingDistribution = ViewBag.PackagingDistribution as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var geographicDistribution = ViewBag.GeographicDistribution as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var materialComposition = ViewBag.MaterialComposition as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var companyPerformance = ViewBag.CompanyPerformance as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+@section Styles {
+<style>
+    .reporting-page { padding-bottom: 2rem; }
+    .dashboard-header { margin-bottom: 1.5rem; }
+    .dashboard-header h1 { font-size: 1.75rem; color: var(--dark-text); }
+    .dashboard-filter-bar {
+        background: var(--light-bg);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    .metric-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    .metric-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .metric-value { font-size: 1.75rem; font-weight: bold; color: var(--primary-color); margin-bottom: 0.25rem; }
+    .metric-label { font-size: 0.8rem; color: var(--secondary-color); text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-trend { font-size: 0.8rem; margin-top: 0.25rem; color: var(--secondary-color); }
+    .widget-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+    .widget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    .widget-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-text);
+        margin: 0;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-top: 0.5rem;
+    }
+    .sustainability-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    .sustainability-metric {
+        background: var(--light-bg);
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .sustainability-value { font-size: 1.75rem; font-weight: bold; color: var(--primary-color); }
+    .sustainability-label { font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.5rem; }
+    .compliance-gauge { width: 200px; height: 200px; margin: 0 auto; position: relative; }
+    .table-responsive { max-height: 400px; overflow-y: auto; }
+    .data-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .data-item:last-child { border-bottom: none; }
+    .data-label { font-weight: 500; color: var(--dark-text); }
+    .data-value { font-weight: 600; color: var(--primary-color); }
+    .progress-bar-custom { height: 8px; background-color: #e9ecef; border-radius: 4px; overflow: hidden; margin-top: 0.5rem; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%); transition: width 0.3s ease; }
+    .reporting-page .btn-outline-primary { border-width: 1px; }
+    .reporting-page #topBrandsTable .table td:first-child,
+.reporting-page #topBrandsTable .table td:first-child a { font-size: 0.75rem; font-weight: 500; }
+</style>
+}
+
+<div class="container-fluid reporting-page">
+    <div class="dashboard-header">
+        <h1><i class="bi bi-graph-up-arrow"></i> <span data-translate="Reporting Dashboard">Reporting Dashboard</span></h1>
+        <p class="text-muted mb-0"><span data-translate="Comprehensive analytics and insights for your packaging portfolio">Comprehensive analytics and insights for your packaging portfolio</span></p>
+    </div>
+
+    <!-- Filter Bar (rfp1-style) -->
+    <div class="dashboard-filter-bar">
+        <form method="get" action="@Url.Action("Dashboard", "Reporting")" id="filterForm">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label"><span data-translate="Geography">Geography</span></label>
+                    <select class="form-select" name="geography" id="geographyFilter">
+                        <option value="">All Regions</option>
+                        @{
+                            var selGeo = ViewBag.SelectedGeography as string ?? "";
+                            var sb = new System.Text.StringBuilder();
+                            foreach (var r in new[] { "NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT" })
+                            {
+                                sb.AppendFormat("<option value=\"{0}\"{1}>{0}</option>", r, selGeo == r ? " selected=\"selected\"" : "");
+                            }
+                            @Html.Raw(sb.ToString())
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><span data-translate="Date From">Date From</span></label>
+                    <input type="date" class="form-control" name="dateFrom" value="@(ViewBag.DateFrom ?? "")" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label"><span data-translate="Date To">Date To</span></label>
+                    <input type="date" class="form-control" name="dateTo" value="@(ViewBag.DateTo ?? "")" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> <span data-translate="Apply Filters">Apply Filters</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Key Metrics Row (rfp1-style 6 cards) -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <a href="@Url.Action("Index", "Products")" class="text-decoration-none" data-no-tab="true">
+                <div class="metric-card">
+                    <div class="metric-value">@totalProducts</div>
+                    <div class="metric-label"><span data-translate="Products">Products</span></div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-2">
+            <a href="@Url.Action("Index", "Products")" class="text-decoration-none" data-no-tab="true">
+                <div class="metric-card">
+                    <div class="metric-value">@totalCompanies</div>
+                    <div class="metric-label"><span data-translate="Brands">Brands</span></div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="metric-card">
+                <div class="metric-value">@(totalWeightTonnes.ToString("F2"))</div>
+                <div class="metric-label"><span data-translate="Weight (tonnes)">Weight (tonnes)</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="metric-card">
+                <div class="metric-value">$@(avgCostPerUnit.ToString("F2"))</div>
+                <div class="metric-label"><span data-translate="Avg Cost/Unit">Avg Cost/Unit</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="metric-card">
+                <div class="metric-value">@((complianceRate * 100).ToString("F0"))%</div>
+                <div class="metric-label"><span data-translate="Compliant">Compliant</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="metric-card">
+                <div class="metric-value">@sustainabilityScore</div>
+                <div class="metric-label"><span data-translate="Sustainability">Sustainability</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Widgets - single container to avoid duplicate canvas issues -->
+    <div id="reporting-dashboard-charts" data-reporting-dashboard="1">
+    <div class="row">
+        <!-- 1. Packaging Distribution by Type (doughnut) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-pie-chart"></i> <span data-translate="Packaging Distribution by Type">Packaging Distribution by Type</span></h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="packagingTypeChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Geographic Distribution (bar) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-map"></i> <span data-translate="Geographic Distribution">Geographic Distribution</span></h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="geographicChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Material Composition (pie) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-circle-fill"></i> <span data-translate="Material Composition">Material Composition</span></h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="materialChart" width="300" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Sustainability Metrics (grid) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-leaf"></i> <span data-translate="Sustainability Metrics">Sustainability Metrics</span></h3>
+                </div>
+                <div class="sustainability-grid">
+                    <div class="sustainability-metric">
+                        <div class="sustainability-value">@((complianceRate * 100).ToString("F0"))%</div>
+                        <div class="sustainability-label"><span data-translate="Recycled Content">Recycled Content</span></div>
+                    </div>
+                    <div class="sustainability-metric">
+                        <div class="sustainability-value">@((complianceRate * 100).ToString("F0"))%</div>
+                        <div class="sustainability-label"><span data-translate="Compliant">Compliant</span></div>
+                    </div>
+                    <div class="sustainability-metric">
+                        <div class="sustainability-value">32%</div>
+                        <div class="sustainability-label"><span data-translate="Certified">Certified</span></div>
+                    </div>
+                    <div class="sustainability-metric">
+                        <div class="sustainability-value">@sustainabilityScore</div>
+                        <div class="sustainability-label"><span data-translate="Score">Score</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Top Brands / Companies Performance (table) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-building"></i> <span data-translate="Top Brands Performance">Top Brands Performance</span></h3>
+                    <a href="@Url.Action("Index", "Products")" class="btn btn-sm btn-outline-primary" data-no-tab="true"><span data-translate="View All">View All</span></a>
+                </div>
+                <div class="table-responsive" id="topBrandsTable">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th><span data-translate="Brand">Brand</span></th>
+                                <th><span data-translate="Products">Products</span></th>
+                                <th><span data-translate="Avg Cost">Avg Cost</span></th>
+                                <th><span data-translate="Compliance">Compliance</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in companyPerformance)
+                            {
+                                var brandSearch = Url.Action("Index", "Products", new { search = (string)row.CompanyName });
+                                <tr>
+                                    <td><a href="@brandSearch" class="text-decoration-none fw-bold text-primary">@row.CompanyName</a></td>
+                                    <td><a href="@brandSearch" class="text-decoration-none">@row.ProductCount</a></td>
+                                    <td>$@(((decimal)row.AvgCost).ToString("F2"))</td>
+                                    <td>@(((decimal)row.ComplianceRate * 100).ToString("F0"))%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (!companyPerformance.Any())
+                {
+                    <p class="text-muted text-center small mb-0"><span data-translate="No brand data">No brand data</span></p>
+                }
+            </div>
+        </div>
+
+        <!-- 6. Compliance Status (doughnut gauge) -->
+        <div class="col-md-6">
+            <div class="widget-card">
+                <div class="widget-header">
+                    <h3 class="widget-title"><i class="bi bi-shield-check"></i> <span data-translate="Compliance Status">Compliance Status</span></h3>
+                </div>
+                <div class="compliance-gauge">
+                    <canvas id="complianceGauge" width="200" height="200"></canvas>
+                </div>
+                <div class="text-center mt-2">
+                    <h5 class="mb-0">@((complianceRate * 100).ToString("F0"))% <span data-translate="Compliant">Compliant</span></h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Available Reports (rfp1-style) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card" style="border: 1px solid var(--border-color); border-radius: 8px;">
+                <div class="card-header" style="background: var(--primary-color); color: white; font-weight: 600;">
+                    <i class="bi bi-file-earmark-text"></i> <span data-translate="Available Reports">Available Reports</span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="@Url.Action("PortfolioReport", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-box"></i> <span data-translate="Portfolio Report">Portfolio Report</span></a>
+                        <a href="@Url.Action("CostAnalysisReport", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-currency-dollar"></i> <span data-translate="Cost Analysis">Cost Analysis</span></a>
+                        <a href="@Url.Action("SustainabilityReport", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-leaf"></i> <span data-translate="Sustainability Report">Sustainability Report</span></a>
+                        <a href="@Url.Action("ComplianceReport", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-shield-check"></i> <span data-translate="Compliance Report">Compliance Report</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            var container = document.getElementById('reporting-dashboard-charts');
+            if (!container) return;
+            var existing = container.getAttribute('data-charts-initialized');
+            if (existing) return;
+            container.setAttribute('data-charts-initialized', '1');
+
+            function getCanvas(id) {
+                var el = container.querySelector('#' + id);
+                return el ? el : null;
+            }
+            function destroyChart(canvas) {
+                if (!canvas || typeof Chart === 'undefined') return;
+                var chart = Chart.getChart(canvas);
+                if (chart) chart.destroy();
+            }
+
+            const primaryGreen = '#28a745';
+            const colors = [primaryGreen, '#20c997', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545', '#6f42c1', '#e83e8c'];
+
+            var packagingData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(packagingDistribution));
+            if (!packagingData || packagingData.length === 0) packagingData = [{ PackagingType: 'No data', Count: 1 }];
+            var packagingCtx = getCanvas('packagingTypeChart');
+            if (packagingCtx) {
+                destroyChart(packagingCtx);
+                var labels = packagingData.map(function(d) { return d.PackagingType || d.packagingType || 'Unknown'; });
+                var counts = packagingData.map(function(d) { return d.Count || d.count || 0; });
+                new Chart(packagingCtx, {
+                    type: 'doughnut',
+                    data: { labels: labels, datasets: [{ data: counts, backgroundColor: colors }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        var v = ctx.parsed || 0;
+                                        var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0);
+                                        var pct = total ? ((v / total) * 100).toFixed(1) : 0;
+                                        return (ctx.label || '') + ': ' + v + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            var geoData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(geographicDistribution));
+            if (!geoData || geoData.length === 0) geoData = [{ Region: 'No data', Count: 1 }];
+            var geoCtx = getCanvas('geographicChart');
+            if (geoCtx) {
+                destroyChart(geoCtx);
+                var geoLabels = geoData.map(function(d) { return d.Region || d.region || 'Unknown'; });
+                var geoCounts = geoData.map(function(d) { return d.Count || d.count || 0; });
+                new Chart(geoCtx, {
+                    type: 'bar',
+                    data: { labels: geoLabels, datasets: [{ label: 'Products', data: geoCounts, backgroundColor: primaryGreen }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: { y: { beginAtZero: true } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            var materialData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(materialComposition));
+            if (!materialData || materialData.length === 0) materialData = [{ MaterialType: 'No data', Count: 1 }];
+            var materialCtx = getCanvas('materialChart');
+            if (materialCtx) {
+                destroyChart(materialCtx);
+                var matLabels = materialData.map(function(d) { return d.MaterialType || d.materialType || 'Unknown'; });
+                var matCounts = materialData.map(function(d) { return d.Count || d.count || 0; });
+                new Chart(materialCtx, {
+                    type: 'pie',
+                    data: { labels: matLabels, datasets: [{ data: matCounts, backgroundColor: colors }] },
+                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+                });
+            }
+
+            var complianceRateVal = @((double)(complianceRate * 100));
+            if (complianceRateVal < 0 || isNaN(complianceRateVal)) complianceRateVal = 0;
+            if (complianceRateVal > 100) complianceRateVal = 100;
+            var complianceCtx = getCanvas('complianceGauge');
+            if (complianceCtx) {
+                destroyChart(complianceCtx);
+                new Chart(complianceCtx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [complianceRateVal, 100 - complianceRateVal],
+                            backgroundColor: [primaryGreen, '#e9ecef']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '75%',
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            }
+        })();
+    </script>
+}

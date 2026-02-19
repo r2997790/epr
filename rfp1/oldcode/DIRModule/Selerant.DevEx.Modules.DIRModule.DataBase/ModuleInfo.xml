@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ModuleInfo>
+	<Code>DIR</Code>
+	<Description>Dynamic Industry Resource Efficiency Tool (DIRECT) Module</Description>
+	<Version>Auto</Version>
+	<VersionDescription></VersionDescription>
+	<DatabaseSchemaVersion>Auto</DatabaseSchemaVersion>
+	<InitialDatabaseSchemaVersion>81</InitialDatabaseSchemaVersion>
+	<DbManagerVersion>3.0.1</DbManagerVersion>
+	<RepositoryBase>$/DevEX Program/Modules/DIR/Main</RepositoryBase>
+	<BaseOfficialRelease>Release|\\sftp\Selerant\DIR Release\Devex 3.10.1 (3.10.1.142)</BaseOfficialRelease>
+	<Migrations>
+		<Version_001>
+			<Label core_path="3.10.0_TO_3.10.1" />
+			<Database from="00081" to="LATEST" />
+			<Source from="C711026" to="*" />
+		</Version_001>
+	</Migrations>
+</ModuleInfo>

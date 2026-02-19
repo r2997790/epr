@@ -1,0 +1,93 @@
+﻿@using System.Web.UI.WebControls
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models
+@using Selerant.DevEx.Modules.DIRModule.Configuration.Resources
+@using Selerant.DevEx.WebControls
+@using Selerant.DevEx.BusinessLayer
+@using Selerant.DevEx.Modules.DIRModule.BackEnd.AssessmentTypeManagement
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Searches.Views.DevExSearchSinglePanelView<Selerant.DevEx.WebMvcModules.Infrastructure.Searches.Models.DevExSearchCompositePanelModel>
+
+@{
+    WebListItemCollection assessmentStatusList = new WebListItemCollection();
+    DxPhraseType statusPhraseType = DxPhraseType.Get(DxPhraseTypeCategory.ListOfValuesStandard, "DXDIR_ASSESSMENT.STATUS");
+    DxPhraseList phraseList = new DxPhraseList(statusPhraseType, DxUser.CurrentUser.GetDxCulture());
+    phraseList.Populate();
+
+    Func<DxListItem, bool> predicate;
+
+    if (Model.IsSearchInDialog)
+    {
+        predicate = x => x.Value == "DEVELOPMENT";
+    }
+    else
+    {
+        predicate = x => x.Value == "DEVELOPMENT" || x.Value == "DRAFT";
+    }
+
+    assessmentStatusList.AddRange(phraseList.Items.OfType<DxListItem>().OrderBy(i => i.Text).Where(predicate).Select(i => new WebListItem(i.Value, i.Text)));
+
+    List<string> checkListValues = assessmentStatusList.Select(r => r.Value).ToList();
+
+    var checkListStatus = Html.ListOfValuesControl("AssessmentStatusList")
+        .AddItems(assessmentStatusList)
+        .SetIsMultiValue(true)
+        .SetShowCheckAllOption(true)
+        .SetValueDisplayType(ListOfValuesControlIndexModel.ValueDisplayType.Values)
+        .SetLookAheadSettings(true, filterValues: true)
+        .SetValues(checkListValues.ToArray())
+        .SetSkin("SkForm")
+        .SetWidth(Unit.Percentage(100));
+
+    DxAssessmentTypeCollection assessmentTypes = new DxAssessmentTypeCollection();
+    assessmentTypes.Load();
+
+    WebListItemCollection assessmentTypesListItems = new WebListItemCollection();
+    assessmentTypesListItems.AddRange(assessmentTypes.Select(i => new WebListItem(i.Code, i.Description)));
+    List<string> assessmentTypeCheckListValues = assessmentTypesListItems.Select(r => r.Value).ToList();
+
+    var assessmentTypeCheckList = Html.ListOfValuesControl("AssessmentTypeList")
+        .AddItems(assessmentTypesListItems)
+        .SetIsMultiValue(true)
+        .SetShowCheckAllOption(true)
+        .SetValueDisplayType(ListOfValuesControlIndexModel.ValueDisplayType.Values)
+        .SetLookAheadSettings(true, filterValues: true)
+        .SetValues(assessmentTypeCheckListValues.ToArray())
+        .SetSkin("SkForm")
+        .SetWidth(Unit.Percentage(100));
+}
+
+<div class="CompositePanel grid-like-border-bottom">
+    <div class="container-fluid container-with-edge-content">
+        <div class="row">
+            <div class="field-label col-2">
+                @Html.LabelControl("AssessmentDescriptionLabel").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentDescriptionLbl")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+            </div>
+            <div class="field-value col-4">
+                @Html.TextControl("AssessmentDescription").SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm).SetWidth(Unit.Percentage(100))
+            </div>
+
+            <div class="field-label col-2">
+                @Html.LabelControl("AssessmentCodeLabel").SetText(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentCodeLbl")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+            </div>
+            <div class="field-value col-4">
+                @Html.TextControl("AssessmentCode").SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm).SetWidth(Unit.Percentage(100))
+            </div>
+        </div>
+        <div class="row">
+			@*This is temporary hidden - CR 104449*@
+            @*<div class="field-label col-2">
+                @Html.LabelControl("AssessmentTypeLabel").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentTypeLbl")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+            </div>
+            <div class="field-value col-4">
+                @assessmentTypeCheckList.Render()
+            </div>*@
+            <div class="field-label col-2">
+                @Html.LabelControl("AssessmentStatusLabel").SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AssessmentStatusLbl")).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+            </div>
+            <div class="field-value col-4">
+                @checkListStatus.Render()
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,14 @@
+﻿.dir-module-partial-dest-tab td._Category img.category-icon-add {
+	float: right;
+	cursor: pointer;
+	margin-right: 4px;
+}
+
+.dir-module-partial-dest-tab th img.column-icon-add {
+	float: right;
+	cursor: pointer;
+}
+
+.dir-module-partial-dest-tab .required-footnote {
+	margin-top: 5px;
+}

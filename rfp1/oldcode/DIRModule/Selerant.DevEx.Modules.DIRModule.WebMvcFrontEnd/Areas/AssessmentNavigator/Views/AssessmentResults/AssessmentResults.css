@@ -1,0 +1,96 @@
+﻿.grid-row-bolded td {
+    font-weight: bold !important;
+}
+
+.dir-module-bus-nav-assessment-results-row-fluid {
+    margin-bottom: 50px;
+}
+
+.dir-module-bus-nav-assessment-results-chart-title {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.dir-module-bus-nav-assessment-results-pie-chart-container {
+    display: inline-block;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+}
+
+.dir-module-bus-nav-assessment-results-pie-chart {
+    display: inline-block;
+}
+
+.dir-module-bus-nav-assessment-results-pie-chart-legend {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.dir-module-bus-nav-assessment-results-pie-chart-legend-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+}
+
+.dir-module-bus-nav-assessment-results-legend-table {
+    overflow-y: auto;
+    background: #fff;
+    min-width: 150px;
+    max-height: 210px;
+    bottom: 0;
+    right: 10px;
+    margin-top: 30px;
+}
+
+.dir-module-bus-nav-assessment-results-legend-table span {
+    width: 8px;
+    height: 20px;
+    display: block;
+    float: left;
+    margin-top: 3px;
+}
+
+.dir-module-bus-nav-assessment-results-legend-table p {    
+    margin: 0px;
+    margin-left: 15px;
+    margin-top: 7px;
+    font-size: 11px;
+    padding: 0px;
+}
+
+.dir-module-panel {
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid #CBCBCB;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, .05);
+}
+
+.dir-module-panel-body {
+    padding: 15px;
+}
+
+.dir-module-panel-heading {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    background: #E0E0E0;
+}
+
+    .dir-module-panel-heading h2 {
+        text-transform: none;
+        color: #333333;
+    }
+
+.dir-module-panel-body .DX_Mvc_InfoBoxControl {
+	position: absolute !important;
+	top: 1.5px !important;
+	left: auto !important;
+	right: 12px;
+}

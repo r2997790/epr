@@ -1,0 +1,3 @@
+[submodule "EmpauerLocal"]
+	path = EmpauerLocal
+	url = https://github.com/r2997790/empauer-local.git

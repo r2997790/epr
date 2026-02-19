@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sh:despatchAdviceMessage xmlns:sh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
+                          xmlns:epcis="urn:epcglobal:epcis:xsd:1">
+    <sh:StandardBusinessDocumentHeader>
+        <sh:HeaderVersion>1.0</sh:HeaderVersion>
+        <sh:Sender>
+            <sh:Identifier>1234567890002</sh:Identifier>
+        </sh:Sender>
+        <sh:Receiver>
+            <sh:Identifier>1234567890003</sh:Identifier>
+        </sh:Receiver>
+        <sh:DocumentIdentification>
+            <sh:Standard>GS1</sh:Standard>
+            <sh:TypeVersion>3.3</sh:TypeVersion>
+            <sh:InstanceIdentifier>ASN-CHAIN-002</sh:InstanceIdentifier>
+            <sh:Type>despatchAdvice</sh:Type>
+            <sh:CreationDateAndTime>2026-02-06T15:00:00Z</sh:CreationDateAndTime>
+        </sh:DocumentIdentification>
+    </sh:StandardBusinessDocumentHeader>
+    
+    <despatchAdvice>
+        <creationDateTime>2026-02-06T15:00:00Z</creationDateTime>
+        <documentStatusCode>ORIGINAL</documentStatusCode>
+        <despatchAdviceIdentification>
+            <entityIdentification>ASN-CHAIN-002</entityIdentification>
+            <contentOwner>
+                <gln>1234567890002</gln>
+            </contentOwner>
+        </despatchAdviceIdentification>
+        
+        <!-- Shipper: Central Distribution Hub (receiver from previous ASN) -->
+        <shipper>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890002</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Central Distribution Hub</organisationName>
+            <address>
+                <streetAddressOne>500 Logistics Way</streetAddressOne>
+                <city>Birmingham</city>
+                <postalCode>B2 4BB</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipper>
+        
+        <!-- Receiver: Regional DC North -->
+        <receiver>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890003</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Regional Distribution Center North</organisationName>
+        </receiver>
+        
+        <!-- Ship-To: Regional DC North -->
+        <shipTo>
+            <additionalPartyIdentification>
+                <additionalPartyIdentificationTypeCode>GLN</additionalPartyIdentificationTypeCode>
+                <additionalPartyIdentificationValue>1234567890003</additionalPartyIdentificationValue>
+            </additionalPartyIdentification>
+            <organisationName>Regional Distribution Center North</organisationName>
+            <address>
+                <streetAddressOne>88 Northern Business Park</streetAddressOne>
+                <city>Leeds</city>
+                <postalCode>LS1 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipTo>
+        
+        <!-- Transport Details -->
+        <logisticServiceProvider>
+            <organisationName>Express Freight Services</organisationName>
+        </logisticServiceProvider>
+        
+        <!-- Pallet with partial goods from manufacturer shipment -->
+        <despatchAdviceLogisticUnit>
+            <logisticUnitIdentification>
+                <sscc>376123456789012346</sscc>
+            </logisticUnitIdentification>
+            <packageTypeCode>PLT</packageTypeCode>
+            <despatchAdviceLineItem>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched>250</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678900</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Premium Coffee Beans 1kg</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-2026-001</batchNumber>
+                    <bestBeforeDate>2026-08-05</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            
+            <despatchAdviceLineItem>
+                <lineItemNumber>2</lineItemNumber>
+                <quantityDespatched>150</quantityDespatched>
+                <quantityDespatchedUnitOfMeasure>EA</quantityDespatchedUnitOfMeasure>
+                <tradeItemIdentification>
+                    <gtin>05012345678917</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <itemDescription>Organic Tea Selection Box</itemDescription>
+                </tradeItemDescriptionInformation>
+                <tradeItemBatchIdentification>
+                    <batchNumber>BATCH-2026-002</batchNumber>
+                    <bestBeforeDate>2026-12-31</bestBeforeDate>
+                </tradeItemBatchIdentification>
+            </despatchAdviceLineItem>
+            
+            <logisticUnitGrossWeight>
+                <value>312.5</value>
+                <measurementUnitCode>KGM</measurementUnitCode>
+            </logisticUnitGrossWeight>
+        </despatchAdviceLogisticUnit>
+        
+        <totalGrossWeight>
+            <value>312.5</value>
+            <measurementUnitCode>KGM</measurementUnitCode>
+        </totalGrossWeight>
+        
+        <estimatedDeliveryDateTime>2026-02-07T10:00:00Z</estimatedDeliveryDateTime>
+        <actualShipDateTime>2026-02-06T15:00:00Z</actualShipDateTime>
+        <despatchInformation>
+            <referenceNumber>TRANSFER-HUB-NORTH-001</referenceNumber>
+        </despatchInformation>
+    </despatchAdvice>
+</sh:despatchAdviceMessage>

@@ -1,0 +1,67 @@
+﻿@using System.Web.UI.WebControls
+@using Selerant.DevEx.WebControls
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<NotesModel>
+@{
+	Model.SetLogicId("ResourceNotePartial");
+}
+@using (Model.BeginRendering(Html))
+{
+<div class="container-fluid">
+	<div class="row" id="BusinessCostOtherNotes" style="margin-top : 10px; @(Model.HasBusinessCostOther? "": "display: none")">
+		<div class="col-7 offset-5">
+			<div class="row">
+				<div class="col-4 text-right">
+						@(Html.LabelControl("lblOtherNotes")
+								.SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMgmnt_BusinessCostOther"))
+								.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+								.AddCssClass("font-weight-bold")
+								.AddCssClass("h-auto"))
+				</div>
+				<div class="col-8" ; @(Model.HasBusinessCostOther ? "" : "display: none")>
+						@(Html.TextControl("txbBusinessCostOther")
+							.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+							.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { MaxLength = 2000 })
+							.SetLabelLogicId("lblOtherNotes")
+							.SetValue(Model.GetNotesByResourceType(ResourceTabIds.BUSINESS_COST_OTHER))
+							.SetWidth(new Unit(100, UnitType.Percentage)))
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row" style="margin-top : 10px">
+		<div class="col-7 offset-5">
+			<div class="row">
+				<div class="col-4 text-right">
+						@(Html.LabelControl("lblNotes")
+									.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+									.AddCssClass("font-weight-bold")
+									.AddCssClass("h-auto")
+									.SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResMgmnt_ResourceNotes")))
+				</div>
+				<div class="col-8">
+					@(Html.TextControl("txbNotes")
+									.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+									.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { MaxLength = 2000 })
+									.SetValue(Model.GetNotesByResourceType(Model.ResourceType))
+									.SetMultiLine(true)
+									.SetHeight(75)
+									.SetStyle("padding", "5px")
+									.SetLabelLogicId("lblNotes")
+									.SetWidth(new Unit(100, UnitType.Percentage)))
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-12">
+			@(Html.ButtonControl("btnSave")
+									.SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("dlg_btn_SaveNotes"))
+									.SetKnownSkin(ButtonControlIndexModel.KnownSkins.SkNormal)
+									.SetSkin("dx-btn")
+									.AddCssClass("float-right")
+									.Render())
+		</div>
+	</div>
+</div>
+}

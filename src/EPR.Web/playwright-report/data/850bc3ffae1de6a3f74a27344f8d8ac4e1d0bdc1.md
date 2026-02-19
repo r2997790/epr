@@ -1,0 +1,102 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link " EPR System" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: 
+          - text: EPR System
+        - generic [ref=e7]:
+          - list [ref=e8]:
+            - listitem [ref=e9]:
+              - link " Home" [ref=e10] [cursor=pointer]:
+                - /url: /
+                - generic [ref=e11]: 
+                - text: Home
+            - listitem [ref=e12]:
+              - link " Raw Materials" [ref=e13] [cursor=pointer]:
+                - /url: /PackagingManagement?type=raw-materials
+                - generic [ref=e14]: 
+                - text: Raw Materials
+            - listitem [ref=e15]:
+              - link " Packaging Items" [ref=e16] [cursor=pointer]:
+                - /url: /PackagingManagement?type=packaging-items
+                - generic [ref=e17]: 
+                - text: Packaging Items
+            - listitem [ref=e18]:
+              - link " Packaging Groups" [ref=e19] [cursor=pointer]:
+                - /url: /PackagingManagement?type=packaging-groups
+                - generic [ref=e20]: 
+                - text: Packaging Groups
+            - listitem [ref=e21]:
+              - link " Products" [ref=e22] [cursor=pointer]:
+                - /url: /Products
+                - generic [ref=e23]: 
+                - text: Products
+            - listitem [ref=e24]:
+              - link " Distribution" [ref=e25] [cursor=pointer]:
+                - /url: /Distribution
+                - generic [ref=e26]: 
+                - text: Distribution
+            - listitem [ref=e27]:
+              - link " Recycling" [ref=e28] [cursor=pointer]:
+                - /url: /Recycling
+                - generic [ref=e29]: 
+                - text: Recycling
+            - listitem [ref=e30]:
+              - link " Analysis" [ref=e31] [cursor=pointer]:
+                - /url: /Analysis
+                - generic [ref=e32]: 
+                - text: Analysis
+            - listitem [ref=e33]:
+              - link " Visual Editor" [ref=e34] [cursor=pointer]:
+                - /url: /VisualEditor
+                - generic [ref=e35]: 
+                - text: Visual Editor
+          - list [ref=e36]:
+            - listitem [ref=e37]:
+              - button " Logout (admin)" [ref=e39] [cursor=pointer]:
+                - generic [ref=e40]: 
+                - text: Logout (admin)
+  - main [ref=e42]:
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - heading "EPR System" [level=1] [ref=e45]
+        - paragraph [ref=e46]: Extended Producer Responsibility Management
+      - generic [ref=e47]:
+        - link " Packaging Raw Materials Manage raw materials, categories, EPR fees, and EcoModularity fees by jurisdiction" [ref=e48] [cursor=pointer]:
+          - /url: /PackagingRawMaterials
+          - generic [ref=e50]: 
+          - heading "Packaging Raw Materials" [level=3] [ref=e51]
+          - paragraph [ref=e52]: Manage raw materials, categories, EPR fees, and EcoModularity fees by jurisdiction
+        - link " Packaging Items Define packaging types from raw materials, browse library, create custom types" [ref=e53] [cursor=pointer]:
+          - /url: /PackagingTypes
+          - generic [ref=e55]: 
+          - heading "Packaging Items" [level=3] [ref=e56]
+          - paragraph [ref=e57]: Define packaging types from raw materials, browse library, create custom types
+        - link " Products Manage product SKUs and associate packaging units" [ref=e58] [cursor=pointer]:
+          - /url: /Products
+          - generic [ref=e60]: 
+          - heading "Products" [level=3] [ref=e61]
+          - paragraph [ref=e62]: Manage product SKUs and associate packaging units
+        - link " Distribution Track product distribution to locations and geographies" [ref=e63] [cursor=pointer]:
+          - /url: /Distribution
+          - generic [ref=e65]: 
+          - heading "Distribution" [level=3] [ref=e66]
+          - paragraph [ref=e67]: Track product distribution to locations and geographies
+        - link " Recycling Calculate recyclable materials by location and jurisdiction" [ref=e68] [cursor=pointer]:
+          - /url: /Recycling
+          - generic [ref=e70]: 
+          - heading "Recycling" [level=3] [ref=e71]
+          - paragraph [ref=e72]: Calculate recyclable materials by location and jurisdiction
+        - link " Analysis View comprehensive reports on costs, materials, and recyclability" [ref=e73] [cursor=pointer]:
+          - /url: /Analysis
+          - generic [ref=e75]: 
+          - heading "Analysis" [level=3] [ref=e76]
+          - paragraph [ref=e77]: View comprehensive reports on costs, materials, and recyclability
+  - contentinfo [ref=e78]:
+    - generic [ref=e79]: © 2026 - EPR System
+```

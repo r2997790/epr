@@ -1,0 +1,98 @@
+﻿CREATE OR REPLACE PACKAGE DXDIR_PK_OUTPUT_CATEGORY AS
+
+	PROCEDURE InsertRecord
+	(
+        dcID NUMBER,
+		sTITLE NVARCHAR2,
+		dcSORT_ORDER NUMBER,
+		sTYPE VARCHAR2
+	);
+	PROCEDURE UpdateRecord
+	(
+        dcID NUMBER,
+		sTITLE NVARCHAR2,
+		dcSORT_ORDER NUMBER,
+		sTYPE VARCHAR2
+    
+	);
+	PROCEDURE DeleteRecord
+	(
+		 dcID NUMBER
+	);
+	PROCEDURE GetNextID
+	(
+		dcNextID OUT NUMBER
+	);
+
+END;
+/
+
+create or replace PACKAGE BODY  DXDIR_PK_OUTPUT_CATEGORY AS
+
+	PROCEDURE InsertRecord
+	(
+		dcID NUMBER,
+		sTITLE NVARCHAR2,
+        dcSORT_ORDER NUMBER,
+		sTYPE VARCHAR2
+	)
+    IS
+   BEGIN
+		INSERT INTO DXDIR_OUTPUT_CATEGORY
+		 (
+			ID,
+			TITLE,
+			SORT_ORDER,
+			TYPE
+		 )
+		 VALUES
+		(	
+			dcID,
+			sTITLE ,
+			dcSORT_ORDER,
+			sTYPE 
+
+		);
+    END;
+
+    PROCEDURE UpdateRecord
+	(
+		dcID NUMBER,
+		sTITLE NVARCHAR2,
+        dcSORT_ORDER NUMBER,
+		sTYPE VARCHAR2
+	)
+	IS
+	BEGIN
+		UPDATE DXDIR_OUTPUT_CATEGORY
+		SET 
+			TITLE = sTITLE,
+			TYPE = sTYPE,
+            SORT_ORDER=dcSORT_ORDER 
+		WHERE
+			ID = dcID;
+	END;
+
+    PROCEDURE DeleteRecord
+	(
+		dcID NUMBER
+	)
+	IS
+	BEGIN
+		DELETE FROM DXDIR_OUTPUT_CATEGORY
+		WHERE
+			ID = dcID;
+	END;
+
+	PROCEDURE GetNextId
+	(
+        dcNextID OUT NUMBER
+    )
+	IS
+	BEGIN
+		SELECT DXDIR_OUTPUT_CATEGORY_SEQ.NEXTVAL INTO dcNextID FROM DUAL;
+    END;
+
+END;
+/
+

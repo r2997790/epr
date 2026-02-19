@@ -1,0 +1,232 @@
+﻿IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_BUSINESS_COST$InsertRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$InsertRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT,
+	@sTYPE VARCHAR(24),
+	@sTITLE NVARCHAR(256),
+	@dcSORT_ORDER BIGINT,
+	@dcCOST NUMERIC(24, 4)
+AS
+BEGIN
+	INSERT INTO [dbo].[DXDIR_BUSINESS_COST]
+	(
+		[ID],
+		[ASSESSMENT_CODE],
+		[ASSESSMENT_LC_STAGE_ID],
+		[TYPE],
+		[TITLE],
+		[SORT_ORDER],
+		[COST]
+	)
+	VALUES
+	(
+		@dcID,
+		@sASSESSMENT_CODE,
+		@dcASSESSMENT_LC_STAGE_ID,
+		@sTYPE,
+		@sTITLE,
+		@dcSORT_ORDER,
+		@dcCOST
+	);
+END
+GO
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_BUSINESS_COST$UpdateRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$UpdateRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT,
+	@sTYPE VARCHAR(24),
+	@sTITLE NVARCHAR(256),
+	@dcSORT_ORDER BIGINT,
+	@dcCOST NUMERIC(24, 4)
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_BUSINESS_COST]
+	SET
+		[ASSESSMENT_CODE] = @sASSESSMENT_CODE,
+		[ASSESSMENT_LC_STAGE_ID] = @dcASSESSMENT_LC_STAGE_ID,
+		[TYPE] = @sTYPE,
+		[TITLE] = @sTITLE,
+		[SORT_ORDER] = @dcSORT_ORDER,
+		[COST] = @dcCOST
+	WHERE
+		[ID] = @dcID;
+END
+GO
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_BUSINESS_COST$DeleteRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$DeleteRecord]
+	@dcID BIGINT
+AS
+BEGIN
+	DELETE FROM [dbo].[DXDIR_BUSINESS_COST]
+	WHERE [ID] = @dcID;
+END
+GO
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_BUSINESS_COST$GetNextId'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$GetNextId]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$GetNextId]
+	@dcNextId BIGINT OUTPUT
+AS
+BEGIN
+	SET @dcNextId = NULL;
+
+	DECLARE @dbname NVARCHAR(128) = db_name();
+
+	EXEC DX_PK_UTILITY_SQLSRV$db_sp_get_next_sequence_value @dbname
+		,N'dbo'
+		,N'DXDIR_BUSINESS_COST_SEQ'
+		,@dcNextId OUTPUT;
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_BUSINESS_COST$GetBusinessCostGridItems'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$GetBusinessCostGridItems]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_BUSINESS_COST$GetBusinessCostGridItems]
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT
+AS
+BEGIN
+	DECLARE @totalMass						 NUMERIC(25, 3),
+	        @factor							 NUMERIC(25, 12),
+
+	        @coProductMargin				 NUMERIC(25, 12),
+	        @coProductWeight				 NUMERIC(25, 3) = 0,
+
+			@coProductSecondMargin            NUMERIC(25, 12),
+		    @coProductSecondWeight            NUMERIC(25, 3) = 0,
+
+	        @foodRescueMargin				 NUMERIC(25, 12),
+	        @foodRescueWeight				 NUMERIC(25, 3) = 0,
+			@outputRevenueFactor			 NUMERIC(25, 14),
+
+			@v_COPRODUCT_DEST_CODE           VARCHAR(64) = 'COPRODUCT',
+			@v_COPRODUCT_2ND_DEST_CODE       VARCHAR(64) = 'COPRODUCT_2',
+			@v_FOOD_RESCUE_DEST_CODE         VARCHAR(64) = 'FOOD_RESCUE';
+
+	EXEC dbo.DXDIR_PK_CALCULATIONS$GetTotalMass @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @totalMass OUTPUT;
+
+	IF (@totalMass = 0)
+		BEGIN
+			SET @factor = 0;
+			SET @outputRevenueFactor = 0;
+		END
+	ELSE
+		BEGIN
+			-- massOfWaste / totalInputMass
+			SELECT @factor = ROUND(CAST(ISNULL(SUM(WEIGHT), 0) as NUMERIC(25, 12)) / CAST(@totalMass as NUMERIC(25, 12)), 12)
+			FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE = @sASSESSMENT_CODE AND
+				  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID AND
+				  OUTPUT_CATEGORY_ID <> 1;
+
+			SET @outputRevenueFactor = dbo.DXDIR_PK_CALCULATIONS$GetOutputRevenueFactor(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @totalMass);
+		END
+
+	EXEC dbo.DXDIR_PK_CALCULATIONS$GetMargin @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @v_COPRODUCT_DEST_CODE, @coProductMargin OUTPUT;
+	EXEC dbo.DXDIR_PK_CALCULATIONS$GetMargin @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @v_COPRODUCT_2ND_DEST_CODE, @coProductSecondMargin OUTPUT;
+	EXEC dbo.DXDIR_PK_CALCULATIONS$GetMargin @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @v_FOOD_RESCUE_DEST_CODE, @foodRescueMargin OUTPUT;
+
+	SELECT @coProductWeight = ISNULL(WEIGHT, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @sASSESSMENT_CODE			AND
+		  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID	AND
+		  DESTINATION_CODE	     = @v_COPRODUCT_DEST_CODE;
+
+	SELECT @coProductSecondWeight = ISNULL(WEIGHT, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @sASSESSMENT_CODE			AND
+		  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID	AND
+		  DESTINATION_CODE	     = @v_COPRODUCT_2ND_DEST_CODE;
+
+	SELECT @foodRescueWeight = ISNULL(WEIGHT, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @sASSESSMENT_CODE			AND
+		  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID	AND
+		  DESTINATION_CODE	 = @v_FOOD_RESCUE_DEST_CODE;
+
+	SELECT 
+	   ID,
+       ASSESSMENT_CODE,
+       ASSESSMENT_LC_STAGE_ID,
+       TYPE,
+       TITLE,
+       SORT_ORDER,
+       COST,
+	   dbo.DXDIR_PK_CALCULATIONS$GetWasteRelatedCost(@totalMass, @factor, COST,
+	                                                 @coProductMargin, @coProductWeight,
+													 @coProductSecondMargin, @coProductSecondWeight,
+													 @foodRescueMargin, @foodRescueWeight,
+													 @outputRevenueFactor) AS WASTE_COST
+  FROM DXDIR_BUSINESS_COST 
+  WHERE ASSESSMENT_CODE		   = @sASSESSMENT_CODE	AND
+		ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID;
+END
+GO

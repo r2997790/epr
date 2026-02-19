@@ -1,0 +1,12 @@
+﻿@using Selerant.DevEx.WebControls
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Views
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Home;
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation.Shared
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Models
+@using Selerant.DevEx.Modules.DIRModule.BackEnd.AssessmentManagement.BusinessObjects
+@using System.Web.UI.WebControls
+@inherits NavigatorHeaderView<AssessmentNavigatorHeaderModel>
+@section graphics {
+	@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.CreateAssessmentDialog.Views.Shared.LCStageSteps, new LCStageStepsModel(Model.ControllerUrl, (NavigatorControllerData<DxAssessment>)Model.ControllerData))
+}

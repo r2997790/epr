@@ -1,0 +1,157 @@
+@model EPR.Domain.Entities.PackagingRawMaterial
+@{
+    ViewData["Title"] = "Edit Raw Material";
+    var parentMaterials = ViewBag.ParentMaterials as List<EPR.Domain.Entities.PackagingRawMaterial> ?? new List<EPR.Domain.Entities.PackagingRawMaterial>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between mb-4">
+        <h1><i class="bi bi-box-seam"></i> Edit Raw Material</h1>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Material Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CreatedAt" />
+
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Material Name *</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ParentMaterialId" class="form-label">Parent Category</label>
+                            <select asp-for="ParentMaterialId" class="form-select">
+                                <option value="">-- Top Level Category --</option>
+                                @foreach (var parent in parentMaterials)
+                                {
+                                    <option value="@parent.Id">@parent.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Specification" class="form-label">Specification</label>
+                            <textarea asp-for="Specification" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Jurisdictions Section -->
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-globe"></i> Jurisdiction Fees</h5>
+                    <a href="@Url.Action("AddJurisdiction", new { materialId = Model.Id })" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus"></i> Add Jurisdiction
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.Jurisdictions != null && Model.Jurisdictions.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Jurisdiction</th>
+                                        <th>Fee Per Tonne</th>
+                                        <th>Currency</th>
+                                        <th>Effective From</th>
+                                        <th>Effective To</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var jur in Model.Jurisdictions)
+                                    {
+                                        <tr>
+                                            <td>@jur.Jurisdiction?.Name</td>
+                                            <td>@jur.FeePerTonne.ToString("N2")</td>
+                                            <td>@jur.Currency</td>
+                                            <td>@jur.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                                            <td>@(jur.EffectiveTo?.ToString("yyyy-MM-dd") ?? "Ongoing")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No jurisdiction fees configured. <a href="@Url.Action("AddJurisdiction", new { materialId = Model.Id })">Add one</a></p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("AddJurisdiction", new { materialId = Model.Id })" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-globe"></i> Add Jurisdiction Fee
+                    </a>
+                    <button class="btn btn-success w-100 mb-2" onclick="addEcoModularity(@Model.Id)">
+                        <i class="bi bi-recycle"></i> Add EcoModularity Fee
+                    </button>
+                    <button class="btn btn-info w-100" onclick="exportMaterial(@Model.Id)">
+                        <i class="bi bi-file-earmark-excel"></i> Export to XLSX
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addEcoModularity(materialId) {
+        alert('EcoModularity fee configuration coming soon');
+    }
+
+    function exportMaterial(materialId) {
+        window.location.href = '@Url.Action("Export")?id=' + materialId;
+    }
+</script>
+
+
+
+
+
+
+
+
+

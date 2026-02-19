@@ -1,0 +1,212 @@
+﻿.dialog-form-content .row [class*=col-] {
+    min-height: initial;
+}
+
+.dx-step-panel-hidden 
+{
+    display: none;
+}
+
+.dx-step-panel-visible 
+{
+    display: inline-block;
+}
+
+.dx-step-panel 
+{
+    width: 100%;
+}
+
+#ErrorsNotificationPanel {
+    padding: 0px 11px;
+    margin-top: 5px;
+    margin-bottom: 0px;
+}
+
+.dir-dialog-content .MvcDialBody {
+    overflow-y: hidden;
+}
+
+    .dir-dialog-content .MvcDialBody .row [class*=col-] {
+        min-height: initial;
+    }
+
+.tableWith-text-btn {
+    display: table;
+    position: relative;
+    width: 100%;
+}
+
+    .tableWith-text-btn > div:first-child {
+        width: 100%;
+    }
+
+    .tableWith-text-btn > div {
+        display: table-cell;
+    }
+
+        .tableWith-text-btn > div:last-child {
+            text-align: right;
+            padding-left: 5px;
+        }
+
+.btn.btn-sm:hover
+{
+	border: 1px solid #94bbd3;
+	background: linear-gradient(to bottom, #DDF2FF 0%, #9DCCE8 100%);
+}
+
+.btn.btn-sm:active
+{
+	box-shadow: none;
+	background: linear-gradient(to bottom, #9BCBE7 0%, #DBF1FE 100%);
+	border: 1px solid #94bbd3;
+}
+
+.MvcLOV.SkForm > input[type='text'] {
+    padding-right: 12px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fieldset */
+legend {
+    color: Black;
+    font-size: 12px;
+    font-weight: bold;
+    font-family: Tahoma;
+    margin-left: -8px;
+}
+
+    legend:hover {
+        cursor: pointer;
+    }
+
+.DX_FS1 {
+    border: none;
+    margin-top: 5px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+    padding-right: 0px;
+    padding-bottom: 5px;
+}
+
+fieldset.DX_FS1 {
+    margin-left: -8px;
+}
+
+img, div.triangle {
+    vertical-align: sub;
+    margin-right: 5px;
+    padding-left: 1px;
+}
+
+div.triangle {
+    display: inline-block;
+}
+
+.DX_FS1 legend div.triangle {
+    height: 16px;
+    width: 16px;
+    background-image: url("../../../../../../App_Themes/Default/Images/Misc/TriangleRight.png");
+}
+
+.DX_FS1 legend.expanded div.triangle {
+    background-image: url("../../../../../../App_Themes/Default/Images/Misc/TriangleDown.png");
+}
+
+.vendors_info > div {
+    margin: 0px 5px 0 0;
+    word-spacing: normal;
+    letter-spacing: normal;
+}
+
+.vendors_info {
+    margin-left: 0px;
+    margin-bottom: 10px;
+    letter-spacing: -4px;
+}
+
+#expandLink, #restoreDefault {
+    color: Black;
+    font-size: 12px;
+    font-family: Tahoma;
+    text-decoration: underline;
+}
+
+#enableLink {
+    text-decoration: underline;
+}
+
+    #expandLink:hover, #restoreDefault:hover, #enableLink:hover {
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+.notificationContainer {
+    background-color: transparent;
+    display: inline-block;
+    width: 100%;
+}
+
+    .notificationContainer .notificationItem {
+        background-color: #e3f3ff;
+        border-bottom: solid 3px #c6e6ff;
+    }
+
+    .notificationContainer .notificationItemInfo {
+        position: relative;
+        padding: 0px;
+        display: inline-block;
+        width: 100%;
+    }
+
+        .notificationContainer .notificationItemInfo .notificationItemIcon {
+            border: 0px;
+            margin-right: 5px;
+            width: 32px;
+            height: 32px;
+            background-repeat: no-repeat;
+            background-position: center;
+            display: inline-block;
+            vertical-align: middle;
+            float: left;
+            background-image: url("../../../../../../App_Themes/Default/PageSpecific/Images/notice_info_24x24.png");
+        }
+
+        .notificationContainer .notificationItemInfo .notificationItemMessage {
+            float: left;
+            width: calc(100% - 52px);
+            padding: 5px 5px 5px 0;
+        }
+
+#RoutingListMenuContainer {
+    padding-bottom: 10px;
+}
+
+.MvcButton {
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    height: auto;
+    vertical-align: middle;
+}
+
+#ChildOrganizationNames, #ParentOrganizationNames {
+    width: 100%;
+    min-height: 22px;
+    background-color: #ffffff;
+    border: 1px #cfd1d1 solid;
+    padding: 1px 4px;
+    color: grey;
+    font-size: 0;
+}
+
+    #ChildOrganizationNames span, #ParentOrganizationNames span {
+        font-size: 12px;
+    }
+
+.dir-module-dlg-create-assessment .editable-required-footnote {
+	position: absolute;
+	bottom: 5px;
+}

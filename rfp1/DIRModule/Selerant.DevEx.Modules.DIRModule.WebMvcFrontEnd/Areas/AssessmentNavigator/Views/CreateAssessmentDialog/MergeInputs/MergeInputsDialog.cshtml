@@ -1,0 +1,14 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation.MergeInputs;
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<MergeInputsDialogModel>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="spreadsheet-container">
+                <div id="notificationContainer"></div>
+                @(Model.SpreadsheetControl.Render())
+            </div>
+        </div>
+    </div>
+</div>

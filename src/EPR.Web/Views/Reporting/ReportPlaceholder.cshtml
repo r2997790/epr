@@ -1,0 +1,18 @@
+@{
+    var name = ViewBag.ReportName as string ?? "Report";
+    var description = ViewBag.ReportDescription as string ?? "";
+}
+
+<div class="container-fluid py-4">
+    <div class="card" style="border: 1px solid var(--border-color); border-radius: 8px;">
+        <div class="card-header" style="background: var(--primary-color); color: white; font-weight: 600;">
+            <i class="bi bi-file-earmark-text"></i> @name
+        </div>
+        <div class="card-body">
+            <p class="text-muted">@description</p>
+            <p class="mb-0">
+                <a href="@Url.Action("Dashboard", "Reporting")" class="btn btn-primary"><i class="bi bi-graph-up-arrow"></i> <span data-translate="Back to Dashboard">Back to Dashboard</span></a>
+            </p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,33 @@
+﻿@using Selerant.DevEx.WebMvcModules.Areas.AdminTools.Views
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.DIRAdminTools.Models
+
+@inherits AdminToolIndexView<AssessmentTypesIndexModel>
+
+<div id="AssessmentTypesPanel">
+    @{
+        var filter = Html.DX().jqGridFilter(Model.GridId)
+           .setReferencedGridLogicId(Model.GRID_LOGIC_ID)
+           .setAutomationId("AssessmentTypesGrid_FilterContainer")
+           .SetFilterItemAsYesNo("Active")
+           .setVisible(false);
+    }
+    @(filter.Render())
+    <div>
+        <div id="AssessmentTypeGrid">
+            @{
+                var grid = Html.DX().jqGrid(Model.GridId)
+                    .setFilter(filter)
+                    .setLogicId(Model.GRID_LOGIC_ID)
+                    .initJqGrid(Url.Action(MVC_DIR.DIRAdminTools.AssessmentTypes.GetAdminToolGridData(null, null, null)))
+                    .setHeight(null)
+                    .setShrinkToFit(true)
+                    .onLoadComplete("DX.Ctrl.findParentControlOfType(this, DX.DIRModule.DIRAdminTools.AssessmentTypes.Index).onGridLoadComplete(xhr)");
+
+                Model.CustomizeJQGridPostData(grid);
+            }
+            @(grid.Render())
+        </div>
+    </div>
+    @(Html.EmptyDataBlock("AssessmentTypesGridEmpty", ResText.Controls.GetString("GridEmpty"), false))
+</div>

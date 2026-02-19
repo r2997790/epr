@@ -1,0 +1,40 @@
+@*
+    Minimal layout for embedded content (e.g. Visual Editor in iframe).
+    No navbar, no BrowserTabs, no footer - prevents recursive page nesting.
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/visual-editor.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        body.visual-editor-embedded .footer { display: none !important; }
+        body.visual-editor-embedded .container-fluid { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+        body.visual-editor-embedded main { padding: 0 !important; margin: 0 !important; height: 100% !important; overflow: hidden !important; }
+        /* Embedded: no navbar/tabs, editor fills viewport */
+        body.visual-editor-embedded #epr-visual-editor { top: 0 !important; height: 100vh !important; }
+        body.visual-editor-embedded .epr-project-header { top: 0 !important; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="visual-editor-page visual-editor-embedded">
+    @RenderBody()
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/localization.js" asp-append-version="true"></script>
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/product-form.js" asp-append-version="true"></script>
+    <script src="~/js/visual-editor/visual-editor-complete.js" asp-append-version="true"></script>
+    <script src="~/js/product-form-visual-view.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

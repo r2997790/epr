@@ -1,0 +1,18 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement.Shared;
+@using System.Web.UI.WebControls
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<OutputsGridTabModel>
+@{
+	Model.SetLogicId("OutputsGridTabPartial");
+}
+
+@using (Model.BeginRendering(Html))
+{
+	<div class="res-mgmt-partial-output-tab">
+		<div class="output-grid">
+			@(Model.CreateJqGrid().Render())
+		</div>
+		@*@(Html.EmptyDataBlock(Model.GridEmptyBlockID, Model.EmptyGridMessage, false))*@
+	</div>
+	@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.ResourceNote, Model.Notes)
+}

@@ -1,0 +1,188 @@
+@model EPR.Web.Controllers.ProductsController.ProductListVm
+@{
+    ViewData["Title"] = "Products";
+    var products = Model?.Products ?? new List<EPR.Web.Controllers.ProductsController.ProductListItemVm>();
+    var totalCount = Model?.TotalCount ?? 0;
+    var page = Model?.Page ?? 1;
+    var pageSize = Model?.PageSize ?? 12;
+    var search = Model?.Search ?? "";
+    var totalPages = pageSize > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var viewMode = ViewContext.HttpContext.Request.Query["view"].FirstOrDefault() ?? "list";
+}
+
+<div class="container-fluid">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h1 class="mb-0"><i class="bi bi-bag"></i> Products</h1>
+        <a asp-controller="ProductForm" asp-action="AddProduct" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Product
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <input type="hidden" name="view" value="@viewMode" />
+                <input type="hidden" name="pageSize" value="@pageSize" />
+                <div class="col-auto flex-grow-1">
+                    <label class="form-label small text-muted">Filter by product name, brand, SKU or manufacturer (brand)</label>
+                    <input type="text" name="search" class="form-control" placeholder="Search products, brand, SKU..." value="@search" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+                    @if (!string.IsNullOrEmpty(search))
+                    {
+                        <a asp-action="Index" asp-route-view="@viewMode" asp-route-pageSize="@pageSize" class="btn btn-outline-secondary">Clear</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="text-muted small">
+            @totalCount product@(totalCount == 1 ? "" : "s")
+            @if (!string.IsNullOrEmpty(search)) { <span> matching &quot;@search&quot;</span> }
+        </div>
+        <div class="btn-group btn-group-sm" role="group">
+            <a asp-action="Index" asp-route-search="@search" asp-route-page="@(page)" asp-route-pageSize="@pageSize" asp-route-view="list" class="btn @(viewMode == "list" ? "btn-primary" : "btn-outline-primary")">
+                <i class="bi bi-list-ul"></i> List
+            </a>
+            <a asp-action="Index" asp-route-search="@search" asp-route-page="@(page)" asp-route-pageSize="@pageSize" asp-route-view="grid" class="btn @(viewMode == "grid" ? "btn-primary" : "btn-outline-primary")">
+                <i class="bi bi-grid-3x3-gap"></i> Grid
+            </a>
+        </div>
+    </div>
+
+    @if (products.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <p class="text-muted mb-2">No products found.</p>
+                @if (!string.IsNullOrEmpty(search))
+                {
+                    <a asp-action="Index" class="btn btn-outline-primary">Clear filter</a>
+                }
+                else
+                {
+                    <a asp-controller="ProductForm" asp-action="AddProduct" class="btn btn-primary">Add your first product</a>
+                }
+            </div>
+        </div>
+    }
+    else if (viewMode == "grid")
+    {
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-3 mb-4">
+            @foreach (var p in products)
+            {
+                var gridDetailUrl = Url.Action("Detail", "Products", new { id = p.Id, returnUrl = Url.Action("Index", "Products", new { search = search, page = page, pageSize = pageSize, view = viewMode }) });
+                <div class="col">
+                    <a href="@gridDetailUrl" class="text-decoration-none text-dark d-block h-100" data-same-tab="true">
+                        <div class="card h-100 product-card product-row" data-href="@gridDetailUrl" style="cursor: pointer;">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center product-grid-img-wrap" style="height: 160px; overflow: hidden; border-bottom: 1px solid #dee2e6;">
+                                @if (!string.IsNullOrEmpty(p.ImageUrl))
+                                {
+                                    <img src="@p.ImageUrl" alt="@p.Name" class="img-fluid" style="object-fit: contain; max-height: 160px;" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');" />
+                                    <span class="product-grid-placeholder d-none text-muted p-2 text-center small"><i class="bi bi-image" style="font-size: 2rem;"></i><br />No image</span>
+                                }
+                                else
+                                {
+                                    <span class="product-grid-placeholder text-muted p-2 text-center small"><i class="bi bi-box-seam" style="font-size: 3rem;"></i><br />No image</span>
+                                }
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="fw-semibold text-truncate" title="@p.Name">@p.Name</div>
+                                @if (!string.IsNullOrEmpty(p.Brand))
+                                {
+                                    <div class="small text-muted text-truncate">@p.Brand</div>
+                                }
+                                <div class="small text-truncate">SKU: @p.Sku</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Brand</th>
+                                <th>Manufacturer</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Country</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in products)
+                            {
+                                var detailUrl = Url.Action("Detail", "Products", new { id = p.Id, returnUrl = Url.Action("Index", "Products", new { search = search, page = page, pageSize = pageSize, view = viewMode }) });
+                                <tr role="button" tabindex="0" class="product-row" data-href="@detailUrl" style="cursor: pointer;">
+                                    <td><strong>@p.Name</strong></td>
+                                    <td>@p.Brand</td>
+                                    <td>@p.Manufacturer</td>
+                                    <td>@p.Sku</td>
+                                    <td>@p.ProductCategory</td>
+                                    <td>@p.CountryOfOrigin</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (totalPages > 1)
+    {
+        <nav aria-label="Product pagination" class="d-flex justify-content-center">
+            <ul class="pagination mb-0">
+                <li class="page-item @(page <= 1 ? "disabled" : "")">
+                    <a class="page-link" target="_self" asp-action="Index" asp-route-search="@search" asp-route-page="@(page - 1)" asp-route-pageSize="@pageSize" asp-route-view="@viewMode">Previous</a>
+                </li>
+                @{
+                    var startPage = Math.Max(1, page - 2);
+                    var endPage = Math.Min(totalPages, page + 2);
+                }
+                @for (var i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link" target="_self" asp-action="Index" asp-route-search="@search" asp-route-page="@(i)" asp-route-pageSize="@pageSize" asp-route-view="@viewMode">@(i)</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link" target="_self" asp-action="Index" asp-route-search="@search" asp-route-page="@(page + 1)" asp-route-pageSize="@pageSize" asp-route-view="@viewMode">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    function goToHref(href) {
+        if (href) window.location.href = href;
+    }
+    document.querySelectorAll('.product-row[data-href]').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+            if (e.target.closest('a')) return;
+            e.preventDefault();
+            goToHref(row.getAttribute('data-href'));
+        });
+        row.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                goToHref(row.getAttribute('data-href'));
+            }
+        });
+    });
+})();
+</script>
+}

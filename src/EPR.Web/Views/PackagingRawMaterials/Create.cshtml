@@ -1,0 +1,102 @@
+@model EPR.Domain.Entities.PackagingRawMaterial
+@{
+    ViewData["Title"] = "Create Raw Material";
+    var parentMaterials = ViewBag.ParentMaterials as List<EPR.Domain.Entities.PackagingRawMaterial> ?? new List<EPR.Domain.Entities.PackagingRawMaterial>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between mb-4">
+        <h1><i class="bi bi-box-seam"></i> Create Raw Material</h1>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Material Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Material Name *</label>
+                            <input asp-for="Name" class="form-control" required placeholder="e.g., Glass, Plastic, Paper" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="ParentMaterialId" class="form-label">Parent Category (Optional)</label>
+                            <select asp-for="ParentMaterialId" class="form-select">
+                                <option value="">-- Top Level Category --</option>
+                                @foreach (var parent in parentMaterials)
+                                {
+                                    <option value="@parent.Id">@parent.Name</option>
+                                }
+                            </select>
+                            <small class="form-text text-muted">Select a parent category if this is a sub-category (e.g., "Green Glass" under "Glass")</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Specification" class="form-label">Specification</label>
+                            <textarea asp-for="Specification" class="form-control" rows="3" placeholder="Detailed specification of the material"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Material
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Information</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">Create raw materials with hierarchical categories. For example:</p>
+                    <ul class="small">
+                        <li><strong>Glass</strong> (parent)
+                            <ul>
+                                <li>Clear Glass (sub-category)</li>
+                                <li>Green Glass (sub-category)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p class="small mt-3">After creating, you can:</p>
+                    <ul class="small">
+                        <li>Associate with jurisdictions</li>
+                        <li>Set EPR fees per jurisdiction</li>
+                        <li>Configure EcoModularity fees</li>
+                        <li>Export to XLSX</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+

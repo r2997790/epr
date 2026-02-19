@@ -1,0 +1,1403 @@
+﻿IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 3) 
+AS
+BEGIN
+	DECLARE @sumMass NUMERIC(25, 3);
+
+	SELECT @sumMass = ISNULL(SUM(MASS), 0)
+	FROM DXDIR_INPUT 
+	WHERE ASSESSMENT_CODE = @dcAssessmentCode AND
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage;
+
+	RETURN @sumMass;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassWaterExcludedInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumMassWaterExcludedInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumMassWaterExcludedInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 3) 
+AS
+BEGIN
+	DECLARE @sumMass NUMERIC(25, 3);
+
+	SELECT @sumMass = ISNULL(SUM(MASS), 0)
+	FROM DXDIR_INPUT 
+	WHERE ASSESSMENT_CODE			 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID 	 = @dcLCStage AND
+		  MAT_CODE					 NOT IN ('DIR_FOOD_WATER', 'DIR_NONFOOD_WATER');
+
+	RETURN @sumMass;
+END
+GO
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 4) 
+AS
+BEGIN
+	DECLARE @sumCost NUMERIC(25, 4);
+
+	SELECT @sumCost = ISNULL(SUM(COST), 0)
+	FROM DXDIR_INPUT 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage;
+
+	RETURN @sumCost;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumFoodMassInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumFoodMassInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumFoodMassInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 3)
+AS
+BEGIN
+	DECLARE @sumMass NUMERIC(25, 3);
+
+	SELECT @sumMass = ISNULL(SUM(MASS), 0)
+	FROM DXDIR_INPUT 
+		 INNER JOIN DXDIR_INPUT_CATEGORY
+		 ON DXDIR_INPUT.INPUT_CATEGORY_ID	 = DXDIR_INPUT_CATEGORY.ID
+	WHERE DXDIR_INPUT.ASSESSMENT_CODE		 = @dcAssessmentCode AND
+		  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID = @dcLCStage AND
+		  DXDIR_INPUT_CATEGORY.TYPE			 = 'FOOD';
+
+	RETURN @sumMass;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodWaterInputToDestination')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodWaterInputToDestination]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodWaterInputToDestination]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT,
+	@sDESTINATION_CODE VARCHAR(64)
+)
+RETURNS NUMERIC(26, 12)
+AS
+BEGIN
+	DECLARE @result NUMERIC(26, 12)
+
+	SELECT @result = ISNULL(SUM(DXDIR_INPUT.MASS * DXDIR_INPUT_DESTINATION.PERCENTAGE / 100), 0) 
+	FROM DXDIR_INPUT
+		 INNER JOIN DXDIR_INPUT_DESTINATION 
+		 ON DXDIR_INPUT.ID							 = DXDIR_INPUT_DESTINATION.INPUT_ID
+		 INNER JOIN DXDIR_INPUT_CATEGORY 
+		 ON DXDIR_INPUT.INPUT_CATEGORY_ID			 = DXDIR_INPUT_CATEGORY.ID
+	WHERE DXDIR_INPUT.ASSESSMENT_CODE				 = @dcAssessmentCode AND
+		 DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID			 = @dcLCStage AND
+		 DXDIR_INPUT.MAT_CODE						 IN ('DIR_FOOD_WATER', 'DIR_NONFOOD_WATER') AND 
+		 DXDIR_INPUT_CATEGORY.TYPE					 = 'FOOD'AND 
+		 DXDIR_INPUT_DESTINATION.DESTINATION_CODE	 = @sDESTINATION_CODE;
+
+	RETURN @result;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 6) 
+AS
+BEGIN
+	DECLARE @sum NUMERIC(25, 6);
+
+	SELECT @sum = ISNULL(SUM(DXDIR_INPUT.MASS * (1 - DXDIR_INPUT.INEDIBLE_PARTS) * (DXDIR_INPUT_DESTINATION.PERCENTAGE / 100)), 0)  
+	FROM DXDIR_INPUT
+		 INNER JOIN DXDIR_INPUT_DESTINATION 
+		 ON DXDIR_INPUT_DESTINATION.INPUT_ID	 = DXDIR_INPUT.ID
+		 INNER JOIN DXDIR_INPUT_CATEGORY 
+		 ON DXDIR_INPUT.INPUT_CATEGORY_ID		 = DXDIR_INPUT_CATEGORY.ID 
+	WHERE DXDIR_INPUT_CATEGORY.TYPE					 = 'FOOD'AND 
+		  DXDIR_INPUT.ASSESSMENT_CODE				 = @dcAssessmentCode AND 
+		  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID		 = @dcLCStage AND 
+		  DXDIR_INPUT_DESTINATION.DESTINATION_CODE	 IN ('COPRODUCT','FOOD_RESCUE');
+
+	RETURN @sum;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(25, 3)
+AS
+BEGIN
+	DECLARE @sumWeight NUMERIC(25, 3);
+
+	SELECT @sumWeight = ISNULL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+	FROM DXDIR_OUTPUT 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+		  (INPUT_ID IS NOT NULL OR (INPUT_ID IS NULL AND DESTINATION_CODE IS NULL AND OUTPUT_CATEGORY_ID <> 1));
+
+	RETURN @sumWeight ;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightWaterExOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightWaterExOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightWaterExOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(26, 12)
+AS
+BEGIN
+	DECLARE @sumWeight1 NUMERIC(26, 12),
+			@sumWeight2 NUMERIC(26, 12);
+
+	SELECT @sumWeight1 = ISNULL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+	FROM DXDIR_OUTPUT 
+		 INNER JOIN DXDIR_INPUT 
+		 ON DXDIR_OUTPUT.INPUT_ID = DXDIR_INPUT.ID 
+	WHERE DXDIR_OUTPUT.ASSESSMENT_CODE			 = @dcAssessmentCode AND 
+		  DXDIR_OUTPUT.ASSESSMENT_LC_STAGE_ID	 = @dcLCStage AND 
+		  INPUT_ID								 IS NOT NULL AND 
+		  DXDIR_INPUT.MAT_CODE					 NOT IN ('DIR_FOOD_WATER', 'DIR_NONFOOD_WATER');
+
+	SELECT @sumWeight2 = ISNULL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+	FROM DXDIR_OUTPUT 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+		  INPUT_ID				 IS NULL AND 
+		  DESTINATION_CODE		 IS NULL AND 
+		  OUTPUT_CATEGORY_ID	 <> 1;
+
+	RETURN @sumWeight1 + @sumWeight2 ;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightPackgWasteOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightPackgWasteOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightPackgWasteOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sum NUMERIC(26, 12);
+
+	SELECT @sum = ISNULL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+	FROM  DXDIR_INPUT 
+		 INNER JOIN DXDIR_OUTPUT 
+		 ON DXDIR_INPUT.ID = DXDIR_OUTPUT.INPUT_ID
+			 INNER JOIN DXDIR_INPUT_CATEGORY 
+			 ON DXDIR_INPUT.INPUT_CATEGORY_ID = DXDIR_INPUT_CATEGORY.ID
+	WHERE DXDIR_OUTPUT.ASSESSMENT_CODE			 = @dcAssessmentCode AND 
+		  DXDIR_OUTPUT.ASSESSMENT_LC_STAGE_ID	 = @dcLCStage AND
+		  DXDIR_OUTPUT.OUTPUT_CATEGORY_ID		 = 6 AND 
+		  DXDIR_OUTPUT.INPUT_ID					 IS NOT NULL AND
+		  DXDIR_INPUT_CATEGORY.TYPE				 <> 'FOOD' AND
+		  DXDIR_INPUT.PACKAGING                  = 1
+		  ;
+
+	RETURN @sum;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFoodPartOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFoodPartOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFoodPartOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(25, 3)
+AS
+BEGIN
+	DECLARE @sumWeight NUMERIC(25, 3);
+
+	SELECT @sumWeight = ISNULL(SUM(WEIGHT), 0)
+	FROM DXDIR_OUTPUT 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND
+		  INPUT_ID				 IS NOT NULL AND 
+		  OUTPUT_CATEGORY_ID	 IN  (4, 5);
+
+	RETURN @sumWeight;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightEdiblePartOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightEdiblePartOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumWeightEdiblePartOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC (25, 3)
+AS
+BEGIN
+	DECLARE @sumWeight NUMERIC(25, 3);
+
+	SELECT @sumWeight = ISNULL(SUM(WEIGHT), 0) 
+	FROM DXDIR_OUTPUT 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+		  INPUT_ID				 IS NOT NULL AND 
+		  OUTPUT_CATEGORY_ID	 = 4;
+
+	RETURN @sumWeight;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetCostOutput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetCostOutput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetCostOutput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(26, 4) 
+AS
+BEGIN
+	DECLARE @sumCost NUMERIC(26, 4);
+
+	SELECT @sumCost = ISNULL(SUM(COST), 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+		  (INPUT_ID IS NOT NULL OR (INPUT_ID IS NULL AND DESTINATION_CODE IS NULL AND OUTPUT_CATEGORY_ID <> 1));
+
+	RETURN @sumCost;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumBusinessCost')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumBusinessCost]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetSumBusinessCost]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC (25, 4)
+AS
+BEGIN
+	DECLARE @sumCost NUMERIC(25, 4);
+
+	SELECT @sumCost = ISNULL(SUM(COST), 0) 
+	FROM DXDIR_BUSINESS_COST 
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage;
+
+	RETURN @sumCost ;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetCostElectricity')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetCostElectricity]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetCostElectricity]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC (30, 4)
+AS
+BEGIN
+	DECLARE @sumCost NUMERIC(30, 4);
+
+	SELECT @sumCost = ISNULL(SUM(COST), 0)
+	FROM DXDIR_BUSINESS_COST 
+	WHERE ASSESSMENT_CODE			 = @dcAssessmentCode AND 
+		  ASSESSMENT_LC_STAGE_ID	 = @dcLCStage AND 
+		  DXDIR_BUSINESS_COST.TITLE	 IN ('ELECTRICITY', 'GAS');
+
+	RETURN @sumCost ;
+END
+GO
+
+
+/*Row for results grid*/
+/*Utilised input to gross product ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetUtilisedInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetUtilisedInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetUtilisedInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumWeight NUMERIC(25, 3),
+			@sumMass NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput(@dcAssessmentCode, @dcLCStage);
+
+	IF @sumMass = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeight = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput(@dcAssessmentCode, @dcLCStage);
+
+	RETURN 1.0 - @sumWeight / @sumMass;
+END
+GO
+
+
+/*Stock holding to gross product ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetStockHolding')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetStockHolding]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetStockHolding]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @productWeightOutput NUMERIC(26, 12),
+			@sumMass NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput(@dcAssessmentCode, @dcLCStage);
+
+	IF @sumMass = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SELECT @productWeightOutput = ISNULL(WEIGHT, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE = @dcAssessmentCode AND
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND
+		  (INPUT_ID IS NULL AND DESTINATION_CODE IS NULL AND OUTPUT_CATEGORY_ID = 1) ;
+
+	RETURN 1 - @productWeightOutput / @sumMass;
+END
+GO
+
+
+/*Food material loss (with inedible parts) to total material loss ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodMaterialLoss')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodMaterialLoss]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodMaterialLoss]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumWeightForWasteFood NUMERIC(25, 3),
+			@sumFoodMassPerCoproductAndFoodRescue NUMERIC(25, 6),
+			@sumWeight NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput(@dcAssessmentCode, @dcLCStage);
+
+	IF @sumWeight = 0 
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeightForWasteFood					 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFoodPartOutput(@dcAssessmentCode, @dcLCStage);
+	SET @sumFoodMassPerCoproductAndFoodRescue	 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp(@dcAssessmentCode, @dcLCStage);
+
+	RETURN CAST((@sumWeightForWasteFood + @sumFoodMassPerCoproductAndFoodRescue) as NUMERIC(25, 12)) / @sumWeight;
+END
+GO
+
+
+/*Food material loss (without inedible parts) to inputs ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetEdibleFoodMatLoss')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEdibleFoodMatLoss]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*Food material loss (without inedible parts) to inputs ratio*/
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEdibleFoodMatLoss]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumMass NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassInput(@dcAssessmentCode, @dcLCStage),
+			@sumWeightEdiblePart NUMERIC(25, 3),
+			@sumFoodMassCo NUMERIC(25, 12);
+
+	IF @sumMass = 0 
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeightEdiblePart = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightEdiblePartOutput(@dcAssessmentCode, @dcLCStage);
+	SET @sumFoodMassCo		 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp(@dcAssessmentCode, @dcLCStage);
+
+	RETURN CAST((@sumWeightEdiblePart + @sumFoodMassCo) as NUMERIC(26, 12)) / @sumMass;
+END
+GO
+
+
+/*Food material loss (without inedible parts) to total material loss ratio */
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetEdibleMatLossToMatLoss')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEdibleMatLossToMatLoss]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEdibleMatLossToMatLoss]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumWeight NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightFromOutput(@dcAssessmentCode, @dcLCStage),
+			@sumWeightForWasteFood NUMERIC(26, 12),
+			@sumFoodMassPerCoproductAndFoodRescue NUMERIC(25, 12);
+
+    IF @sumWeight = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeightForWasteFood					 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightEdiblePartOutput(@dcAssessmentCode, @dcLCStage);
+	SET @sumFoodMassPerCoproductAndFoodRescue	 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodIngMassToCoFoodRescInp(@dcAssessmentCode, @dcLCStage);
+
+	RETURN (@sumWeightForWasteFood + @sumFoodMassPerCoproductAndFoodRescue) / @sumWeight;
+END
+GO
+
+
+/*Total material loss (ex water) to material input (ex water) ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetMatLossToInputExWater')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetMatLossToInputExWater]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetMatLossToInputExWater]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumMassWater NUMERIC(25, 3) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumMassWaterExcludedInput(@dcAssessmentCode, @dcLCStage),
+			@sumWeightExWater NUMERIC(26, 12),
+			@waterInputCoProduct NUMERIC(26, 12),
+			@waterInputFoodRescue NUMERIC(26, 12);
+
+	IF @sumMassWater = 0 
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeightExWater     = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightWaterExOutput(@dcAssessmentCode, @dcLCStage);
+	SET @waterInputCoProduct  = dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodWaterInputToDestination(@dcAssessmentCode, @dcLCStage, 'COPRODUCT');
+	SET @waterInputFoodRescue = dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodWaterInputToDestination(@dcAssessmentCode, @dcLCStage, 'FOOD_RESCUE');
+
+	RETURN (@sumWeightExWater - @waterInputCoProduct - @waterInputFoodRescue) / @sumMassWater;
+END
+GO
+
+
+/*Packaging material loss to food input ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetPackgLossToFoodInput')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetPackgLossToFoodInput]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetPackgLossToFoodInput]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12)
+AS
+BEGIN
+	DECLARE @sumMassFood NUMERIC(26, 12) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumFoodMassInput(@dcAssessmentCode, @dcLCStage),
+			@sumWeightPackg NUMERIC(26, 12);
+
+	IF @sumMassFood = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWeightPackg = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumWeightPackgWasteOutput(@dcAssessmentCode, @dcLCStage);
+
+	RETURN CAST(@sumWeightPackg as NUMERIC(26, 12)) / CAST(@sumMassFood as NUMERIC(26, 12));
+END
+GO
+
+
+/*Output product packaging to gross product ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetPackToGrossProduct')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetPackToGrossProduct]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetPackToGrossProduct]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @packNonFoodProductSum NUMERIC(25, 12),
+			@productOutputWeight NUMERIC(25, 3);
+
+	SELECT @productOutputWeight = ISNULL(WEIGHT, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND
+		  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND
+		  OUTPUT_CATEGORY_ID	 = 1;
+
+	IF @productOutputWeight = 0 
+	BEGIN
+		RETURN 0;
+	END
+
+	SELECT @packNonFoodProductSum = ISNULL(SUM(DXDIR_INPUT.MASS * DXDIR_INPUT_DESTINATION.PERCENTAGE / 100), 0) 
+	FROM DXDIR_INPUT  
+		INNER JOIN DXDIR_INPUT_CATEGORY
+		ON DXDIR_INPUT.INPUT_CATEGORY_ID = DXDIR_INPUT_CATEGORY.ID
+			INNER JOIN DXDIR_INPUT_DESTINATION 
+			ON DXDIR_INPUT.ID= DXDIR_INPUT_DESTINATION.INPUT_ID
+	WHERE DXDIR_INPUT.ASSESSMENT_CODE				 = @dcAssessmentCode AND 
+		  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID		 = @dcLCStage AND 
+		  DXDIR_INPUT_CATEGORY.TYPE					 <> 'FOOD' AND 
+		  DXDIR_INPUT.PACKAGING						 = 1 AND
+		  DXDIR_INPUT_DESTINATION.DESTINATION_CODE	 = 'PRODUCT';
+
+	RETURN @packNonFoodProductSum / @productOutputWeight;
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatmentProc'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatmentProc]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatmentProc]
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT,
+	@dcRESULT NUMERIC(30, 4) OUTPUT
+AS
+BEGIN
+	SET @dcRESULT = dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID);
+END
+GO
+
+
+/* Waste removal cost */
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(25, 4) 
+AS
+BEGIN
+	DECLARE @sumTimeCost NUMERIC(25, 4);
+
+	SELECT @sumTimeCost = ISNULL(SUM(SRC.OUTPUT_COST), 0)
+	FROM
+	(
+		SELECT OUTPUT_COST FROM DXDIR_OUTPUT
+		WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+			  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+			  DESTINATION_CODE		 IS NOT NULL AND 
+			  INPUT_ID				 IS NULL
+		UNION ALL
+		SELECT OUTPUT_COST FROM DXDIR_OUTPUT
+		WHERE ASSESSMENT_CODE		 = @dcAssessmentCode AND 
+			  ASSESSMENT_LC_STAGE_ID = @dcLCStage AND 
+			  OUTPUT_CATEGORY_ID IN (2, 3)
+	) AS SRC;
+
+	RETURN @sumTimeCost;
+END
+GO
+
+
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$RevenueFromOutputIncome')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$RevenueFromOutputIncome]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$RevenueFromOutputIncome]
+(
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT
+)
+RETURNS NUMERIC(26, 7) 
+AS
+BEGIN
+	DECLARE @result NUMERIC(26, 7) = 0,
+			@productValuePerMass NUMERIC(26, 12) = dbo.DXDIR_PK_CALCULATIONS$GetValuePerMass(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, 1);
+    
+	IF (@productValuePerMass <> 0)
+	BEGIN
+		-- SUM(COSTS * INCOMES / WEIGHTS / @productValuePerMass)
+		SELECT @result = ISNULL(SUM(COSTS * CAST(CAST(INCOMES / WEIGHTS as NUMERIC(26, 12)) / @productValuePerMass as NUMERIC(26, 12))), 0)
+		FROM
+		(
+			SELECT CAST(SUM(COST) as NUMERIC(26, 12)) as COSTS,
+				   CAST(SUM(INCOME) as NUMERIC(24, 4)) as INCOMES,
+			       CAST(SUM(WEIGHT) as NUMERIC(24, 3)) as WEIGHTS
+			FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE = @sASSESSMENT_CODE
+			 AND ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID
+			 AND OUTPUT_CATEGORY_ID in (4,5,6)
+			GROUP BY OUTPUT_CATEGORY_ID, DESTINATION_CODE
+			HAVING SUM(INCOME) > 0 AND SUM(WEIGHT) > 0
+		) as r
+	END;
+
+    RETURN @result;  
+END
+GO
+
+
+/* Estimated true cost of waste*/
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$EstimatedCostOfWaste'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$EstimatedCostOfWaste]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$EstimatedCostOfWaste]
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT,
+	@dcRESULT NUMERIC(26, 12) OUTPUT
+AS
+BEGIN
+	DECLARE @coProductMargin				 NUMERIC(16, 12),
+			@foodRescueMargin				 NUMERIC(16, 12),
+			@sumCostRelatedWaste			 NUMERIC(24, 12),
+			@costCoproduct					 NUMERIC(25, 4),
+			@costFoodRescue					 NUMERIC(25, 4),
+			@sumCostOutput					 NUMERIC(25, 4),
+			@wasteCollectionTreat			 NUMERIC(25, 4),
+			@revenueFromIncome				 NUMERIC(26, 12);
+
+	DECLARE @tableBusinessCost TABLE (
+			   ID BIGINT,
+			   ASSESSMENT_CODE VARCHAR(32),
+			   ASSESSMENT_LC_STAGE_ID BIGINT,
+			   TYPE VARCHAR(24),
+			   TITLE NVARCHAR(256),
+			   SORT_ORDER INT,
+			   COST NUMERIC(24),
+			   WASTE_COST NUMERIC(24, 12));
+
+	DECLARE @COPRODUCT_OUTPUT_CATEGORY_ID	 BIGINT = 2;
+	DECLARE @FOOD_RESCUE_OUTPUT_CATEGORY_ID  BIGINT = 3;
+	
+	EXEC [dbo].[DXDIR_PK_CALCULATIONS$GetMargin] @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @COPRODUCT_OUTPUT_CATEGORY_ID, @coProductMargin OUTPUT;
+	EXEC [dbo].[DXDIR_PK_CALCULATIONS$GetMargin] @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @FOOD_RESCUE_OUTPUT_CATEGORY_ID, @foodRescueMargin OUTPUT;
+
+	SELECT @costCoproduct = ISNULL(COST, 0)
+	FROM DXDIR_OUTPUT
+	WHERE  ASSESSMENT_CODE		 = @sASSESSMENT_CODE AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID AND 
+		  (INPUT_ID IS NULL AND DESTINATION_CODE IS NULL AND OUTPUT_CATEGORY_ID = @COPRODUCT_OUTPUT_CATEGORY_ID);
+
+	SELECT @costFoodRescue = ISNULL(COST, 0)
+	FROM DXDIR_OUTPUT
+	WHERE ASSESSMENT_CODE		 = @sASSESSMENT_CODE AND 
+		  ASSESSMENT_LC_STAGE_ID = @dcASSESSMENT_LC_STAGE_ID AND 
+		  (INPUT_ID IS NULL AND DESTINATION_CODE IS NULL AND OUTPUT_CATEGORY_ID = @FOOD_RESCUE_OUTPUT_CATEGORY_ID);
+
+	SET @sumCostRelatedWaste	 = @costCoproduct * @coProductMargin + @costFoodRescue * @foodRescueMargin; 
+	SET @sumCostOutput			 = dbo.DXDIR_PK_RESULTCALCULATIONS$GetCostOutput(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID);
+	SET @wasteCollectionTreat	 = dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID);
+	SET @revenueFromIncome       = dbo.DXDIR_PK_RESULTCALCULATIONS$RevenueFromOutputIncome(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID);
+
+	INSERT INTO @tableBusinessCost EXEC [dbo].[DXDIR_PK_BUSINESS_COST$GetBusinessCostGridItems] @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID;
+
+	SELECT @dcRESULT = ISNULL(SUM(WASTE_COST), 0) + @wasteCollectionTreat - @sumCostRelatedWaste - @revenueFromIncome + @sumCostOutput FROM @tableBusinessCost;
+END
+GO
+
+
+/* Energy spend as % of operating costs*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetEnergyCost')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEnergyCost]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetEnergyCost]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumEnergy NUMERIC(26, 8),
+			@sumBusinessCost NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumBusinessCost(@dcAssessmentCode, @dcLCStage),
+			@sumWaste NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@dcAssessmentCode, @dcLCStage),
+			@sumCostInput NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput(@dcAssessmentCode, @dcLCStage);
+				
+	IF @sumBusinessCost = 0 AND @sumWaste = 0 AND @sumCostInput = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumEnergy = CAST(dbo.DXDIR_PK_RESULTCALCULATIONS$GetCostElectricity(@dcAssessmentCode, @dcLCStage) as NUMERIC(26, 8));
+
+	RETURN @sumEnergy / (@sumWaste + @sumBusinessCost + @sumCostInput);
+END
+GO
+
+
+/* Material spend as % of operating cost*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$GetMaterialSpend')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetMaterialSpend]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetMaterialSpend]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumCostInput NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput(@dcAssessmentCode, @dcLCStage),
+			@sumBusinessCost NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumBusinessCost(@dcAssessmentCode, @dcLCStage),
+			@sumWaste NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@dcAssessmentCode, @dcLCStage);
+
+	IF @sumWaste = 0 AND @sumBusinessCost = 0 AND @sumCostInput = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	RETURN @sumCostInput / (@sumWaste + @sumBusinessCost + @sumCostInput);
+END
+GO
+
+
+/*Disposal To Purchase Ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$DisposalToPurchase')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$DisposalToPurchase]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$DisposalToPurchase]
+(
+	@dcAssessmentCode VARCHAR(32),
+	@dcLCStage			BIGINT
+)
+RETURNS NUMERIC(26, 12) 
+AS
+BEGIN
+	DECLARE @sumCostInput NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput(@dcAssessmentCode, @dcLCStage),
+			@sumWaste NUMERIC(25, 4);
+
+	IF @sumCostInput = 0
+	BEGIN
+		RETURN 0;
+	END
+
+	SET @sumWaste = CAST(dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@dcAssessmentCode, @dcLCStage) as NUMERIC(25, 4));
+
+	RETURN @sumWaste / @sumCostInput;
+END
+GO
+
+
+/*Estimated true cost of waste ratio to purchase ratio*/
+IF EXISTS (
+		SELECT 1
+		FROM dbo.sysobjects
+		WHERE id = object_id(N'dbo.DXDIR_PK_RESULTCALCULATIONS$EstimatedWasteToPurchase')
+			AND OBJECTPROPERTY(id, N'IsScalarFunction') = 1
+		)
+	DROP FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$EstimatedWasteToPurchase]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE FUNCTION [dbo].[DXDIR_PK_RESULTCALCULATIONS$EstimatedWasteToPurchase]
+(
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT,
+	@estimatedTrueCostOfWaste NUMERIC(26, 12)
+)
+RETURNS NUMERIC(26, 12)
+AS
+BEGIN
+	DECLARE @sumCostInput NUMERIC(25, 4) = dbo.DXDIR_PK_RESULTCALCULATIONS$GetSumCostInput(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID);
+
+	IF @sumCostInput <> 0
+		RETURN @estimatedTrueCostOfWaste / @sumCostInput;
+
+	RETURN 0;
+END
+GO
+
+
+/*Results grid*/
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$GetResultsTable'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetResultsTable]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetResultsTable]
+	@sASSESSMENT_CODE VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT
+AS
+BEGIN
+	DECLARE	@resultsTable TABLE (
+			   ROW_ID BIGINT NOT NULL PRIMARY KEY,
+			   RESULT NUMERIC(26, 12)
+			 );
+
+	DECLARE @estimatedTrueCostOfWaste NUMERIC(26, 12);
+
+	EXEC [dbo].[DXDIR_PK_RESULTCALCULATIONS$EstimatedCostOfWaste] @sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @estimatedTrueCostOfWaste OUTPUT;
+
+	INSERT INTO @resultsTable (ROW_ID, RESULT)
+	SELECT  1,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetUtilisedInput(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 2,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetStockHolding(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 3,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetFoodMaterialLoss(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 4,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetEdibleFoodMatLoss(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 5,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetEdibleMatLossToMatLoss(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 6,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetMatLossToInputExWater(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 7,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetPackgLossToFoodInput(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 8,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetPackToGrossProduct(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 9,
+			@estimatedTrueCostOfWaste	
+	UNION ALL
+	SELECT 10,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$WasteCollectionTreatment(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID)
+	UNION ALL
+	SELECT 11,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetEnergyCost(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 12,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$GetMaterialSpend(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL
+	SELECT 13,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$DisposalToPurchase(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID) * 100
+	UNION ALL 
+	SELECT 14,
+			dbo.DXDIR_PK_RESULTCALCULATIONS$EstimatedWasteToPurchase(@sASSESSMENT_CODE, @dcASSESSMENT_LC_STAGE_ID, @estimatedTrueCostOfWaste) * 100;
+
+	SELECT DXDIR_RESULT_ROW.ID,
+		   DXDIR_RESULT_ROW.TITLE,
+		   DXDIR_RESULT_ROW.RESULT_UOM,
+		   DXDIR_RESULT_ROW.RESULT_TYPE,
+		   DXDIR_RESULT_ROW.SORT_ORDER, RESULT 
+	FROM @resultsTable AS RESULT_TAB
+		 INNER JOIN DXDIR_RESULT_ROW 
+		 ON RESULT_TAB.ROW_ID = DXDIR_RESULT_ROW.ID;
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$PyramidChartValues'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$PyramidChartValues]
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesNotIncIndblParts'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesNotIncIndblParts]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesNotIncIndblParts]
+	@sASSESSMENT_CODE		  VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT
+AS
+BEGIN
+	SELECT ISNULL(WEIGHT, 0) AS WEIGHT,
+		   OC.TYPE AS CODE,
+		   0 AS WASTE,
+		   0 AS SORT_ORDER,
+		   0 AS USED_ON,
+		   OC.TITLE
+	FROM DXDIR_OUTPUT O
+		 JOIN DXDIR_OUTPUT_CATEGORY OC
+		 ON OC.ID = O.OUTPUT_CATEGORY_ID
+	WHERE ASSESSMENT_CODE				 = @sASSESSMENT_CODE AND 
+		  ASSESSMENT_LC_STAGE_ID		 = @dcASSESSMENT_LC_STAGE_ID AND 
+		  OUTPUT_CATEGORY_ID			 IN (2, 3)
+	UNION 
+	SELECT ISNULL(SUM(WEIGHT), 0) AS WEIGHT,
+		   D.CODE AS CODE,
+		   0 AS WASTE,
+		   0 AS SORT_ORDER,
+		   0 AS USED_ON,
+		   D.TITLE
+	FROM DXDIR_OUTPUT O
+		 JOIN DXDIR_DESTINATION D
+		 ON O.DESTINATION_CODE	 = D.CODE
+		 JOIN DXDIR_OUTPUT_CATEGORY OC
+		 ON OC.ID				 = O.OUTPUT_CATEGORY_ID
+	WHERE ASSESSMENT_CODE			 = @sASSESSMENT_CODE AND
+		  ASSESSMENT_LC_STAGE_ID	 = @dcASSESSMENT_LC_STAGE_ID AND 
+		  OC.TYPE					 = 'FOOD'
+	GROUP BY D.CODE, D.TITLE;
+END
+GO
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesInediblePartsOnly'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesInediblePartsOnly]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULTCALCULATIONS$GetFoodLossesInediblePartsOnly]
+	@sASSESSMENT_CODE		  VARCHAR(32),
+	@dcASSESSMENT_LC_STAGE_ID BIGINT
+AS
+BEGIN
+	SELECT ISNULL(SUM(WEIGHT), 0) AS WEIGHT,
+		   D.CODE AS CODE,
+		   0 AS WASTE,
+		   0 AS SORT_ORDER,
+		   0 AS USED_ON,
+		   D.TITLE
+	FROM DXDIR_OUTPUT O
+		 JOIN DXDIR_DESTINATION D
+			ON O.DESTINATION_CODE = D.CODE
+		 JOIN DXDIR_OUTPUT_CATEGORY OC
+			ON OC.ID = O.OUTPUT_CATEGORY_ID
+	WHERE O.ASSESSMENT_CODE			 = @sASSESSMENT_CODE				AND
+		  O.ASSESSMENT_LC_STAGE_ID	 = @dcASSESSMENT_LC_STAGE_ID		AND 
+		  O.OUTPUT_CATEGORY_ID		 = 5
+	GROUP BY D.CODE, D.TITLE;
+END
+GO

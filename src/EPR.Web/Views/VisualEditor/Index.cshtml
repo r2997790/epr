@@ -1,0 +1,1595 @@
+@{
+    ViewData["Title"] = "Visual Editor - EPR Flow Builder";
+    Layout = Context.Request.Query["embedded"] == "1" ? "_LayoutEmbedded" : "_Layout";
+}
+
+<style>
+    /* Hide footer and break out of container */
+    body.visual-editor-page .footer {
+        display: none !important;
+    }
+    
+    body.visual-editor-page .container-fluid {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    body.visual-editor-page main {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: calc(100vh - 60px) !important;
+        overflow: hidden !important;
+    }
+    
+    /* Visual Editor Container - Account for navbar (56px) + tab bar (40px) = 96px */
+    #epr-visual-editor {
+        position: fixed;
+        top: 96px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: calc(100vh - 96px);
+        background: #f5f5f5;
+        z-index: 100;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto;
+    }
+    
+    /* CRITICAL: Ensure nothing covers the entire viewport */
+    #epr-visual-editor::before,
+    #epr-visual-editor::after {
+        display: none !important;
+        pointer-events: none !important;
+    }
+    
+    /* Ensure all child elements can receive pointer events */
+    #epr-visual-editor > * {
+        pointer-events: auto;
+    }
+    
+    /* Project Header - Positioned directly below browser tab bar (96px = navbar 56px + tabs 40px) */
+    .epr-project-header {
+        position: fixed;
+        top: 96px;
+        left: 0;
+        right: 0;
+        height: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: white;
+        border-bottom: 2px solid #dee2e6;
+        z-index: 200;
+        pointer-events: auto;
+    }
+    
+    .epr-project-name-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .epr-project-name-section label {
+        font-weight: 600;
+        margin: 0;
+        white-space: nowrap;
+        font-size: 0.9rem;
+    }
+    
+    .epr-project-name-section input {
+        min-width: 300px;
+        font-size: 18px !important;
+        font-weight: 600;
+    }
+    
+    .epr-autosave-timestamp {
+        font-size: 12px !important;
+        color: #6c757d;
+        font-weight: normal;
+        margin-left: 0.5rem; /* Small space between title and autosave */
+    }
+    
+    .epr-header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    /* Harmonize menu buttons - no fill, green on hover */
+    .epr-header-actions .btn,
+    .epr-header-actions label.btn {
+        background: transparent !important;
+        border: 1px solid #dee2e6;
+        color: #495057;
+    }
+    
+    .epr-header-actions .btn:hover,
+    .epr-header-actions label.btn:hover {
+        background: #28a745 !important;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .epr-header-actions .btn:hover i,
+    .epr-header-actions label.btn:hover i {
+        color: white;
+    }
+    
+    .epr-header-actions .btn-danger {
+        color: #dc3545;
+    }
+    
+    .epr-header-actions .btn-danger:hover {
+        background: #dc3545 !important;
+        border-color: #dc3545;
+        color: white;
+    }
+    
+    .epr-header-actions .btn-warning {
+        color: #ffc107;
+    }
+    
+    .epr-header-actions .btn-warning:hover {
+        background: #ffc107 !important;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    .epr-header-actions .btn-success {
+        color: #28a745;
+    }
+    
+    .epr-header-actions .btn-success:hover {
+        background: #28a745 !important;
+        border-color: #28a745;
+        color: white;
+    }
+    
+    .epr-header-actions .btn-info {
+        color: #17a2b8;
+    }
+    
+    .epr-header-actions .btn-info:hover {
+        background: #17a2b8 !important;
+        border-color: #17a2b8;
+        color: white;
+    }
+    
+    /* Floating Toolbars */
+    .epr-floating-toolbar {
+        position: fixed !important;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000 !important;
+        min-width: 200px;
+        max-height: calc(100vh - 80px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto !important;
+        transition: height 0.3s ease, max-height 0.3s ease;
+    }
+    
+    .epr-floating-toolbar * {
+        pointer-events: auto !important;
+    }
+    
+    .epr-floating-toolbar.minimized,
+    .epr-types-panel.minimized {
+        height: auto;
+        max-height: 40px;
+        overflow: hidden;
+    }
+    
+    .epr-floating-toolbar.minimized .epr-toolbar-content,
+    .epr-types-panel.minimized .epr-toolbar-content {
+        display: none;
+    }
+    
+    .epr-toolbar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0.75rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        cursor: move;
+        font-weight: 600;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    
+    .epr-btn-close-toolbar,
+    .epr-btn-split-toolbar,
+    .epr-btn-lock-toolbar {
+        background: none;
+        border: none;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 1rem;
+    }
+    
+    .epr-btn-close-toolbar:hover,
+    .epr-btn-split-toolbar:hover,
+    .epr-btn-lock-toolbar:hover {
+        color: #495057;
+    }
+    
+    .epr-btn-split-toolbar.active {
+        color: #28a745;
+    }
+    
+    .epr-btn-lock-toolbar.locked {
+        color: #28a745;
+    }
+    
+    .epr-btn-lock-toolbar.locked i {
+        color: #28a745;
+    }
+    
+    .epr-toolbar-content {
+        padding: 0.75rem;
+        overflow-y: auto;
+        flex: 1;
+        min-height: 0;
+    }
+    
+    /* Actions Toolbar - Initial position, but draggable */
+    .epr-actions-toolbar {
+        top: 186px;
+        left: 40px;
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+    }
+    
+    .epr-actions-toolbar .epr-toolbar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+    
+    .epr-toolbar-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 1rem;
+        padding: 0;
+    }
+    
+    .epr-toolbar-btn:hover {
+        background: #f8f9fa;
+        border-color: #28a745;
+    }
+    
+    .epr-toolbar-btn.active {
+        background: #28a745;
+        color: white;
+        border-color: #218838;
+    }
+    
+    #eprSankeyFlowToggleBtn {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        min-width: auto;
+        width: auto;
+    }
+    
+    #eprSankeyFlowToggleBtn #eprSankeyFlowToggleText,
+    #eprSankeyFlowToggleBtn #eprSankeyFlowToggleText2 {
+        transition: font-weight 0.2s;
+    }
+    
+    #eprSankeyFlowToggleBtn.active #eprSankeyFlowToggleText {
+        font-weight: bold;
+        color: #28a745;
+    }
+    
+    #eprSankeyFlowToggleBtn:not(.active) #eprSankeyFlowToggleText2 {
+        font-weight: bold;
+        color: #28a745;
+    }
+    
+    .epr-toolbar-divider {
+        height: 1px;
+        background: #dee2e6;
+        margin: 0.25rem 0;
+    }
+    
+    /* Types Toolbar - Initial position, but draggable */
+    .epr-types-toolbar {
+        top: 146px;
+        left: 90px;
+        width: 220px;
+        max-height: calc(100vh - 166px);
+    }
+    
+    /* Raw Materials section in unified toolbar should be wider */
+    .epr-types-toolbar .epr-toolbar-section[data-section="raw-materials"] {
+        width: 100%;
+    }
+    
+    .epr-types-toolbar .epr-material-buttons {
+        width: 100%;
+    }
+    
+    /* Types Toolbar Split Panels */
+    .epr-types-toolbar.split-mode {
+        display: none;
+    }
+    
+    .epr-types-panel {
+        position: fixed !important;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000 !important;
+        width: 220px;
+        max-height: calc(100vh - 146px);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        pointer-events: auto !important;
+    }
+    
+    .epr-types-panel-raw-materials {
+        width: 320px !important; /* Wider to show full button labels */
+    }
+    
+    .epr-types-panel * {
+        pointer-events: auto !important;
+    }
+    
+    /* Types panels positioned horizontally at bottom - 40px from left, 200px from bottom */
+    .epr-types-panel-raw-materials {
+        bottom: 200px;
+        left: 40px;
+        top: auto;
+    }
+    
+    .epr-types-panel-packaging {
+        bottom: 200px;
+        left: 340px;
+        top: auto;
+    }
+    
+    .epr-types-panel-packaging-groups {
+        bottom: 200px;
+        left: 580px;
+        top: auto;
+    }
+    
+    .epr-types-panel-products {
+        bottom: 200px;
+        left: 820px;
+        top: auto;
+    }
+    
+    .epr-types-panel-distribution {
+        bottom: 200px;
+        left: 1060px;
+        top: auto;
+    }
+    
+    .epr-types-panel-distribution-groups {
+        bottom: 200px;
+        left: 1300px;
+        top: auto;
+    }
+    
+    .epr-toolbar-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .epr-toolbar-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .epr-section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .epr-material-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, auto);
+        gap: 0.5rem;
+        align-content: flex-start;
+    }
+    
+    .epr-material-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        user-select: none;
+        pointer-events: auto !important;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .epr-material-btn:hover {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+    
+    .epr-material-btn.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+    }
+    
+    .epr-material-btn i {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .epr-material-btn span {
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .epr-toolbar-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .epr-toolbar-controls .btn {
+        width: 100%;
+        font-size: 0.85rem;
+    }
+    
+    /* Parameters Panel - Default position: top-right, but draggable */
+    .epr-parameters-panel {
+        top: 146px; /* Below project header (96px) + 50px spacing */
+        right: 20px;
+        width: 300px;
+        max-height: calc(100vh - 166px);
+    }
+    
+    /* Canvas Container - Account for project header */
+    .epr-canvas-container {
+        flex: 1;
+        position: relative;
+        overflow: auto;
+        background: #f5f5f5;
+        z-index: 1;
+        min-height: 0;
+        margin-top: 50px; /* Space for project header */
+        pointer-events: auto;
+    }
+    
+    .epr-canvas {
+        position: relative;
+        width: 100%;
+        min-height: 100%;
+        background: white;
+        z-index: 1;
+        pointer-events: auto;
+        cursor: default;
+        min-width: 100%;
+    }
+    
+    .epr-canvas.drag-over {
+        background: #e8f5e9;
+        border: 2px dashed #28a745;
+    }
+    
+    .epr-canvas-placeholder {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .epr-canvas-placeholder.hidden {
+        display: none;
+    }
+    
+    .epr-canvas.grid-visible {
+        background-image: 
+            linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    
+    .epr-connections-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: stroke;
+        z-index: 1;
+        overflow: visible;
+    }
+    
+    /* Ensure canvas accepts drops */
+    .epr-canvas-container,
+    .epr-canvas {
+        pointer-events: auto;
+    }
+    
+    .epr-nodes-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+        min-height: 100%;
+    }
+    
+    .epr-nodes-layer > * {
+        pointer-events: all;
+    }
+    
+    /* Canvas Nodes */
+    .epr-canvas-node {
+        position: absolute;
+        min-width: 150px;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #28a745;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        cursor: move;
+        z-index: 10;
+        transition: box-shadow 0.2s;
+    }
+    
+    .epr-canvas-node:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .epr-canvas-node.selected {
+        border-color: #218838;
+        border-width: 3px;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        z-index: 20;
+    }
+    
+    .epr-canvas-node.dragging {
+        opacity: 0.7;
+        z-index: 30;
+    }
+    
+    .epr-node-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .epr-node-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .epr-node-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        flex: 1;
+    }
+    
+    .epr-node-delete {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+    
+    .epr-canvas-node[data-type="transport"] .epr-node-delete {
+        padding-bottom: 3px;
+    }
+    
+    .epr-node-delete:hover {
+        opacity: 1;
+    }
+    
+    .epr-node-lock {
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+    
+    .epr-node-lock:hover {
+        opacity: 1;
+    }
+    
+    .epr-canvas-node[data-locked="true"] {
+        border-color: #ffc107 !important;
+        border-width: 3px;
+    }
+    
+    .epr-node-type {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    /* Node Type Colors */
+    .epr-canvas-node[data-type="raw-material"] {
+        border-color: #17a2b8;
+    }
+    
+    .epr-canvas-node[data-type="packaging"] {
+        border-color: #28a745;
+    }
+    
+    .epr-canvas-node[data-type="product"] {
+        border-color: #ffc107;
+    }
+    
+    .epr-canvas-node[data-type="distribution"] {
+        border-color: #6f42c1;
+    }
+    
+    .epr-canvas-node[data-type="supplier-packaging"] {
+        border-color: #20c997;
+    }
+    
+    /* Transport nodes should be hidden when displayed as boxes on connection lines */
+    /* Old large orange transport node styling COMPLETELY REMOVED - transport nodes are now small boxes on connections */
+    .epr-canvas-node[data-type="transport"][data-transport-on-connection="true"],
+    .epr-canvas-node[data-type="transport"].epr-transport-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+    
+    /* PREVENT any old transport node styling from appearing */
+    /* Transport nodes between two nodes should NEVER be visible as large nodes */
+    .epr-canvas-node[data-type="transport"] {
+        /* NO orange border, NO min-width, NO special padding - removed completely */
+        width: auto;
+        min-width: auto;
+    }
+    
+    /* Only show transport nodes as regular nodes if they're NOT between two connected nodes */
+    .epr-canvas-node[data-type="transport"]:not([data-transport-on-connection="true"]):not(.epr-transport-hidden) {
+        /* Allow normal node styling only for standalone transport nodes */
+        /* But still no special orange styling - use default node colors */
+    }
+    
+    /* Connection Lines */
+    .epr-connection-line {
+        stroke: #6c757d;
+        stroke-width: 2;
+        fill: none;
+        pointer-events: stroke;
+        cursor: pointer;
+    }
+    
+    .epr-connection-line:hover {
+        stroke: #28a745;
+        stroke-width: 3;
+    }
+    
+    /* Ensure toolbar buttons are always clickable */
+    .epr-floating-toolbar button,
+    .epr-types-panel button,
+    .epr-project-header button,
+    .epr-header-actions button,
+    .epr-toolbar-header button {
+        pointer-events: auto;
+        position: relative;
+    }
+    
+    /* Ensure canvas container doesn't block clicks */
+    .epr-canvas-container {
+        z-index: 1;
+        pointer-events: auto;
+        position: relative;
+    }
+    
+    .epr-canvas {
+        z-index: 1;
+        pointer-events: auto;
+        position: relative;
+    }
+    
+    .epr-nodes-layer {
+        z-index: 10 !important;
+        pointer-events: none;
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .epr-nodes-layer > * {
+        pointer-events: all !important;
+        position: relative !important;
+    }
+    
+    /* Ensure canvas nodes are draggable */
+    .epr-canvas-node {
+        pointer-events: all !important;
+        cursor: move !important;
+        position: absolute !important;
+        z-index: 20 !important;
+    }
+    
+    /* CRITICAL: Ensure connections layer doesn't block node clicks */
+    .epr-connections-layer {
+        z-index: 5 !important;
+        pointer-events: stroke;
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* CRITICAL: Ensure toolbars are ALWAYS above canvas */
+    .epr-floating-toolbar,
+    .epr-types-panel,
+    .epr-parameters-panel {
+        z-index: 10000;
+        pointer-events: auto;
+        position: fixed;
+    }
+    
+    /* Ensure project header is above everything */
+    .epr-project-header {
+        z-index: 200;
+        pointer-events: auto;
+        position: fixed;
+    }
+    
+    /* Ensure all buttons in toolbars are clickable */
+    .epr-floating-toolbar *,
+    .epr-types-panel *,
+    .epr-parameters-panel *,
+    .epr-project-header * {
+        pointer-events: auto;
+    }
+    
+    /* Remove any potential blocking overlays */
+    body.visual-editor-page::before,
+    body.visual-editor-page::after,
+    #epr-visual-editor::before,
+    #epr-visual-editor::after {
+        display: none !important;
+        pointer-events: none !important;
+    }
+    
+    /* Ensure all interactive elements are above canvas */
+    .epr-floating-toolbar,
+    .epr-types-panel,
+    .epr-project-header,
+    .epr-parameters-panel {
+        pointer-events: auto !important;
+        z-index: 10000 !important;
+        position: fixed !important;
+    }
+    
+    /* CRITICAL: Ensure all buttons and inputs work */
+    .epr-floating-toolbar *,
+    .epr-types-panel *,
+    .epr-project-header *,
+    .epr-parameters-panel * {
+        pointer-events: auto !important;
+    }
+    
+    /* CRITICAL: Hide modals when they're not shown - Bootstrap modals should be hidden */
+    .modal:not(.show) {
+        display: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    /* Only show modals when they have .show class */
+    .modal.show {
+        display: block !important;
+        pointer-events: auto !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1055;
+    }
+    
+    /* CRITICAL: Modal backdrops should ONLY block when modal is actually shown */
+    .modal-backdrop:not(.show) {
+        display: none !important;
+        pointer-events: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    .modal-backdrop.show {
+        z-index: 1040;
+        pointer-events: auto;
+    }
+    
+    /* Ensure modals are clickable when shown */
+    .modal.show .modal-dialog {
+        pointer-events: auto;
+        z-index: 1055;
+    }
+    
+    /* Ensure dropdowns are clickable */
+    .dropdown-menu {
+        pointer-events: auto;
+        z-index: 10500;
+    }
+    
+    /* Ensure toolbar headers are clickable for dragging */
+    .epr-toolbar-header {
+        pointer-events: auto !important;
+        z-index: 10002 !important;
+        position: relative;
+    }
+    
+    /* Ensure project header is always clickable */
+    .epr-project-header,
+    .epr-project-header * {
+        pointer-events: auto !important;
+        z-index: 200 !important;
+    }
+    
+    /* Ensure canvas doesn't block toolbar clicks */
+    .epr-canvas-container {
+        pointer-events: auto;
+    }
+    
+    .epr-canvas {
+        pointer-events: auto;
+    }
+    
+    /* Only disable pointer events on the connections layer itself, not on buttons */
+    .epr-connections-layer {
+        pointer-events: stroke;
+    }
+    
+    .epr-connections-layer * {
+        pointer-events: stroke;
+    }
+    
+    /* Center all modals vertically and horizontally */
+    .modal {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 90vw;
+    }
+    
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: calc(100% - 1rem);
+    }
+    
+    #eprNewProductModal .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: auto !important;
+        min-height: calc(100% - 1rem);
+    }
+    
+    /* Ensure toolbar header buttons are grouped on the right */
+    .epr-toolbar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .epr-toolbar-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+</style>
+
+<script type="text/javascript">
+if (document.body) {
+    document.body.classList.add('visual-editor-page');
+}
+</script>
+@{ 
+    var scriptVersion = DateTime.Now.Ticks; 
+    var cacheBuster = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+    var cacheVersion = $"v{DateTime.Now:yyyyMMddHHmmssfff}-{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+}
+<script type="text/javascript">
+console.log('Visual Editor script loading - Cache Version: @cacheVersion');
+</script>
+<script type="text/javascript" src="/js/visual-editor/clickability-debug.js?v=@cacheVersion"></script>
+<script type="text/javascript" src="/js/visual-editor/visual-editor-complete.js?v=@cacheVersion&t=@cacheBuster&v2=@DateTime.Now.Ticks&nocache=@Guid.NewGuid()"></script>
+<script type="text/javascript">
+console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
+</script>
+
+<!-- TEST: This comment should appear in HTML source -->
+<div id="epr-visual-editor" data-test="view-rendering">
+    <!-- Project Header -->
+    <div class="epr-project-header">
+        <div class="epr-project-name-section">
+            <input type="text" id="eprProjectName" class="form-control epr-project-name-input" placeholder="Enter project name..." value="Untitled" style="border: none; background: transparent; font-weight: 600; font-size: 18px !important; padding: 0.25rem 0.5rem; cursor: text; display: inline-block; width: auto; min-width: 200px;" />
+            <span id="eprAutosaveTimestamp" class="epr-autosave-timestamp" style="display: none; font-size: 12px !important; margin-left: 0.15rem;"></span>
+        </div>
+        <div class="epr-header-actions">
+            <button class="btn btn-sm btn-danger" id="eprClearCanvasBtn" title="Clear Canvas" data-no-tab="true">
+                <i class="bi bi-x-circle"></i> <span>Clear Canvas</span>
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Visibility Options" data-no-tab="true">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <ul class="dropdown-menu" id="eprVisibilityDropdown" data-no-tab="true">
+                    <li>
+                        <label class="dropdown-item-text">
+                            <input type="checkbox" id="eprVisibilityNodeNotes" checked class="me-2"> Node Notes
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item-text">
+                            <input type="checkbox" id="eprVisibilityContents" checked class="me-2"> Contents (nested list)
+                        </label>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <label class="dropdown-item-text">
+                            <input type="checkbox" id="eprVisibilityTransportNodes" checked class="me-2"> Transport Nodes
+                        </label>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <label class="dropdown-item-text">
+                            <input type="checkbox" id="eprVisibilityToolbars" checked class="me-2"> Toolbars
+                        </label>
+                    </li>
+                    <li>
+                        <label class="dropdown-item-text">
+                            <input type="checkbox" id="eprVisibilityPalettes" checked class="me-2"> Palettes
+                        </label>
+                    </li>
+                </ul>
+            </div>
+            <button class="btn btn-sm btn-primary" id="eprSaveProjectBtn" data-no-tab="true">
+                <i class="bi bi-save"></i> Save Project
+            </button>
+            <label class="btn btn-sm btn-secondary" style="margin-right: 0.5rem; cursor: pointer;" data-no-tab="true">
+                <input type="checkbox" id="eprAutosaveCheckbox" class="me-2" style="cursor: pointer;"> Autosave
+            </label>
+            <button class="btn btn-sm btn-secondary" id="eprLoadProjectBtn" data-no-tab="true">
+                <i class="bi bi-folder-open"></i> Load Project
+            </button>
+            <button class="btn btn-sm btn-warning" id="eprNewProjectBtn" data-no-tab="true">
+                <i class="bi bi-file-plus"></i> New Project
+            </button>
+            <button class="btn btn-sm btn-success" id="eprSaveElementBtn" title="Save selected element(s) and all related components" data-no-tab="true">
+                <i class="bi bi-bookmark"></i> Save Element(s)
+            </button>
+            <button class="btn btn-sm btn-info" id="eprLoadElementBtn" title="Load previously saved element(s)" data-no-tab="true">
+                <i class="bi bi-bookmark-fill"></i> Load Element(s)
+            </button>
+            <button class="btn btn-sm btn-secondary" id="eprSaveLayoutBtn" title="Save current toolbar/palette layout" data-no-tab="true">
+                <i class="bi bi-layout-sidebar"></i> Save Layout
+            </button>
+            <button class="btn btn-sm btn-secondary" id="eprResetLayoutBtn" title="Reset toolbar/palette layout to saved position" data-no-tab="true">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset Layout
+            </button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Align/Distribute Selected Nodes" data-no-tab="true">
+                    <i class="bi bi-align-middle"></i> Align/Distribute
+                </button>
+                <ul class="dropdown-menu" id="eprAlignDistributeDropdown" style="z-index: 10001 !important;" data-no-tab="true">
+                    <li><a class="dropdown-item" href="#" id="eprAlignLeftBtn"><i class="bi bi-align-start"></i> Align Left</a></li>
+                    <li><a class="dropdown-item" href="#" id="eprAlignRightBtn"><i class="bi bi-align-end"></i> Align Right</a></li>
+                    <li><a class="dropdown-item" href="#" id="eprAlignCenterBtn"><i class="bi bi-align-center"></i> Align Center</a></li>
+                    <li><a class="dropdown-item" href="#" id="eprAlignTopBtn"><i class="bi bi-align-top"></i> Align Top</a></li>
+                    <li><a class="dropdown-item" href="#" id="eprAlignBottomBtn"><i class="bi bi-align-bottom"></i> Align Bottom</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" id="eprDistributeHorizontallyBtn"><i class="bi bi-arrows-collapse"></i> Distribute Horizontally</a></li>
+                    <li><a class="dropdown-item" href="#" id="eprDistributeVerticallyBtn"><i class="bi bi-arrows-collapse-vertical"></i> Distribute Vertically</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Toolbar -->
+    <div id="eprActionsToolbar" class="epr-floating-toolbar epr-actions-toolbar">
+        <div class="epr-toolbar-header">
+            <span>Actions</span>
+            <div class="epr-toolbar-header-actions">
+                <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
+                    <i class="bi bi-unlock"></i>
+                </button>
+                <button class="epr-btn-close-toolbar" title="Minimize">
+                    <i class="bi bi-dash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="epr-toolbar-content">
+            <button class="epr-toolbar-btn" id="eprDragModeBtn" title="Drag Mode">
+                <i class="bi bi-arrows-move"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprZoomInBtn" title="Zoom In">
+                <i class="bi bi-zoom-in"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprZoomOutBtn" title="Zoom Out">
+                <i class="bi bi-zoom-out"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprUndoBtn" title="Undo">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprFitToCanvasBtn" title="Fit to Canvas">
+                <i class="bi bi-arrows-angle-contract"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprArrangeBtn" title="Arrange Nodes">
+                <i class="bi bi-diagram-3"></i>
+            </button>
+            <div class="epr-toolbar-divider"></div>
+            <button class="epr-toolbar-btn active" id="eprSelectToolBtn" title="Select Tool (Click to select, drag to multi-select)">
+                <i class="bi bi-cursor"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprToggleGridBtn" title="Show/Hide Grid">
+                <i class="bi bi-grid"></i>
+            </button>
+            <button class="epr-toolbar-btn" id="eprSnapToGridBtn" title="Snap to Grid">
+                <i class="bi bi-magnet"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Types Toolbar (Unified) -->
+    <div id="eprTypesToolbar" class="epr-floating-toolbar epr-types-toolbar">
+        <div class="epr-toolbar-header">
+            <span>Types</span>
+            <div class="epr-toolbar-header-actions">
+                <button class="epr-btn-split-toolbar" id="eprSplitTypesBtn" title="Split Toolbars">
+                    <i class="bi bi-columns"></i>
+                </button>
+                <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
+                    <i class="bi bi-unlock"></i>
+                </button>
+                <button class="epr-btn-close-toolbar" title="Minimize">
+                    <i class="bi bi-dash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="epr-toolbar-content">
+            <!-- Raw Materials Section -->
+            <div class="epr-toolbar-section" data-section="raw-materials">
+                <h6 class="epr-section-title">Raw Materials</h6>
+                <div id="eprRawMaterialsButtons" class="epr-material-buttons">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Packaging Library Section -->
+            <div class="epr-toolbar-section" data-section="packaging">
+                <h6 class="epr-section-title">Packaging Library</h6>
+                <div class="epr-toolbar-controls">
+                    <select id="eprPackagingLibraryDropdown" class="form-select form-select-sm">
+                        <option value="">Select packaging...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddPackagingBtn">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                    <button class="btn btn-sm btn-success" id="eprNewPackagingBtn">
+                        <i class="bi bi-plus-circle"></i> New
+                    </button>
+                </div>
+            </div>
+
+            <!-- Packaging Groups Section -->
+            <div class="epr-toolbar-section" data-section="packaging-groups">
+                <h6 class="epr-section-title">Packaging Groups</h6>
+                <div class="epr-toolbar-controls">
+                    <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
+                        <i class="bi bi-collection"></i> Add Group
+                    </button>
+                    <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtn" style="width: 100%;">
+                        <i class="bi bi-folder-open"></i> Load Group
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Library Section -->
+            <div class="epr-toolbar-section" data-section="products">
+                <h6 class="epr-section-title">Product Library</h6>
+                <div class="epr-toolbar-controls">
+                    <select id="eprProductLibraryDropdown" class="form-select form-select-sm">
+                        <option value="">Select product...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddProductBtn">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                    <button class="btn btn-sm btn-success" id="eprNewProductBtn">
+                        <i class="bi bi-plus-circle"></i> New
+                    </button>
+                </div>
+            </div>
+
+            <!-- Supplier Packaging Section -->
+            <div class="epr-toolbar-section" data-section="supplier-packaging">
+                <h6 class="epr-section-title">Supplier Packaging</h6>
+                <div class="epr-toolbar-controls">
+                    <select id="eprSupplierPackagingDropdown" class="form-select form-select-sm">
+                        <option value="">Select supplier packaging...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddSupplierPackagingBtn">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                </div>
+                <small class="text-muted">Connect to products to attach supplier packaging</small>
+            </div>
+
+            <!-- Distribution Groups Section -->
+            <div class="epr-toolbar-section" data-section="distribution-groups">
+                <h6 class="epr-section-title">Distribution Groups</h6>
+                <div class="epr-toolbar-controls">
+                    <button class="btn btn-sm btn-info" id="eprAddDistributionGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
+                        <i class="bi bi-collection"></i> Add Network Distribution
+                    </button>
+                    <button class="btn btn-sm btn-success" id="eprLoadDistributionGroupBtn" style="width: 100%;">
+                        <i class="bi bi-folder-open"></i> Load Network Distribution
+                    </button>
+                </div>
+            </div>
+
+            <!-- Distribution Section -->
+            <div class="epr-toolbar-section" data-section="distribution">
+                <h6 class="epr-section-title">Distribution</h6>
+                <div class="epr-toolbar-controls">
+                    <select id="eprCountryDropdown" class="form-select form-select-sm">
+                        <option value="">Select location...</option>
+                    </select>
+                    <select id="eprRegionDropdown" class="form-select form-select-sm" style="display: none;">
+                        <option value="">Select region...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddDistributionBtn">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                    <button class="btn btn-sm btn-success" id="eprNewLocationBtn">
+                        <i class="bi bi-plus-circle"></i> New
+                    </button>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="epr-toolbar-section" data-section="notes">
+                <h6 class="epr-section-title">Notes</h6>
+                <div class="epr-toolbar-controls">
+                    <button class="btn btn-sm btn-secondary" id="eprAddNoteBtn" style="width: 100%;">
+                        <i class="bi bi-sticky-fill"></i> Add Note
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Split Types Toolbar Panels (Hidden by default) -->
+    <div id="eprTypesPanelRawMaterials" class="epr-types-panel epr-types-panel-raw-materials" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Raw Materials</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div id="eprRawMaterialsButtonsSplit" class="epr-material-buttons"></div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelPackaging" class="epr-types-panel epr-types-panel-packaging" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Packaging Library</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <select id="eprPackagingLibraryDropdownSplit" class="form-select form-select-sm">
+                    <option value="">Select packaging...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="eprAddPackagingBtnSplit">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+                <button class="btn btn-sm btn-success" id="eprNewPackagingBtnSplit">
+                    <i class="bi bi-plus-circle"></i> New
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelProducts" class="epr-types-panel epr-types-panel-products" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Product Library</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <select id="eprProductLibraryDropdownSplit" class="form-select form-select-sm">
+                    <option value="">Select product...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="eprAddProductBtnSplit">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+                <button class="btn btn-sm btn-success" id="eprNewProductBtnSplit">
+                    <i class="bi bi-plus-circle"></i> New
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelDistribution" class="epr-types-panel epr-types-panel-distribution" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Distribution</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <select id="eprCountryDropdownSplit" class="form-select form-select-sm">
+                    <option value="">Select location...</option>
+                </select>
+                <select id="eprRegionDropdownSplit" class="form-select form-select-sm" style="display: none;">
+                    <option value="">Select region...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="eprAddDistributionBtnSplit">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+                <button class="btn btn-sm btn-success" id="eprNewLocationBtnSplit">
+                    <i class="bi bi-plus-circle"></i> New
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelPackagingGroups" class="epr-types-panel epr-types-panel-packaging-groups" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Packaging Groups</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtnSplit" style="width: 100%; margin-bottom: 0.25rem;">
+                    <i class="bi bi-collection"></i> Add Group
+                </button>
+                <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtnSplit" style="width: 100%;">
+                    <i class="bi bi-folder-open"></i> Load Group
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelDistributionGroups" class="epr-types-panel epr-types-panel-distribution-groups" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>Distribution Groups</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <button class="btn btn-sm btn-info" id="eprAddDistributionGroupBtnSplit" style="width: 100%; margin-bottom: 0.25rem;">
+                    <i class="bi bi-collection"></i> Add Network Distribution
+                </button>
+                <button class="btn btn-sm btn-success" id="eprLoadDistributionGroupBtnSplit" style="width: 100%;">
+                    <i class="bi bi-folder-open"></i> Load Network Distribution
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parameters Panel -->
+    <div id="eprParametersPanel" class="epr-floating-toolbar epr-parameters-panel">
+        <div class="epr-toolbar-header">
+            <span>Parameters</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div id="eprParametersContent">
+                <p class="text-muted small">Select a node to view/edit parameters</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Canvas -->
+    <div id="eprCanvasContainer" class="epr-canvas-container">
+        <div id="eprCanvas" class="epr-canvas">
+            <svg id="eprConnectionsLayer" class="epr-connections-layer"></svg>
+            <div id="eprNodesLayer" class="epr-nodes-layer"></div>
+            <div id="eprCanvasPlaceholder" class="epr-canvas-placeholder">
+                <i class="bi bi-diagram-3" style="font-size: 4rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                <p style="color: #6c757d; font-size: 1.1rem; margin-bottom: 0.5rem;">Drag items from the toolbar to start building</p>
+                <p style="color: #9ca3af; font-size: 0.9rem;">or click buttons to add items to the canvas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="eprNewPackagingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Packaging Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="eprNewPackagingName" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="eprNewPackagingDescription"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewPackagingBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eprNewProductModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px; width: 400px; margin: auto;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">SKU</label>
+                    <input type="text" class="form-control" id="eprNewProductSku" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="eprNewProductName" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="eprNewProductDescription"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewProductBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eprNewLocationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Distribution Location</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Unique Location Code</label>
+                        <input type="text" class="form-control" id="eprNewLocationUniqueLocationCode" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" class="form-control" id="eprNewLocationCompanyName" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Site Name</label>
+                        <input type="text" class="form-control" id="eprNewLocationSiteName" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Street Address</label>
+                        <input type="text" class="form-control" id="eprNewLocationStreetAddress" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Postcode/Zip Code</label>
+                        <input type="text" class="form-control" id="eprNewLocationPostcode" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" id="eprNewLocationCity" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">County/State/Province</label>
+                        <input type="text" class="form-control" id="eprNewLocationState" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Country <span style="color: red;">*</span></label>
+                        <input type="text" class="form-control" id="eprNewLocationCountry" required />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Type</label>
+                        <select class="form-select" id="eprNewLocationType">
+                            <option value="">Select type...</option>
+                            <option value="Hub">Hub</option>
+                            <option value="Warehouse">Warehouse</option>
+                            <option value="Store">Store</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Local Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationLocalAuthority" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Regional Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationRegionalAuthority" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Industry Authority</label>
+                        <input type="text" class="form-control" id="eprNewLocationIndustryAuthority" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprSaveNewLocationBtn">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ var scriptVersion2 = DateTime.Now.Ticks; }
+    <script type="text/javascript" src="~/js/visual-editor/visual-editor-complete.js?v=@scriptVersion2" asp-append-version="true"></script>
+    <script type="text/javascript">
+    let initRetryCount = 0;
+    const MAX_RETRIES = 50; // Maximum 10 seconds (50 * 200ms)
+    
+    function initEPRVisualEditor() {
+        console.log('[EPR Visual Editor] initEPRVisualEditor() called, attempt:', initRetryCount + 1);
+        
+        if (initRetryCount >= MAX_RETRIES) {
+            console.error('[EPR Visual Editor] ❌ Maximum retry count reached. EPRVisualEditorApp may not be loaded. Check for JavaScript errors.');
+            return;
+        }
+        
+        if (typeof window.EPRVisualEditorApp === 'undefined') {
+            console.warn('[EPR Visual Editor] EPRVisualEditorApp not available, retrying...');
+            initRetryCount++;
+            setTimeout(initEPRVisualEditor, 200);
+            return;
+        }
+        
+        const editor = document.getElementById('epr-visual-editor');
+        const canvas = document.getElementById('eprCanvas');
+        const nodesLayer = document.getElementById('eprNodesLayer');
+        const connectionsLayer = document.getElementById('eprConnectionsLayer');
+        
+        if (!editor || !canvas || !nodesLayer || !connectionsLayer) {
+            console.warn('[EPR Visual Editor] Elements not found, retrying...');
+            initRetryCount++;
+            setTimeout(initEPRVisualEditor, 200);
+            return;
+        }
+        
+        try {
+            window.EPRVisualEditor = new window.EPRVisualEditorApp();
+            console.log('[EPR Visual Editor] ✅ Editor created successfully!');
+            
+            // CRITICAL: Hide all modals that aren't shown
+            setTimeout(() => {
+                // Remove hidden modal backdrops
+                document.querySelectorAll('.modal-backdrop:not(.show)').forEach(backdrop => {
+                    backdrop.remove();
+                });
+                
+                // Force hide all modals that don't have .show class
+                document.querySelectorAll('.modal:not(.show)').forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.style.pointerEvents = 'none';
+                    modal.style.visibility = 'hidden';
+                    modal.style.opacity = '0';
+                    modal.setAttribute('aria-hidden', 'true');
+                });
+                
+                console.log('[EPR Visual Editor] Hidden modals cleaned up:', document.querySelectorAll('.modal:not(.show)').length);
+            }, 100);
+        } catch (error) {
+            console.error('[EPR Visual Editor] ❌ Error creating editor:', error);
+            console.error('[EPR Visual Editor] Error stack:', error.stack);
+        }
+    }
+    
+    setTimeout(function() {
+        if (typeof window.EPRVisualEditorApp !== 'undefined') {
+            initEPRVisualEditor();
+        } else {
+            setTimeout(initEPRVisualEditor, 500);
+        }
+    }, 500);
+    </script>
+}
+
+<!-- Modal for Loading Saved Elements -->
+<div class="modal fade" id="eprLoadElementModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Saved Element(s)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="eprSavedElementsList" style="max-height: 400px; overflow-y: auto;">
+                    <p class="text-muted">Loading saved elements...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

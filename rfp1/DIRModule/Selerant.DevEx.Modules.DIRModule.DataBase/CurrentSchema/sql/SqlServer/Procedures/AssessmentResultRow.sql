@@ -1,0 +1,98 @@
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULT_ROW$InsertRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$InsertRecord]
+	@dcID TINYINT,
+	@sTITLE VARCHAR(512),
+	@sRESULT_UOM VARCHAR(16),
+	@sRESULT_TYPE VARCHAR(1),
+	@dcSORT_ORDER NUMERIC(3,0)
+AS
+BEGIN
+	INSERT [dbo].[DXDIR_RESULT_ROW]
+	(
+		[ID],
+		[TITLE],
+		[RESULT_UOM],
+		[RESULT_TYPE],
+		[SORT_ORDER]
+	)
+	VALUES
+	(
+		@dcID,
+		@sTITLE,
+		@sRESULT_UOM,
+		@sRESULT_TYPE,
+		@dcSORT_ORDER
+	)
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULT_ROW$UpdateRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$UpdateRecord]
+	@dcID TINYINT,
+	@sTITLE VARCHAR(512),
+	@sRESULT_UOM VARCHAR(16),
+	@sRESULT_TYPE VARCHAR(1),
+	@dcSORT_ORDER NUMERIC(3,0)
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_RESULT_ROW]
+	SET 
+		[TITLE] = @sTITLE,
+		[RESULT_UOM] = @sRESULT_UOM,
+		[RESULT_TYPE] = @sRESULT_TYPE,
+		[SORT_ORDER] = @dcSORT_ORDER
+	WHERE [ID] = @dcID
+	
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_RESULT_ROW$DeleteRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_RESULT_ROW$DeleteRecord]
+	@dcID TINYINT
+AS
+BEGIN
+	DELETE FROM [dbo].[DXDIR_RESULT_ROW]
+	WHERE [ID] = @dcID
+END
+GO

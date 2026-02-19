@@ -1,0 +1,177 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Views
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.AssessmentResults
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers
+@using Selerant.DevEx.Modules.DIRModule.Configuration.Resources
+@using System.Web.Mvc
+
+@inherits NavigatorPanelView<AssessmentResultsModel>
+
+@{
+    string noResultsGridLabel = ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("GridNoResults");
+
+    string productionRatiosEmptyBlockId = "GridDataEmpty_ProductionRatios";
+    string finantialIndicatorsEmptyBlockId = "GridDataEmpty_KeyFinantialIndicators";
+    string foodWastePerDestinationEmptyBlockId = "GridDataEmpty_FoodWastePerDestinationEmptyBlockId";
+    string costOfWasteEmptyBlockId = "GridDataEmpty_CostOfWasteEmptyBlockId";
+
+    var productionRatiosGrid = Html.DX().jqGrid(Model.ProductionRatiosGridId)
+        .setLogicId(Model.ProductionRatiosGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentResults.GetAssessmentResults(null, Model.LcStageId, AssessmentResultType.MASS)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setPager(null)
+        .setEmptyBlock(productionRatiosEmptyBlockId);
+
+    var finantialIndicatorsGrid = Html.DX().jqGrid(Model.KeyFinantialIndicatorsGridId)
+        .setLogicId(Model.KeyFinantialIndicatorsGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentResults.GetAssessmentResults(null, Model.LcStageId, AssessmentResultType.PERCENTAGE)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setPager(null)
+        .setEmptyBlock(finantialIndicatorsEmptyBlockId);
+
+    var foodWastePerDestinationGrid = Html.DX().jqGrid(Model.FoodWastePerDestinationGridId)
+        .setLogicId(Model.FoodWastePerDestinationGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentResults.GetFoodWasteDestinationData(null, Model.LcStageId)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setPager(null)
+        .setEmptyBlock(foodWastePerDestinationEmptyBlockId);
+
+    var costOfWasteGrid = Html.DX().jqGrid(Model.CostOfWasteGridId)
+        .setLogicId(Model.CostOfWasteGridId)
+        .initJqGrid(Url.Action(MVC_DIR.AssessmentNavigator.AssessmentResults.GetCostOfWasteData(null, Model.LcStageId)))
+        .SetControllerRequestPostData(Model.ControllerData)
+        .setAutoWidth(true)
+        .setShrinkToFit(true)
+        .setPager(null)
+        .setEmptyBlock(costOfWasteEmptyBlockId);
+
+    var costOfWasteChart = Html.ChartControl("CostOfWasteChart").SetChartType("DonutChart")
+        .SetColors(new string[]
+        {
+        "#f44a81", "#0076ce", "#6cc043", "#a63b99", "#22b1e6", "#d384c9",
+        "#DD824E", "#339177", "#00D479", "#FF9200","#debf4e", "#3b6291",
+        "#339177", "#6a3c96", "#4d449a", "#4FAB22", "#780F6C", "#07A3DF"
+        })
+        .SetData(Model.GetEmptyCostOfWasteChartData())
+        .SetHeight(430)
+        .SetWidth(430)
+        .SetInnerRadius(65)
+        .SetShowDialog(false)
+        .SetMargin(70)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsCostOfWasteChartTitle"))
+        .AddExtraParameter("useOuterLabels", true);
+
+    var productionRatiosChart = Html.ChartControl("ProductionRatiosChart").SetChartType("HorizontalGroupedBarChart")
+        .SetColors(new string[] { "#039BE5", "#006DB3", "#00558C", "#004470", "#003354", "#002035", "#00070C", "#000000" })
+        .SetData(Model.GetEmptyProductionRatiosChartData())
+        .SetWidth(670)
+        .SetHeight(430)
+        .SetLegendPanelAbsoluteSize(170)
+        .SetShowDialog(false)
+        .SetMargin(60, 80, 90, 220)
+        .SetPosition(new string[] { "240px", "0px" })
+        .SetBottomLegend(false)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsProdRatiosChartTitle"))
+        .AddExtraParameter("xAxisFormat", "PERCENTAGE");
+
+    var finantialIndicatorsChart = Html.ChartControl("KeyFinantialIndicatorsChart").SetChartType("HorizontalGroupedBarChart")
+        .SetColors(new string[] { "#6CC043", "#039BE5", "#006DB3", "#00558C", "#004470", "#003354", "#002035", "#00070C", "#000000" })
+        .SetData(Model.GetEmptyKeyFinantialIndicators())
+        .SetWidth(670)
+        .SetHeight(450)
+        .SetLegendPanelAbsoluteSize(170)
+        .SetShowDialog(false)
+        .SetMargin(60, 80, 90, 220)
+        .SetPosition(new string[] { "240px", "0px" })
+        .SetBottomLegend(false)
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsFinIndChartTitle"))
+        .AddExtraParameter("xAxisFormat", "PERCENTAGE");
+
+    var pyramidChartOutput = Html.ChartControl("pyramidDestinationChart").SetChartType("PyramidChart")
+        .SetColors(Model.GetEmptyPyramidColorData())
+        .SetData(Model.GetEmptyPyramidDestinationData())
+        .SetWidth(570)
+        .SetHeight(450)
+        .SetShowDialog(false)
+        .SetBottomLegend(false)
+        .SetLegendPanelSize(20)
+        .SetMargin(20)
+        .SetPosition(new string[] { "0px", "0px" })
+        .SetTitle(ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ResultsPyramidChartFoodDestination"));
+}
+
+<div class="container-fluid main-container">
+    <div class="row dir-module-bus-nav-assessment-results-row-fluid">
+        <div class="col-6" @Html.AutoId("productionRatiosChart")>
+            <div class="dir-module-panel">
+                <div class="dir-module-panel-heading">
+                    <h2 id="productionRatiosChart">@productionRatiosChart.ChartTitle</h2>
+                </div>
+                <div class="dir-module-panel-body">
+                    @productionRatiosChart.Render()
+                    @productionRatiosGrid.Render()
+                    @(Html.EmptyDataBlock(productionRatiosEmptyBlockId, noResultsGridLabel, false))
+                </div>
+            </div>
+        </div>
+        <div class="col-6" @Html.AutoId("costOfWasteChart")>
+            <div class="dir-module-panel">
+                <div class="dir-module-panel-heading">
+                    <h2 id="costOfWasteChart">@costOfWasteChart.ChartTitle</h2>
+                </div>
+                <div class="dir-module-panel-body">
+                    <div class="row">
+                        <div class="col-8">
+                            @costOfWasteChart.Render()
+                        </div>
+                        <div class="col-4">
+                            <table class="dir-module-bus-nav-assessment-results-legend-table dir-module-bus-nav-assessment-results-legend-table--cost-of-waste">
+                            </table>
+                        </div>
+                    </div>
+                    @costOfWasteGrid.Render()
+                    @(Html.EmptyDataBlock(costOfWasteEmptyBlockId, noResultsGridLabel, false))
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row dir-module-bus-nav-assessment-results-row-fluid">
+        <div class="col-6" @Html.AutoId("finantialIndicatorsChart")>
+            <div class="dir-module-panel">
+                <div class="dir-module-panel-heading">
+                    <h2 id="finalIndicatorsChart">@finantialIndicatorsChart.ChartTitle</h2>
+                </div>
+                <div class="dir-module-panel-body">
+                    @finantialIndicatorsChart.Render()
+                    @finantialIndicatorsGrid.Render()
+                    @(Html.EmptyDataBlock(finantialIndicatorsEmptyBlockId, noResultsGridLabel, false))
+                </div>
+            </div>
+        </div>
+        <div class="col-6" style="position: relative;" @Html.AutoId("pyramidChartOutput")>
+            <div class="dir-module-panel">
+                <div class="dir-module-panel-heading">
+                    <h2 id="pyramidChartOutput">@pyramidChartOutput.ChartTitle</h2>
+                </div>
+                <div class="dir-module-panel-body">
+                    <div class="row">
+                        <div class="col-8">
+                            @pyramidChartOutput.Render()
+                        </div>
+                        <div class="col-4">
+                            <table class="dir-module-bus-nav-assessment-results-legend-table dir-module-bus-nav-assessment-results-legend-table--food-waste-per-destination"></table>
+                        </div>
+                    </div>                    
+                    @foodWastePerDestinationGrid.Render()
+                    @(Html.EmptyDataBlock(foodWastePerDestinationEmptyBlockId, noResultsGridLabel, false))
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

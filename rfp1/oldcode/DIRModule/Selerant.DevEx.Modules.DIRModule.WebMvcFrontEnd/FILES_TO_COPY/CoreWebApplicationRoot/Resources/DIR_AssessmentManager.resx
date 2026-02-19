@@ -1,0 +1,966 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ANNNavTabAssessmentResults" xml:space="preserve">
+    <value>Assessment Results</value>
+  </data>
+  <data name="ANNNavTabGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="ANNNavTabResourceManagement" xml:space="preserve">
+    <value>Resource Management</value>
+  </data>
+  <data name="ANNToolbarCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ANNToolbarCopyTT" xml:space="preserve">
+    <value>Copy Assessment</value>
+  </data>
+  <data name="ANNToolbarDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ANNToolbarDeleteTT" xml:space="preserve">
+    <value>Delete Assessment</value>
+  </data>
+  <data name="ANNToolbarDashboard" xml:space="preserve">
+    <value>Assessment dashboard</value>
+  </data>
+  <data name="AssessmentView" xml:space="preserve">
+    <value>Assessment View</value>
+  </data>
+  <data name="AssessmentLbl" xml:space="preserve">
+    <value>Assessment</value>
+  </data>
+  <data name="AssessmentOfTypeLbl" xml:space="preserve">
+    <value>of type</value>
+  </data>
+  <data name="InputsGridColumn_Mass" xml:space="preserve">
+    <value>Mass per time period (t)</value>
+  </data>
+  <data name="InputsGridColumn_Cost" xml:space="preserve">
+    <value>Cost per time period ($)</value>
+  </data>
+  <data name="InputsGridColumn_Food" xml:space="preserve">
+    <value>Food (%)</value>
+  </data>
+  <data name="InputsGridColumn_InedibleParts" xml:space="preserve">
+    <value>Inedible parts (%)</value>
+  </data>
+  <data name="InputsGridColumn_Measurement" xml:space="preserve">
+    <value>Data collection type</value>
+  </data>
+  <data name="InputsGridColumn_PartOfProductCoproduct" xml:space="preserve">
+    <value>Product/Co-Product material destinations</value>
+  </data>
+  <data name="InputsGridColumn_Packaging" xml:space="preserve">
+    <value>Packaging</value>
+  </data>
+  <data name="InputsGridColumn_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="InputsEmptyGrid" xml:space="preserve">
+    <value>Inputs are empty</value>
+  </data>
+  <data name="BusinessCostsGridColumn_BusinessCost" xml:space="preserve">
+    <value>Business Cost</value>
+  </data>
+  <data name="BusinessCostsGridColumn_AverageCostPerAnnum" xml:space="preserve">
+    <value>Cost per life cycle stage ($)</value>
+  </data>
+  <data name="BusinessCostsGridColumn_CostWasteManagement" xml:space="preserve">
+    <value>Portion of cost related to material losses ($)</value>
+  </data>
+  <data name="BusinessCostsGridColumn_Comment" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="BusinessCostsGridColumn_TotalCost" xml:space="preserve">
+    <value>Total Cost</value>
+  </data>
+  <data name="BusinessCostsGridColumn_CarriedCost" xml:space="preserve">
+    <value>Carried over cost</value>
+  </data>
+  <data name="BusinessCostsEmptyGrid" xml:space="preserve">
+    <value>Business Costs are empty</value>
+  </data>
+  <data name="DestinationsGridColumn_Category" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="DestinationsGridColumn_Product_1" xml:space="preserve">
+    <value>Product 1</value>
+  </data>
+  <data name="DestinationsGridColumn_Product_2" xml:space="preserve">
+    <value>Product 2</value>
+  </data>
+  <data name="DestinationsGridColumn_Product_3" xml:space="preserve">
+    <value>Product 3</value>
+  </data>
+  <data name="DestinationsGridColumn_CoProduct_1" xml:space="preserve">
+    <value>Co-Product 1</value>
+  </data>
+  <data name="DestinationsGridColumn_CoProduct_2" xml:space="preserve">
+    <value>Co-Product 2</value>
+  </data>
+  <data name="DestinationsGridColumn_FoodRescue" xml:space="preserve">
+    <value>Food Rescue</value>
+  </data>
+  <data name="DestinationsGridColumn_AnimalFeed" xml:space="preserve">
+    <value>Animal Feed</value>
+  </data>
+  <data name="DestinationsGridColumn_BiomassMaterial" xml:space="preserve">
+    <value>Bio-material</value>
+  </data>
+  <data name="DestinationsGridColumn_CodigestionAnaerobic" xml:space="preserve">
+    <value>Codigestion</value>
+  </data>
+  <data name="DestinationsGridColumn_Composting" xml:space="preserve">
+    <value>Composting</value>
+  </data>
+  <data name="DestinationsGridColumn_Combustion" xml:space="preserve">
+    <value>Combustion</value>
+  </data>
+  <data name="DestinationsGridColumn_LandApp" xml:space="preserve">
+    <value>Land Application</value>
+  </data>
+  <data name="DestinationsGridColumn_Landfill" xml:space="preserve">
+    <value>Landfill</value>
+  </data>
+  <data name="DestinationsGridColumn_NotHarvested" xml:space="preserve">
+    <value>Not harvested</value>
+  </data>
+  <data name="DestinationsGridColumn_RefuseDiscard" xml:space="preserve">
+    <value>Refuse</value>
+  </data>
+  <data name="DestinationsGridColumn_Sewer" xml:space="preserve">
+    <value>Sewer</value>
+  </data>
+  <data name="DestinationsGridColumn_EnvironmentLoss" xml:space="preserve">
+    <value>Environmental Loss</value>
+  </data>
+  <data name="DestinationsGridColumn_Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="DestinationsGridColumn_Recycling" xml:space="preserve">
+    <value>Recycling</value>
+  </data>
+  <data name="DestinationsGridColumn_IncinWithEnRecover" xml:space="preserve">
+    <value>Incineration w en. recovery</value>
+  </data>
+  <data name="CostOfWasteGridColumn_Percentage" xml:space="preserve">
+    <value>% of True Cost of Waste</value>
+  </data>
+  <data name="CostOfWasteGridTotalRowTitle" xml:space="preserve">
+    <value>Estimated True Cost of Waste</value>
+  </data>
+  <data name="FoodWastePerDestinationGridColumn_Title" xml:space="preserve">
+    <value>Food Material 'Loss' Destination</value>
+  </data>
+  <data name="FoodWastePerDestinationGridColumn_Weight" xml:space="preserve">
+    <value>Mass (t)</value>
+  </data>
+  <data name="CarriedOverFromPreviousStageTT" xml:space="preserve">
+    <value>Carried over from previous stage ({0})</value>
+  </data>
+  <data name="ProductSource_P1" xml:space="preserve">
+    <value>Product 1</value>
+  </data>
+  <data name="ProductSource_P2" xml:space="preserve">
+    <value>Product 2</value>
+  </data>
+  <data name="ProductSource_P3" xml:space="preserve">
+    <value>Product 3</value>
+  </data>
+  <data name="GridNoResults" xml:space="preserve">
+    <value>No Results</value>
+  </data>
+  <data name="DestinationsEmptyGrid" xml:space="preserve">
+    <value>Destinations are empty</value>
+  </data>
+  <data name="RowPercentageOverHundred" xml:space="preserve">
+    <value>Row percentage should sum to 100%</value>
+  </data>
+  <data name="Comments" xml:space="preserve">
+    <value>Comments</value>
+  </data>
+  <data name="CompanyName" xml:space="preserve">
+    <value>Company name </value>
+  </data>
+  <data name="ContactedUser" xml:space="preserve">
+    <value>Contacted User</value>
+  </data>
+  <data name="DlgCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="DlgOk" xml:space="preserve">
+    <value>Ok</value>
+  </data>
+  <data name="EditAssessment" xml:space="preserve">
+    <value>Edit Assessment</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email </value>
+  </data>
+  <data name="PhoneNumber" xml:space="preserve">
+    <value>Phone number </value>
+  </data>
+  <data name="ATAddAssessmentTypeTabHeader" xml:space="preserve">
+    <value>Add Assessment Type</value>
+  </data>
+  <data name="ATAddAssessmentTypeMessage" xml:space="preserve">
+    <value>Successfully added</value>
+  </data>
+  <data name="ATAddActiveStatusYes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="ATAddActiveStatusNo" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ResMngmt_TabBusinessCosts" xml:space="preserve">
+    <value>Business Costs</value>
+  </data>
+  <data name="ResMngmt_TabInputs" xml:space="preserve">
+    <value>Material Inputs</value>
+  </data>
+  <data name="ResMngmt_TabDestinations" xml:space="preserve">
+    <value>Food Material Destinations</value>
+  </data>
+  <data name="ResMngmt_TabNonFoodDestinations" xml:space="preserve">
+    <value>Non-Food Material Destinations</value>
+  </data>
+  <data name="ResMngmt_TabOutputs" xml:space="preserve">
+    <value>Material Outputs - Cost/Income</value>
+  </data>
+  <data name="ATAssessmentTypeActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ATAssessmentTypeCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="ATAssessmentTypeDescription" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="ATAssessmentTypeDialogEditedSuccess" xml:space="preserve">
+    <value>Assessment type was successfully edited.</value>
+  </data>
+  <data name="ATAssessmentTypeDialogSavedCodeExist" xml:space="preserve">
+    <value>Assessment type with provided code already exists.</value>
+  </data>
+  <data name="ATAssessmentTypeDialogSavedSuccess" xml:space="preserve">
+    <value>Assessment type was successfully created.</value>
+  </data>
+  <data name="ATAutoGenerated" xml:space="preserve">
+    <value>(Auto-Generated)</value>
+  </data>
+  <data name="GridAction_Activate" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="GridAction_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="GridAction_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ATEditAssessmentTypeTabHeader" xml:space="preserve">
+    <value>Edit Assessment Type</value>
+  </data>
+  <data name="ATAssessmentTypeDialogActivateSuccess" xml:space="preserve">
+    <value>Assessment Type was successfully activated.</value>
+  </data>
+  <data name="ATAssessmentTypeActivationFailed" xml:space="preserve">
+    <value>There was an error activating selected assessment type.</value>
+  </data>
+  <data name="ATAssessmentTypeDeletionFailed" xml:space="preserve">
+    <value>There was an error deleting selected assessment type.</value>
+  </data>
+  <data name="ATAssessmentTypeDialogDeleteSuccess" xml:space="preserve">
+    <value>Assessment type was sucessfully deleted.</value>
+  </data>
+  <data name="ATAssessmentTypeEditSuccess" xml:space="preserve">
+    <value>Assessment type was sucessfully edited.</value>
+  </data>
+  <data name="ExportToExcel" xml:space="preserve">
+    <value>Export to Excel</value>
+  </data>
+  <data name="ResultsCostOfWasteChartTitle" xml:space="preserve">
+    <value>True Cost of Waste Breakdown</value>
+  </data>
+  <data name="ResultsFinIndChartTitle" xml:space="preserve">
+    <value>Key Production Financial Ratios</value>
+  </data>
+  <data name="ResultsFinIndChartTitleNoDate" xml:space="preserve">
+    <value>Key financial ratios comparison assessments</value>
+  </data>
+  <data name="ResultsPyramidChartFoodDestination" xml:space="preserve">
+    <value>Food Material Losses - Not Inc. Inedible Parts - (t) Per Destination</value>
+  </data>
+  <data name="ResultsPyramidChartInediblePartsOnlyPerDestination" xml:space="preserve">
+    <value>Food Material Losses - Inedible Parts Only - (t) Per Destination</value>
+  </data>
+  <data name="FoodMatLossesNotIncIndblPartsExcelSheetName" xml:space="preserve">
+    <value>Not Inc. Inedible Parts</value>
+  </data>
+  <data name="FoodMatLossesIndblPartsOnlyExcelSheetName" xml:space="preserve">
+    <value>Inedible Parts Only</value>
+  </data>
+  <data name="ResultsGridColumn_Result" xml:space="preserve">
+    <value>%</value>
+  </data>
+  <data name="ResultsGridColumn_Assessment" xml:space="preserve">
+    <value>Assessment Name</value>
+  </data>
+  <data name="ResultsGridColumn_Title" xml:space="preserve">
+    <value>Product Lifecycle Stage</value>
+  </data>
+  <data name="ResultsGridColumn_UoM" xml:space="preserve">
+    <value>Nominal unit</value>
+  </data>
+  <data name="CostOfWasteGridColumn_Cost" xml:space="preserve">
+    <value>Cost ($)</value>
+  </data>
+  <data name="HotSpotGridColumn_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="ResultsProdRatiosChartTitle" xml:space="preserve">
+    <value>Key Production Mass Ratios</value>
+  </data>
+  <data name="ResultsProdRatiosChartTitleNoDate" xml:space="preserve">
+    <value>Key production ratios comparison assessments</value>
+  </data>
+  <data name="InputsGridColumn_ApproximateWastePriceAvoidable" xml:space="preserve">
+    <value>Approximate waste avoidable p.a. ($)</value>
+  </data>
+  <data name="AssessmentTimeFrameTo" xml:space="preserve">
+    <value>to</value>
+  </data>
+  <data name="AssessmentCodeLbl" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="AssessmentModDateLbl" xml:space="preserve">
+    <value>Modified</value>
+  </data>
+  <data name="AssessmentStatusLbl" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="DIR_NavAssessmentType_SearchPanel" xml:space="preserve">
+    <value>Assessment Search</value>
+  </data>
+  <data name="AssessmentDescriptionLbl" xml:space="preserve">
+    <value>Assessment name</value>
+  </data>
+  <data name="AssessmentTypeLbl" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="AssessmentBasicTab" xml:space="preserve">
+    <value>Basic</value>
+  </data>
+  <data name="AssessmentRecentTab" xml:space="preserve">
+    <value>Recent</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="UserCompletingAssessment" xml:space="preserve">
+    <value>User Completing Assessment</value>
+  </data>
+  <data name="AssessmentLcStageDialog_TitleLbl" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="DIR_AddAssessmentLcStageTitle" xml:space="preserve">
+    <value>Assessment LcStage</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_RemoveActionErrorMessage" xml:space="preserve">
+    <value>An error occurred while removing lcStage(s)</value>
+  </data>
+  <data name="DIR_AssessmentLcStageContainer_SaveActionErrorMessage" xml:space="preserve">
+    <value>An error occurred while saving Assessment LcStage</value>
+  </data>
+  <data name="DIR_AssessmentLcStage_InvalidIdentifiableString" xml:space="preserve">
+    <value>Assessment LcStage doesn't exist</value>
+  </data>
+  <data name="DIR_AssessmentLcStage_TitleEmpty" xml:space="preserve">
+    <value>Assessment LcStage title is invalid</value>
+  </data>
+  <data name="AMPromptConfirmAssessmentDelete" xml:space="preserve">
+    <value>Are you sure you want to delete an assessment?</value>
+  </data>
+  <data name="AssessmentOfTypeLb" xml:space="preserve">
+    <value>of Type</value>
+  </data>
+  <data name="AssessmentCode" xml:space="preserve">
+    <value>Assessment Code</value>
+  </data>
+  <data name="AssessmentCodeTT" xml:space="preserve">
+    <value>The Code can be auto generated or entered manually.</value>
+  </data>
+  <data name="AssessmentDescription" xml:space="preserve">
+    <value>Assessment Description</value>
+  </data>
+  <data name="AssessmentDescriptionTT" xml:space="preserve">
+    <value>Description for new Assessment.</value>
+  </data>
+  <data name="AssessmentType" xml:space="preserve">
+    <value>Assessment Type</value>
+  </data>
+  <data name="ANNToolbarSharing" xml:space="preserve">
+    <value>Share</value>
+  </data>
+  <data name="AssessmentUserName" xml:space="preserve">
+    <value>What is your name?</value>
+  </data>
+  <data name="AssessmentUserNameTT" xml:space="preserve">
+    <value>Your system name will be automatically pre-filled</value>
+  </data>
+  <data name="AssessmentCompanyName" xml:space="preserve">
+    <value>What is the company name?</value>
+  </data>
+  <data name="AssessmentCompanyNameTT" xml:space="preserve">
+    <value>Please enter the name of the operational company producing the product.</value>
+  </data>
+  <data name="AssessmentProductName" xml:space="preserve">
+    <value>What is the name of this assessment?</value>
+  </data>
+  <data name="AssessmentProductNameTT" xml:space="preserve">
+    <value>Please enter the name of the assessment.
+		[For example, you could use the name of the product or kinds of products being assessed]</value>
+  </data>
+  <data name="AssessmentProdClassification" xml:space="preserve">
+    <value>Product classification?</value>
+  </data>
+  <data name="AssessmentProdClassificationTT" xml:space="preserve">
+    <value>Please search (*name*) for and select the relevant food classification for your product. N.B. The list is currently drawn from the United Nations Central Production Classification system (CPC Ver 2.1). This will be the equivalent to the “Food Category” boundary dimension of the FLW Standard.</value>
+  </data>
+  <data name="AssessmentTimeFrameFrom" xml:space="preserve">
+    <value>What is the assessment time frame?</value>
+  </data>
+  <data name="AssessmentTimeFrameFromTT" xml:space="preserve">
+    <value>The time frame is the period that you want to report on for this assessment. N.B. This is currently limited to 1 year only, but you can select and/or project the time period forward in time.</value>
+  </data>
+  <data name="AssessmentOrgStructure" xml:space="preserve">
+    <value>Level of Organisation?</value>
+  </data>
+  <data name="AssessmentOrgStructureTT" xml:space="preserve">
+    <value>Enter the level of organisation you will be reporting on. This could be: organisation wide; a business unit; an individual factory/farm/store; down to an individual piece of equipment or segment of a facility.</value>
+  </data>
+  <data name="AssessmentLocation" xml:space="preserve">
+    <value>What is the location?</value>
+  </data>
+  <data name="AssessmentLocationTT" xml:space="preserve">
+    <value>This is the geographic location that the product life cycle stages are being measured. N.B. Currently this is limited to nations so search (*name*) for and select your country (e.g. Australia).</value>
+  </data>
+  <data name="AssessmentWasteDestination" xml:space="preserve">
+    <value>Material destinations?</value>
+  </data>
+  <data name="AssessmentWasteDestinationTT" xml:space="preserve">
+    <value>Please select from the list of destinations that the wasted material used to produce the product may go to. N.B. This list excludes the material that makes it into the final product(s), co-product(s), food rescue, is lost to the environment and/or other destinations, as they are always available.</value>
+  </data>
+  <data name="AssessmentIndustry" xml:space="preserve">
+    <value>Industry inclusion?</value>
+  </data>
+  <data name="AssessmentLifecycleStages" xml:space="preserve">
+    <value>What are the product life cycle stages?</value>
+  </data>
+  <data name="AssessmentLifecycleStagesTT" xml:space="preserve">
+    <value>Please, select from the list of life cycle stages that you want to report on</value>
+  </data>
+  <data name="AssessmentDataQuality" xml:space="preserve">
+    <value>Data collection type?</value>
+  </data>
+  <data name="AssessmentDataQualityTT" xml:space="preserve">
+    <value>Please indicate whether the majority of data has been measured, estimated, or are future projections, by selecting the relevant label.</value>
+  </data>
+  <data name="SucccessfullyCreatedAssessment" xml:space="preserve">
+    <value>The assessment has been successfully created.</value>
+  </data>
+  <data name="AssessmentResultsHideLegendTitleButton" xml:space="preserve">
+    <value>Hide legend</value>
+  </data>
+  <data name="AssessmentResultsShowLegendTitleButton" xml:space="preserve">
+    <value>Show legend</value>
+  </data>
+  <data name="AssessmentCreationFailed" xml:space="preserve">
+    <value>Failed creation!</value>
+  </data>
+  <data name="DIR_NewAssessment" xml:space="preserve">
+    <value>New Assessment</value>
+  </data>
+  <data name="DIR_CreateAssessmentWiazrd" xml:space="preserve">
+    <value>Create Assessment Wizard</value>
+  </data>
+  <data name="DIR_GeneralPanel_ProductName" xml:space="preserve">
+    <value>Assessment name</value>
+  </data>
+  <data name="DIR_GeneralPanel_ProductClassification" xml:space="preserve">
+    <value>Product classification</value>
+  </data>
+  <data name="DIR_GeneralPanel_Industry" xml:space="preserve">
+    <value>Industry</value>
+  </data>
+  <data name="DIR_GeneralPanel_Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="DIR_GeneralPanel_DataQuality" xml:space="preserve">
+    <value>Data collection type</value>
+  </data>
+  <data name="DIR_GeneralPanel_TimeFrame" xml:space="preserve">
+    <value>Assessment time frame</value>
+  </data>
+  <data name="DIR_GeneralPanel_TimeFrame_From" xml:space="preserve">
+    <value>Assessment time frame from</value>
+  </data>
+  <data name="DIR_GeneralPanel_TimeFrame_To" xml:space="preserve">
+    <value>Assessment time frame to</value>
+  </data>
+  <data name="DIR_GeneralPanel_OrgStructure" xml:space="preserve">
+    <value>Organisation level</value>
+  </data>
+  <data name="DIR_GeneralPanel_CreatedBy" xml:space="preserve">
+    <value>Auditor</value>
+  </data>
+  <data name="DXDIR_OUTPUT_CATEGORY_FOOD" xml:space="preserve">
+    <value>Food</value>
+  </data>
+  <data name="DXDIR_OUTPUT_CATEGORY_INEDIBLE_PARTS" xml:space="preserve">
+    <value>Inedible Parts</value>
+  </data>
+  <data name="DXDIR_OUTPUT_CATEGORY_NON_FOOD" xml:space="preserve">
+    <value>Non-Food</value>
+  </data>
+  <data name="OutputsGridColumn_Destination" xml:space="preserve">
+    <value>Destination</value>
+  </data>
+  <data name="OutputsGridColumn_Destination_FoodLoss" xml:space="preserve">
+    <value>(Loss) {0}</value>
+  </data>
+  <data name="OutputsGridColumn_OutputCost" xml:space="preserve">
+    <value>Output Cost (as related to material loss)</value>
+  </data>
+  <data name="OutputsGridColumn_Income" xml:space="preserve">
+    <value>Income</value>
+  </data>
+  <data name="OutputsGridColumn_OutputCost_InfoBox" xml:space="preserve">
+    <value>Please enter any costs accrued, above ordinary business costs, for the disposal and handling of non-product material outputs/losses. This can include additional costs for the management and movement of Co-Product and Food Rescue, as well as other waste collection and treatment costs, all of which are considered material losses.</value>
+  </data>
+  <data name="OutputsGridRow_LossPrefix" xml:space="preserve">
+    <value>(Loss)</value>
+  </data>
+  <data name="OutputsEmptyGrid" xml:space="preserve">
+    <value>Outputs are empty</value>
+  </data>
+  <data name="AddBusinessCost" xml:space="preserve">
+    <value>Add New Business Cost</value>
+  </data>
+  <data name="DeleteRowPromptMessage" xml:space="preserve">
+    <value>Delete business cost?</value>
+  </data>
+  <data name="DXDIR_INPUT_MEASURE_1" xml:space="preserve">
+    <value>Measured</value>
+  </data>
+  <data name="DXDIR_INPUT_MEASURE_2" xml:space="preserve">
+    <value>Projected</value>
+  </data>
+  <data name="DXDIR_INPUT_MEASURE_3" xml:space="preserve">
+    <value>Estimated</value>
+  </data>
+  <data name="InputsGrid_CategoryAddIconTitle" xml:space="preserve">
+    <value>Add material input to category</value>
+  </data>
+  <data name="AssessmentResultNotificationError" xml:space="preserve">
+    <value>Managing Material Destination(s) has affected your mass distribution, please fix the quantities in {0} Material Destinations in Resource Management.</value>
+  </data>
+  <data name="DestinationMassBalanceError" xml:space="preserve">
+    <value>Managing Material Destination(s) has affected your mass distribution, please fix the quantities.</value>
+  </data>
+  <data name="InputDestinationFOOD" xml:space="preserve">
+    <value>FOOD</value>
+  </data>
+  <data name="InputDestinationNON-FOOD" xml:space="preserve">
+    <value>NON-FOOD</value>
+  </data>
+  <data name="InputDestinationNON-FOODorFOOD" xml:space="preserve">
+    <value>FOOD and NON-FOOD</value>
+  </data>
+  <data name="AlertErrorMassage" xml:space="preserve">
+    <value>Following LC {0} in Food or Non-food destinations have invalid data, row % needs to sum to 100%.</value>
+  </data>
+  <data name="HomeAlerMassageStages" xml:space="preserve">
+    <value>stage/s: {0}</value>
+  </data>
+  <data name="HomeAlerMassageStage" xml:space="preserve">
+    <value>stage: {0}</value>
+  </data>
+  <data name="InputsGridTab_AddExistingCategory" xml:space="preserve">
+    <value>Add Existing Category</value>
+  </data>
+  <data name="InputsGridTab_AddNewCategory" xml:space="preserve">
+    <value>Add New Category</value>
+  </data>
+  <data name="InputsGridTab_AddCategory" xml:space="preserve">
+    <value>Add Category</value>
+  </data>
+  <data name="InputsGridTab_Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="InputsGridTab_CategoryTypeToolTip" xml:space="preserve">
+    <value>Category type</value>
+  </data>
+  <data name="Inputs_DeletePromptMsgCategory" xml:space="preserve">
+    <value>Remove input category?</value>
+  </data>
+  <data name="Inputs_DeletePromptMsgCategoryWithInputs" xml:space="preserve">
+    <value>Remove category and all its inputs?</value>
+  </data>
+  <data name="Inputs_AddMaterialIconTitle" xml:space="preserve">
+    <value>Add material name</value>
+  </data>
+  <data name="Inputs_MaterialCreationPromptMessage" xml:space="preserve">
+    <value>Are you sure you want to create new material with name {0}?</value>
+  </data>
+  <data name="Inputs_MaterialCreationFailed" xml:space="preserve">
+    <value>Error while creating new material!</value>
+  </data>
+  <data name="Inputs_SuccessfullyMaterialCreation" xml:space="preserve">
+    <value>New material has been successfully created.</value>
+  </data>
+  <data name="Inputs_MaterialCreationWarning" xml:space="preserve">
+    <value>Please perfrom the search!</value>
+  </data>
+  <data name="Inputs_PartOfProductChange" xml:space="preserve">
+    <value>Part of product/co-product changes affected input's {0} mass balance.</value>
+  </data>
+  <data name="BusinessDataDialog_PromptMessageCancelButton" xml:space="preserve">
+    <value>All of your work will be lost. Are you sure you want to cancel?</value>
+  </data>
+  <data name="BusinessDataDialog_UpdateAssessmentError" xml:space="preserve">
+    <value>Error while updating assessment</value>
+  </data>
+  <data name="BusinessDataDialog_DeleteAssessmentError" xml:space="preserve">
+    <value>Error while deleting assessment</value>
+  </data>
+  <data name="BusinessDataDialog_UnsavedChangesWarning" xml:space="preserve">
+    <value>There are some unsaved changes!</value>
+  </data>
+  <data name="DashboardRemoveAssessment" xml:space="preserve">
+    <value>Remove Assessment</value>
+  </data>
+  <data name="DashboardMaxNumExceeded" xml:space="preserve">
+    <value>A maximum of {0} assessments can be compared at one time.</value>
+  </data>
+  <data name="CantRemoveLastAssessment" xml:space="preserve">
+    <value>Cannot remove last assessment.</value>
+  </data>
+  <data name="AssessmentAlreadyPresent" xml:space="preserve">
+    <value>Assessment is already present in the dashboard.</value>
+  </data>
+  <data name="AssessmentDashboard" xml:space="preserve">
+    <value>Assessment dashboard</value>
+  </data>
+  <data name="AssessmentDashboard_HotSpot" xml:space="preserve">
+    <value>HotSpot Graph</value>
+  </data>
+  <data name="AssessmentDashboard_HotSpot_Mass" xml:space="preserve">
+    <value>Mass</value>
+  </data>
+  <data name="AssessmentDashboard_HotSpot_Cost" xml:space="preserve">
+    <value>Cost</value>
+  </data>
+  <data name="AssessmentDashboard_CostOfWaste" xml:space="preserve">
+    <value>True cost of waste breakdown radar comparison</value>
+  </data>
+  <data name="HostMenuMain_Direct" xml:space="preserve">
+    <value>Direct</value>
+  </data>
+  <data name="Inputs_DeletePromptMsgInput" xml:space="preserve">
+    <value>Delete input?</value>
+  </data>
+  <data name="CopyAssessment_CommandName" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Copy_DialogTitle" xml:space="preserve">
+    <value>Copy Assessment</value>
+  </data>
+  <data name="CopyAssessmentAction_Success" xml:space="preserve">
+    <value>Assessment has been successfully copied.</value>
+  </data>
+  <data name="CopyAssessmentAction_Error" xml:space="preserve">
+    <value>Error while copying assessment.</value>
+  </data>
+  <data name="Inputs_TotalRow" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="AssessmentDashboard_CostHotspotTitle" xml:space="preserve">
+    <value>True cost of waste across life cycle stages</value>
+  </data>
+  <data name="AssessmentDashboard_MassHotspotTitle" xml:space="preserve">
+    <value>Material loss mass across life cycle stages</value>
+  </data>
+  <data name="AssessmentDashboard_YAxisTitleHotspotCost" xml:space="preserve">
+    <value>$</value>
+  </data>
+  <data name="AssessmentDashboard_YAxisTitleHotspotMass" xml:space="preserve">
+    <value>t</value>
+  </data>
+  <data name="AssessmentDashboard_TabTrueCost" xml:space="preserve">
+    <value>True Cost</value>
+  </data>
+  <data name="AssessmentDashboard_TabFoodLosses" xml:space="preserve">
+    <value>Food Material Losses</value>
+  </data>
+  <data name="DestinationsPartialView_BreakdownsFootnote" xml:space="preserve">
+    <value>The breakdowns are in percentages and they must total 100%.</value>
+  </data>
+  <data name="CreateAssessmentDlg_RequiredFootnote" xml:space="preserve">
+    <value>All fields marked with an * are required.</value>
+  </data>
+  <data name="ResultsProductionRatiosGrid_HeaderInfoBox" xml:space="preserve">
+    <value>&lt;b&gt;Output product packaging to gross product ratio&lt;/b&gt;: This measures the output packaging to product ratio by weight.
+&lt;b&gt;Packaging material loss to food input ratio&lt;/b&gt;: This measures the packaging losses compared to food material inputs ratio by weight. Packaging material loss includes all packaging going to food rescue and co-product.
+&lt;b&gt;Total material loss to material input ratio&lt;/b&gt;: This measures all material losses compared to all material inputs ration by weight.
+&lt;b&gt;Food material loss (without inedible parts) to total material loss ratio&lt;/b&gt;: This measures edible food material losses compared to all material losses ratio by weight. Total material loss includes water, and material going to destinations such as co-products and food rescue.
+&lt;b&gt;Food material loss (without inedible parts) to inputs ratio&lt;/b&gt;: This measures edible food material losses compared to all material inputs ratio by weight.
+&lt;b&gt;Food material loss (with inedible parts) to total material loss ratio&lt;/b&gt;: This measures edible and inedible food material losses compared to all material losses ratio by weight. Total material loss includes water, and material going to destinations such as co-products and food rescue.
+&lt;b&gt;Non product material to gross product ratio&lt;/b&gt;: This measures input material not used for a product (i.e. going to a non-product destination) compared to product ratio by weight.
+&lt;b&gt;Material inputs to gross product ratio&lt;/b&gt;: This measures all material inputs compared to product ratio by weight.</value>
+  </data>
+  <data name="KeyFinantialIndicatorsGrid_HeaderInfoBox" xml:space="preserve">
+    <value>&lt;b&gt;Estimated true cost of waste ratio to purchase ratio&lt;/b&gt;: This measures the estimated true cost of waste to cost of material inputs (food and non-food) ratio. Non-food inputs could include packaging, auxiliary materials etc.
+&lt;b&gt;Disposal to purchase ratio&lt;/b&gt;: This measures the cost of material loss to cost of material purchase inputs (food and non-food) ratio. Material loss costs include costs such as landfill, recycling, etc.
+&lt;b&gt;Material spend to operating cost ratio&lt;/b&gt;: This measures the cost of material inputs (food and non-food) compared with all operating costs (business costs such as energy, labour, overheads etc.). Non-food materials could include packaging, auxiliary materials etc.
+&lt;b&gt;Energy spend to operating cost ratio&lt;/b&gt;: This measures the cost of electricity and natural gas inputs compared with all operating costs (business costs such as energy, labour, overheads etc.).</value>
+  </data>
+  <data name="CarryProductOverToTheNextStageMessage" xml:space="preserve">
+    <value>Would you like to bring through the previous stage product(s) to the next life cycle stage?</value>
+  </data>
+  <data name="MergeInputsOfCarriedOverProductMessage" xml:space="preserve">
+    <value>Would you like to merge the material inputs of the product(s) being carried over?</value>
+  </data>
+  <data name="MergeInputsDialogTitle" xml:space="preserve">
+    <value>Merge Dialog</value>
+  </data>
+  <data name="MergeInputsDialogInvalidMessage" xml:space="preserve">
+    <value>Please fill all required values</value>
+  </data>
+  <data name="MergeInputsDialogMergedInputNameColumnTitle" xml:space="preserve">
+    <value>Name for Merged Inputs</value>
+  </data>
+  <data name="MergeInputsDialogSaveFailed" xml:space="preserve">
+    <value>An error occured during merge process. Please try again.</value>
+  </data>
+  <data name="ResMgmnt_ResourceNotes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="ResMngmt_NotesAdded" xml:space="preserve">
+    <value>Note was successfully added.</value>
+  </data>
+  <data name="ResMngmt_NotesSaveFailed" xml:space="preserve">
+    <value>Something went wrong. Saving notes was unsuccesfull.</value>
+  </data>
+  <data name="ResMngmt_NotesUpdated" xml:space="preserve">
+    <value>Note was successfully updated.</value>
+  </data>
+  <data name="ResMgmnt_BusinessCostOther" xml:space="preserve">
+    <value>Notes/details for the business costs included under "Other"</value>
+  </data>
+  <data name="MergeInputsDialog_PromptMessageCancelButton" xml:space="preserve">
+    <value>Inputs will not be merged. Are you sure you want to cancel?</value>
+  </data>
+  <data name="ManageAssessmentLCStages" xml:space="preserve">
+    <value>Manage Assessment LC Stages</value>
+  </data>
+  <data name="ManageMaterialDestination" xml:space="preserve">
+    <value>Manage Material Destinations</value>
+  </data>
+  <data name="ManageDialog_SelectedMaterialDestinations" xml:space="preserve">
+    <value>Material Destinations appearing under Available Destinations are selected for all assessment lifecycle stages.</value>
+  </data>
+  <data name="ManageDialog_AvailableDestinationManagment" xml:space="preserve">
+    <value>Available Destinations</value>
+  </data>
+  <data name="ManageDialog_UsedDestination" xml:space="preserve">
+    <value>Used Destinations</value>
+  </data>
+  <data name="UsedCannotBeEmpty" xml:space="preserve">
+    <value>At least one LC Stage must be used.</value>
+  </data>
+  <data name="ManageDialog_ListboxUpdated" xml:space="preserve">
+    <value>Changes were successfully saved and applied.</value>
+  </data>
+  <data name="ManageDialog_ListboxUpdateFailed" xml:space="preserve">
+    <value>Something went wrong, your changes have not been saved and applied.</value>
+  </data>
+  <data name="AvailableLCStages" xml:space="preserve">
+    <value>Available LC Stages</value>
+  </data>
+  <data name="dlg_btn_SaveNotes" xml:space="preserve">
+    <value>Save Notes</value>
+  </data>
+  <data name="UsedLCStages" xml:space="preserve">
+    <value>Used on Assessment</value>
+  </data>
+  <data name="InputsGridPoPLovProductOptionBase" xml:space="preserve">
+    <value>Product</value>
+  </data>
+  <data name="InputsGridPoPLovCoProductOptionBase" xml:space="preserve">
+    <value>Co-Product</value>
+  </data>
+  <data name="ButtonManage_ManageDestinations" xml:space="preserve">
+    <value>Manage Destinations</value>
+  </data>
+  <data name="ResultsGridColumn_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="CostOfWasteGrid_HeaderInfoBox" xml:space="preserve">
+    <value>This displays the true cost of waste, as per ISO 14051 - which offers a general framework for material flow cost accounting (MFCA). The associated costs of material flows, within the process/life cycle stage assessed, have been separated into product and non-product costs. The results here show all direct and indirect costs of the, non-product, material losses in the process. This includes:
+- Direct costs of material losses
+- Waste &amp; loss collection and treatment costs
+- Indirect business costs (covering both energy and system costs) related to the proportion of material    losses
+- Credit for income on non-product material destinations</value>
+  </data>
+  <data name="FoodWastePerDestinationGrid_HeaderInfoBox" xml:space="preserve">
+    <value>This displays the mass of non-product food material losses (excluding inedible parts) stacked as a nominal hierarchy, descending in order of preference - following guidance provided by Champions 12.3 (champions123.org). Starting with destinations that prevent food materials from leaving the human food supply chain (such as co-products and food rescue), the hierarchy then descends - from high to low valorisation - the list of (potential food loss and waste) destinations that do leave the human food supply chain, as per the FLW Standard.</value>
+  </data>
+  <data name="ManageDialogPromptMessage" xml:space="preserve">
+    <value>Changes you have made might include removal action. Are you sure you want to continue?</value>
+  </data>
+  <data name="MaterialDestinationsFooter" xml:space="preserve">
+    <value>In case of the Material Destination removal, Food and Non-Food Material Destination percentage distribution could potentially be disrupted, leaving the total distribution lesser than 100%.</value>
+  </data>
+  <data name="ManageLcStageFooter" xml:space="preserve">
+    <value>In case of the Lifecycle Stage removal all the data entered for this stage will be deleted.</value>
+  </data>
+  <data name="Output_grid_NonProductsBiggerThanProductValuePerTonne" xml:space="preserve">
+    <value>The income per tonne value of a non-product can not be equal to or greater than that of Product 1. Please refer to the User Guide for an explanation of this issue and suggested solutions.</value>
+  </data>
+  <data name="Output_grid_ProductLesserThanNonProductValuePerTonne" xml:space="preserve">
+	<value>The income per tonne value of Product 1 can not be equal to or less than that of a non-product. Please refer to the User Guide for an explanation of this issue and suggested solutions.</value>
+  </data>
+  <data name="Inputs_SaveError" xml:space="preserve">
+	<value>Inputs Insert/Update failed.</value>
+  </data>
+</root>

@@ -1,0 +1,124 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.705
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.ModuleBlocks", "DIRModule\Selerant.DevEx.Modules.DIRModule.ModuleBlocks\Selerant.DevEx.Modules.DIRModule.ModuleBlocks.csproj", "{CCADE385-DD21-491D-A65C-BA586B1F76C9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.DataBase", "DIRModule\Selerant.DevEx.Modules.DIRModule.DataBase\Selerant.DevEx.Modules.DIRModule.DataBase.csproj", "{3AA62D0B-F4C2-4923-9600-CBC489B7951C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.Configuration", "DIRModule\Selerant.DevEx.Modules.DIRModule.Configuration\Selerant.DevEx.Modules.DIRModule.Configuration.csproj", "{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.BackEnd", "DIRModule\Selerant.DevEx.Modules.DIRModule.BackEnd\Selerant.DevEx.Modules.DIRModule.BackEnd.csproj", "{61FFD671-5D19-4F13-8E49-1861B07A64F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd", "DIRModule\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.csproj", "{F680B728-0EDC-4354-BF06-CCBCE16F8498}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{75C48660-FC2B-40A3-9A01-00A972F9A475}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.BackEnd.Tests", "DIRModule\Selerant.DevEx.Modules.DIRModule.BackEnd.Tests\Selerant.DevEx.Modules.DIRModule.BackEnd.Tests.csproj", "{4B9B306E-A197-4AFD-85F4-521D7C599888}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests", "DIRModule\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests.csproj", "{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Selerant.DevEx.Modules.DIRModule.Configuration.Tests", "DIRModule\Selerant.DevEx.Modules.DIRModule.Configuration.Tests\Selerant.DevEx.Modules.DIRModule.Configuration.Tests.csproj", "{889233AA-ED07-4B7F-A040-A959E738E55F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		DevEx3.10|Any CPU = DevEx3.10|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCADE385-DD21-491D-A65C-BA586B1F76C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AA62D0B-F4C2-4923-9600-CBC489B7951C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C55EC4D-78A5-4F3D-BBDB-A8235B6A85BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61FFD671-5D19-4F13-8E49-1861B07A64F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F680B728-0EDC-4354-BF06-CCBCE16F8498}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B9B306E-A197-4AFD-85F4-521D7C599888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.Debug|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.Debug|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.DevEx3.10|Any CPU.ActiveCfg = DevEx3.10|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.DevEx3.10|Any CPU.Build.0 = DevEx3.10|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{889233AA-ED07-4B7F-A040-A959E738E55F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4B9B306E-A197-4AFD-85F4-521D7C599888} = {75C48660-FC2B-40A3-9A01-00A972F9A475}
+		{F3E8E1D6-DB85-4779-A67D-C1FD53BAD90C} = {75C48660-FC2B-40A3-9A01-00A972F9A475}
+		{889233AA-ED07-4B7F-A040-A959E738E55F} = {75C48660-FC2B-40A3-9A01-00A972F9A475}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AFE68CFE-3BD7-41CE-9E06-6305B921E824}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 9
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://devops.selerant.com/tfs/devex%20program
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = DIRModule\\Selerant.DevEx.Modules.DIRModule.BackEnd.Tests\\Selerant.DevEx.Modules.DIRModule.BackEnd.Tests.csproj
+		SccProjectTopLevelParentUniqueName1 = DIRModule.sln
+		SccProjectName1 = DIRModule/Selerant.DevEx.Modules.DIRModule.BackEnd.Tests
+		SccLocalPath1 = DIRModule\\Selerant.DevEx.Modules.DIRModule.BackEnd.Tests
+		SccProjectUniqueName2 = DIRModule\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests.csproj
+		SccProjectTopLevelParentUniqueName2 = DIRModule.sln
+		SccProjectName2 = DIRModule/Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests
+		SccLocalPath2 = DIRModule\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Tests
+		SccProjectUniqueName3 = DIRModule\\Selerant.DevEx.Modules.DIRModule.Configuration.Tests\\Selerant.DevEx.Modules.DIRModule.Configuration.Tests.csproj
+		SccProjectTopLevelParentUniqueName3 = DIRModule.sln
+		SccProjectName3 = DIRModule/Selerant.DevEx.Modules.DIRModule.Configuration.Tests
+		SccLocalPath3 = DIRModule\\Selerant.DevEx.Modules.DIRModule.Configuration.Tests
+		SccProjectUniqueName4 = DIRModule\\Selerant.DevEx.Modules.DIRModule.ModuleBlocks\\Selerant.DevEx.Modules.DIRModule.ModuleBlocks.csproj
+		SccProjectName4 = DIRModule/Selerant.DevEx.Modules.DIRModule.ModuleBlocks
+		SccLocalPath4 = DIRModule\\Selerant.DevEx.Modules.DIRModule.ModuleBlocks
+		SccProjectUniqueName5 = DIRModule\\Selerant.DevEx.Modules.DIRModule.DataBase\\Selerant.DevEx.Modules.DIRModule.DataBase.csproj
+		SccProjectName5 = DIRModule/Selerant.DevEx.Modules.DIRModule.DataBase
+		SccLocalPath5 = DIRModule\\Selerant.DevEx.Modules.DIRModule.DataBase
+		SccProjectUniqueName6 = DIRModule\\Selerant.DevEx.Modules.DIRModule.Configuration\\Selerant.DevEx.Modules.DIRModule.Configuration.csproj
+		SccProjectName6 = DIRModule/Selerant.DevEx.Modules.DIRModule.Configuration
+		SccLocalPath6 = DIRModule\\Selerant.DevEx.Modules.DIRModule.Configuration
+		SccProjectUniqueName7 = DIRModule\\Selerant.DevEx.Modules.DIRModule.BackEnd\\Selerant.DevEx.Modules.DIRModule.BackEnd.csproj
+		SccProjectName7 = DIRModule/Selerant.DevEx.Modules.DIRModule.BackEnd
+		SccLocalPath7 = DIRModule\\Selerant.DevEx.Modules.DIRModule.BackEnd
+		SccProjectUniqueName8 = DIRModule\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.csproj
+		SccProjectName8 = DIRModule/Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd
+		SccLocalPath8 = DIRModule\\Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd
+	EndGlobalSection
+EndGlobal

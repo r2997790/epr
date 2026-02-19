@@ -1,0 +1,122 @@
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_LCSTAGE_TMPL$InsertRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$InsertRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_TYPE_CODE VARCHAR(32),
+	@sTITLE NVARCHAR(512),
+	@dcSORT_ORDER NUMERIC(9,0)
+AS
+BEGIN
+	INSERT [dbo].[DXDIR_LC_STAGE_TMPL]
+	(
+		[ID],
+		[ASSESSMENT_TYPE_CODE],
+		[TITLE],
+		[SORT_ORDER]
+	)
+	VALUES
+	(
+		@dcID,
+		@sASSESSMENT_TYPE_CODE,
+		@sTITLE,
+		@dcSORT_ORDER
+	)
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_LCSTAGE_TMPL$UpdateRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$UpdateRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_TYPE_CODE VARCHAR(32),
+	@sTITLE NVARCHAR(512),
+	@dcSORT_ORDER NUMERIC(9,0)
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_LC_STAGE_TMPL]
+	SET 
+		[ASSESSMENT_TYPE_CODE] = @sASSESSMENT_TYPE_CODE,
+		[TITLE] = @sTITLE,
+		[SORT_ORDER] = @dcSORT_ORDER
+	WHERE [ID] = @dcID
+	
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_LCSTAGE_TMPL$DeleteRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$DeleteRecord]
+	@dcID BIGINT
+AS
+BEGIN
+	DELETE FROM [dbo].[DXDIR_LC_STAGE_TMPL]
+	WHERE [ID] = @dcID
+END
+GO
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_LCSTAGE_TMPL$GetNextId'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$GetNextId]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_LCSTAGE_TMPL$GetNextId]
+	@dcNextId BIGINT OUTPUT 
+AS
+BEGIN
+	SET @dcNextId = NULL
+
+	DECLARE @dbname NVARCHAR(128) = db_name()
+
+	EXEC DX_PK_UTILITY_SQLSRV$db_sp_get_next_sequence_value @dbname
+		,N'dbo'
+		,N'DXDIR_LC_STAGE_TMPL_SEQ'
+		,@dcNextId OUTPUT
+END
+GO

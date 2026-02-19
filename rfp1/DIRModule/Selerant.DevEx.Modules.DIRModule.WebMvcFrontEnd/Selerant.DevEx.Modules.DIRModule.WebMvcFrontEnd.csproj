@@ -1,0 +1,595 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--<Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />-->
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">Any CPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F680B728-0EDC-4354-BF06-CCBCE16F8498}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd</RootNamespace>
+    <AssemblyName>Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
+    <MvcBuildViews>false</MvcBuildViews>
+    <UseIISExpress>true</UseIISExpress>
+    <Use64BitIISExpress />
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <!--<TypeScriptToolsVersion>3.0</TypeScriptToolsVersion>-->
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">DevEx3.10</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">Any CPU</Platform>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Any CPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Any CPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DevEx3.10|Any CPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\DevEx3.10\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>Any CPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DevEx3.11|Any CPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\DevEx3.11\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>Any CPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'DevEx3.10'">
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Selerant.ApplicationBlocks">
+      <HintPath>..\..\Libraries\3.10\Selerant.ApplicationBlocks.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx.BusinessLayer">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.BusinessLayer.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx.Configuration">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx.Images">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.Images.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx.InfrastructureWeb">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.InfrastructureWeb.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.DevEx.MiddleLayerAdapter">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.MiddleLayerAdapter.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.Infrastructure.DependencyContainer">
+      <HintPath>..\..\Libraries\3.10\Selerant.Infrastructure.DependencyContainer.dll</HintPath>
+    </Reference>
+    <Reference Include="Selerant.Infrastructure.Modules">
+      <HintPath>..\..\Libraries\3.10\Selerant.Infrastructure.Modules.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Abstractions" />
+    <Reference Include="System.Web.Routing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs">
+      <Link>Properties\SharedAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="Areas\AssessmentNavigator\AssessmentNavigatorAreaRegistration.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\AssessmentDashboardDialogController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\AssessmentResultsController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\CopyAssessmentController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\GeneralPanelController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\HomeController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\CreateAssessmentDialogController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\ManageAssessmentDialogController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Controllers\ResourceManagementController.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\MergeInputs\DIRResourceTypeCellType.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\AssessmentDashboardTab.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\Converters\LegendValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\FoodLosses\FoodLossesContainerModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\FoodLosses\FoodLossModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\FoodLosses\FoodLossType.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\FoodLossRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\GeneralPanel\GeneralPanelRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ClientEditableArrayConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\Interfaces\ICreateAssessmentSecurity.cs" />
+    <Compile Include="Areas\AssessmentNavigator\MenuCommands\AssessmentDashboardCommand.cs" />
+    <Compile Include="Areas\AssessmentNavigator\MenuCommands\CopyCommand.cs" />
+    <Compile Include="Areas\AssessmentNavigator\MenuCommands\SharingCommand.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Copy\CopyModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Dialogs\ManageAssessment\Manager\DestinationManager.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Dialogs\ManageAssessment\Manager\EntityManager.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Dialogs\ManageAssessment\Manager\LcStageManager.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Dialogs\ManageAssessment\ManageAssessmentUtility.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Dialogs\ManageAssessment\ManageAssessmentDialogModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Home\AssessmentNavigatorIndexEditModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\AssessmentDashboardDataStore.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\IDataStore.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\BaseRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\CostOfWasteRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\DashboardCostOfWasteRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\DashboardResultRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\IDashboardRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\IRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\RowItem\ResultRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\ResourceTabIds.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Converters\AssessmentResultPanelActionConverter.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Converters\AssessmentSearchResultPanelReferenceConverter.cs" />
+    <Compile Include="Helpers\ExcelExportScriptGenerator.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\Interfaces\IManageAssessmentSecurity.cs" />
+    <Compile Include="AssessmentNavigator.ManageAssessmentDialogController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\GridHelpers.cs" />
+    <Compile Include="Helpers\MaterialHelpers.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\BusinessDataDialogModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\MergeInputs\MergeInputsDialogModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\SecondCreateAssessmentModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\FirstCreateAssessmentModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\Shared\LCStageStepsModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentDashboardDialog\IndexModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\AssessmentResultsModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\GeneralPanel\EditGeneralPanelDialogModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\GeneralPanel\GeneralModelPartial.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\AssessmentResults\AssessmentResultType.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\GeneralPanel\GeneralPanelModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Home\AssessmentNavigatorHeaderModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Home\AssessmentNavigatorIndexModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\ObjectCreation\IndexModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Json\InputResponseModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\AmountFormatter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\BaseRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\BoolToYesNoValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\InputCategoryActionConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\CategoryDestinationsReferenceValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ClientEditableBusinessCostValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ClientEditablePhraseValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ResourceEntityDestinationsActionConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ClientOutputsIsEditableValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\NonFoodDestinationRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ResourceEntityOutputsActionConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\CategoryMaterialReferenceValueConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ClientEditableDecimalConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Converters\ResourceEntityActionConverter.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\BusinessCostRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\DestinationRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\InputRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Json\BusinessCostModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Json\DestinationModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Json\InputModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Json\OutputModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\RowItem\OutputRowItem.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\ResourceManagementModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\BaseGridTabModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\BusinessCostGridTabModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\DestinationRowItemModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\DestinationsGridTabModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\InputsGridTabModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\NotesModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\OutputsGridTabModel.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\AssessmentNavigatorSecurity.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\AssessmentResultsSecurity.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\CreateAssessmentObjectCreationSecurity.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\GeneralPanelSecurity.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Security\ResourceManagementSecurity.cs" />
+    <Compile Include="Areas\AssessmentSearch\AssessmentSearchAreaRegistration.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\AssessmentCustomQueryPanelController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\AssessmentQuickBoxAjaxControllerExtension.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\AssessmentRecentSearchPanelController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\AssessmentSearchManagerHelperExtension.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\AssessmentSearchPanelController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\CompositePanelController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\HomeController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Controllers\SearchResultPanelController.cs" />
+    <Compile Include="Areas\AssessmentSearch\Helpers\AssessmentBasicSearchHelper.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Home\AssessmentIndexModel.cs" />
+    <Compile Include="Areas\AssessmentSearch\Security\AssessmentSearchSecurity.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Panels\Composite\IndexModel.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Panels\Recent\IndexModel.cs" />
+    <Compile Include="Areas\AssessmentSearch\Models\Panels\Result\SearchResultIndexModel.cs" />
+    <Compile Include="Areas\AssessmentSearch\SearchOptions\AssessmentBasicSearchOption.cs" />
+    <Compile Include="Areas\AssessmentSearch\SearchOptions\AssessmentCustomQuerySearchOption.cs" />
+    <Compile Include="Areas\DIRAdminTools\Controllers\AssessmentTypesController.cs" />
+    <Compile Include="Areas\DIRAdminTools\Converters\AssessmentTypesActionsConverter.cs" />
+    <Compile Include="Areas\DIRAdminTools\DIRAdminToolsAreaRegistration.cs" />
+    <Compile Include="Areas\DIRAdminTools\Models\AssessmentTypeDialogModel.cs" />
+    <Compile Include="Areas\DIRAdminTools\Models\AssessmentTypesCommonData.cs" />
+    <Compile Include="Areas\DIRAdminTools\Models\AssessmentTypesIndexModel.cs" />
+    <Compile Include="Areas\DIRAdminTools\Models\EditAssessmentTypeModel.cs" />
+    <Compile Include="Areas\DIRAdminTools\Security\AdminToolsAssessmentTypesSecurity.cs" />
+    <Compile Include="AssessmentNavigator.AssessmentDashboardDialogController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.AssessmentResultsController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.CopyAssessmentController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.CreateAssessmentDialogController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.GeneralPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.HomeController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentNavigator.ResourceManagementController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.AssessmentCustomQueryPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.AssessmentCustomQueryPanelCreateController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.AssessmentCustomQueryPanelRunController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.AssessmentRecentSearchPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.BasicSearchController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.CompositePanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.CustomQueryPanelEditController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.HomeController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.RecentPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.ResultPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="AssessmentSearch.SearchResultPanelController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="DIRAdminTools.AssessmentTypesController.generated.cs">
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\BreadCrumb\AssessmentBreadCrumb.cs" />
+    <Compile Include="Helpers\LovListFactory.cs" />
+    <Compile Include="Areas\AssessmentNavigator\Models\Panels\ResourceManagement\Shared\GridTab.cs" />
+    <Compile Include="T4MVC.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>T4MVC.tt</DependentUpon>
+    </Compile>
+    <Compile Include="_ThisProject\ComponentDescriptorExtensionProvider.cs" />
+    <Compile Include="_ThisProject\Infrastructure\AdminTools\AdminToolsRegistry.cs" />
+    <Compile Include="_ThisProject\Infrastructure\Bundling\DIRStaticResourcesConfigurationUpdater.cs" />
+    <Compile Include="_ThisProject\Infrastructure\CommandResolver\DxAssessmentCollectionCommandResolver.cs" />
+    <Compile Include="_ThisProject\Infrastructure\CommandResolver\DxAssessmentCommandResolver.cs" />
+    <Compile Include="_ThisProject\Infrastructure\HostMenu\CreateAssessmentUrlProvider.cs" />
+    <Compile Include="_ThisProject\Infrastructure\HostMenu\SearchAssessmentUrlProvider.cs" />
+    <Compile Include="_ThisProject\Infrastructure\Navigator\DIRModuleNavigatorControllerTypeProvider.cs" />
+    <Compile Include="_ThisProject\Infrastructure\Resources\DIRResourceFileProvider.cs" />
+    <Compile Include="_ThisProject\Wirings\WiringCommandResolvers.cs" />
+    <Compile Include="_ThisProject\Wirings\WiringNavigatorCommands.cs" />
+    <Compile Include="_ThisProject\Wirings\WiringSecurity.cs" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\AssessmentDashboardDialog.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentResults\AssessmentResults.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\BusinessDataDialog.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\CreateAssessmentDialog.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\MergeInputs\MergeInputsDialog.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\Shared\LCStageSteps.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\GeneralPanel\GeneralPanel.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\Home\Index.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\Home\IndexEdit.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Index.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\GridTab.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\BusinessCostGridTab.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\DestinationsGridTab.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\InputsGridTab.css" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\OutputsGridTab.css" />
+    <Content Include="Areas\DIRAdminTools\Views\AssessmentTypes\EditAssessmentTypeDialog.css" />
+    <Content Include="Areas\DIRAdminTools\Views\AssessmentTypes\Index.css" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\WebMvcModules\Content\Images\toolbar_icons\DxAddDirectUltraDarkGrey.svg" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\Images\Icons\16x16\DxAssessmentSearchMainBlue.svg" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\Images\Icons\16x16\DxDirectUltraDarkGrey.svg" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\Images\Icons\16x16\DxDirectWhite.svg" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\WebMvcModules\Content\Images\toolbar_icons\DxAddUltraDarkGrey.svg" />
+    <Content Include="FILES_TO_COPY\CoreWebApplicationRoot\WebMvcModules\Content\Images\toolbar_icons\DxSearchDirectUltraDarkGrey.svg">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="FILES_TO_COPY\ModuleWritableFolder\AutoNumbering\AutoNumbering_DIR.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="_ThisProject\DIRModuleComponentIdentifier.cs" />
+    <Compile Include="_ThisProject\Wiring.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="FILES_TO_COPY\ModuleWritableFolder\AutoNumbering\ScriptingTestScripts.bat" />
+    <Content Include="Areas\AssessmentNavigator\Views\Home\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\Home\Header.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\web.config" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\Index.cshtml" />
+    <Content Include="FILES_TO_COPY\CoreWritableFolder\GridCustomization\SearchAssessmentBasic.xml" />
+    <Content Include="Selerant.SNK" />
+    <Content Include="Areas\AssessmentNavigator\Views\GeneralPanel\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentResults\Index.cshtml" />
+    <Content Include="T4MVC.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>T4MVC.cs</LastGenOutput>
+    </Content>
+    <Content Include="Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.wpp.targets">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Areas\AssessmentNavigator\Views\GeneralPanel\EditGeneralPanelDialog.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\GeneralPanel\GeneralPanelPartial.cshtml" />
+    <Content Include="Areas\DIRAdminTools\Views\AssessmentTypes\Index.cshtml" />
+    <Content Include="Areas\DIRAdminTools\Views\web.config" />
+    <Content Include="Areas\DIRAdminTools\Views\AssessmentTypes\EditAssessmentTypeDialog.cshtml" />
+    <Content Include="Areas\DIRAdminTools\Views\AssessmentTypes\EditAssessmentTypeDialogIndex.cshtml" />
+    <Content Include="Areas\AssessmentSearch\Views\BasicSearch\Index.cshtml" />
+    <Content Include="Areas\AssessmentSearch\Views\CompositePanel\Index.cshtml" />
+    <Content Include="Areas\AssessmentSearch\Views\RecentPanel\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\Home\IndexEdit.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\BusinessDataDialog.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\InputsGridTab.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\FirstCreateAssessmentDialog.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\SecondCreateAssessmentDialog.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\Shared\LCStageSteps.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\BusinessCostGridTab.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\DestinationsGridTab.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\OutputsGridTab.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CopyAssessment\CopyAssessment.cshtml" />
+    <Content Include="Areas\AssessmentSearch\Views\ResultPanel\SearchResult.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\MergeInputs\MergeInputsDialog.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\ResourceNote.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\ManageAssessmentDialog\Index.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\FoodLosses\FoodLoss.cshtml" />
+    <Content Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\FoodLosses\FoodLossesContainer.cshtml" />
+    <None Include="Properties\PublishProfiles\PublishToDevEX.pubxml" />
+    <None Include="T4MVC.tt.settings.xml" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="Web.Debug.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="Web.Release.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </Content>
+    <Content Include="tsconfig.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Autofac">
+      <Version>5.1.2</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.Mvc">
+      <Version>5.2.7</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.Razor">
+      <Version>3.2.7</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebApi">
+      <Version>5.2.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebApi.Client">
+      <Version>5.2.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebApi.Core">
+      <Version>5.2.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebApi.WebHost">
+      <Version>5.2.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AspNet.WebPages">
+      <Version>3.2.7</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.TypeScript.MSBuild">
+      <Version>3.9.2</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Web.Infrastructure">
+      <Version>1.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="T4MVCExtensions">
+      <Version>4.2.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.DataSetExtensions">
+      <Version>4.*</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CSharp">
+      <Version>4.*</Version>
+    </PackageReference>
+    <PackageReference Include="System.Net.Http">
+      <Version>4.3.4</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\AssessmentDashboardDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\FoodLosses\FoodLoss.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\AssessmentDashboardDialog\FoodLosses\FoodLossesContainer.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\AssessmentResults\AssessmentResults.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\CopyAssessment\CopyAssessment.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\BusinessDataDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\MergeInputs\MergeInputsDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\Shared\LCStageSteps.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\GeneralPanel\EditGeneralPanelDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\GeneralPanel\GeneralPanelPartial.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\GeneralPanel\GeneralPanel.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\Home\Index.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\CreateAssessmentDialog\CreateAssessmentDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\Home\IndexEdit.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ManageAssessmentDialog\ManageAssessmentDialog.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Index.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\BusinessCostGridTab.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\DestinationsGridTab.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\GridTab.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\InputsGridTab.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\OutputsGridTab.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentNavigator\Views\ResourceManagement\Shared\ResourceNote.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentSearch\Views\Home\AssessmentIndexModel.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentSearch\Views\CompositePanel\IndexModel.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentSearch\Views\RecentPanel\AssessmentRecentPanel.ts" />
+    <TypeScriptCompile Include="Areas\AssessmentSearch\Views\ResultPanel\AssessmentSearchResultPanel.ts" />
+    <TypeScriptCompile Include="Areas\DIRAdminTools\Views\AssessmentTypes\EditAssessmentTypeDialog.ts" />
+    <TypeScriptCompile Include="Areas\DIRAdminTools\Views\AssessmentTypes\Index.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FILES_TO_COPY\CoreWebApplicationRoot\Resources\DIR_AdminTools.resx" />
+    <EmbeddedResource Include="FILES_TO_COPY\CoreWebApplicationRoot\Resources\DIR_AssessmentManager.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FILES_TO_COPY\CoreWebApplicationRoot\Resources\DIR_Controls.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="T4MVC.tt.hooks.t4" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FILES_TO_COPY\CoreWritableFolder\UserFormsGeneric\Assessment\" />
+    <Folder Include="FILES_TO_COPY\CoreWritableFolder\UserFormsMvc\Assessment\" />
+    <Folder Include="FILES_TO_COPY\CoreWritableFolder\UserForms\Assessment\" />
+    <Folder Include="FILES_TO_COPY\ModuleWritableFolder\UserFormsGeneric\Assessment\" />
+    <Folder Include="FILES_TO_COPY\ModuleWritableFolder\UserFormsMvc\Assessment\" />
+    <Folder Include="FILES_TO_COPY\ModuleWritableFolder\UserForms\Assessment\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Selerant.DevEx.Modules.DIRModule.BackEnd\Selerant.DevEx.Modules.DIRModule.BackEnd.csproj">
+      <Project>{61ffd671-5d19-4f13-8e49-1861b07a64f3}</Project>
+      <Name>Selerant.DevEx.Modules.DIRModule.BackEnd</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Selerant.DevEx.Modules.DIRModule.Configuration\Selerant.DevEx.Modules.DIRModule.Configuration.csproj">
+      <Project>{2c55ec4d-78a5-4f3d-bbdb-a8235b6a85bc}</Project>
+      <Name>Selerant.DevEx.Modules.DIRModule.Configuration</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Selerant.DevEx.Modules.DIRModule.ModuleBlocks\Selerant.DevEx.Modules.DIRModule.ModuleBlocks.csproj">
+      <Project>{ccade385-dd21-491d-a65c-ba586b1f76c9}</Project>
+      <Name>Selerant.DevEx.Modules.DIRModule.ModuleBlocks</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Selerant.SNK</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DevEx3.10|AnyCPU'">
+    <OutputPath>bin\</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets')" /> -->
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
+  <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
+    <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>True</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>2230</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>http://localhost:30445/</IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>(
+echo:Copying bin
+robocopy "$(TargetDir)." "$(ProjectDir)..\..\..\..\inetpub\wwwroot\devex_module_local_oracle\bin" /NJH /NDL /NP /NC /NS /S /XO /XF "$(TargetDir)System.Numerics.Vectors.dll"
+) ^&amp; IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL = 0
+
+echo:Copying files_to_copy
+xcopy /y /r /s /e /i "$(ProjectDir)FILES_TO_COPY\CoreWebApplicationRoot\*.*" "$(ProjectDir)..\..\..\..\inetpub\wwwroot\devex_module_local_oracle\"
+xcopy /y /r /s /e /i "$(ProjectDir)FILES_TO_COPY\CoreWritableFolder\*.*" "$(ProjectDir)..\..\..\..\inetpub\wwwroot\devex_module_local_oracle\WritableFolder\"
+xcopy /y /r /s /e /i "$(ProjectDir)FILES_TO_COPY\ModuleWritableFolder\*.*" "$(ProjectDir)..\..\..\..\inetpub\wwwroot\devex_module_local_oracle\WritableFolder\Modules\DIRModule\"</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target> -->
+</Project>

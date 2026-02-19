@@ -1,0 +1,588 @@
+/* Inter Font - Using system fonts as fallback, Google Fonts via link tag if needed */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* EmpauerLocal Colors */
+:root {
+  --primary-color: #28a745;
+  --primary-dark: #218838;
+  --primary-light: #34ce57;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-bg: #f8f9fa;
+  --dark-text: #000000;
+  --border-color: #dee2e6;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 12px;
+  min-height: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
+  /* Avoid overflow-y that would create a scroll container and break fixed/sticky children */
+  overflow-y: visible;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--dark-text);
+  background-color: var(--light-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding-left: 30px;
+  padding-right: 30px;
+}
+
+/* Header - Horizontal Navigation: fixed so content scrolls underneath */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  background: white;
+  height: 56px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar {
+  height: 56px;
+  min-height: 56px;
+  max-height: 56px;
+  box-sizing: border-box;
+  margin-bottom: 0 !important;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: white !important;
+}
+
+.navbar-brand {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 600;
+  color: var(--primary-color) !important;
+  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+.navbar-nav {
+  display: flex;
+  flex-direction: row;
+  list-style: none;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.navbar-nav .nav-link {
+  color: var(--dark-text) !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-color) !important;
+  background-color: rgba(40, 167, 69, 0.1);
+  border-radius: 4px;
+}
+
+.navbar-nav .nav-link i {
+  font-size: 1rem;
+}
+
+/* Main content - spacing from navbar/tabs and footer (Empauer-style) */
+main {
+  flex: 1;
+  padding-bottom: 50px;
+}
+
+/* Standardised page heading under tabs: h1 26px, 30px space below heading to content */
+main .container-fluid > div:first-child,
+main .container > div:first-child,
+main .container-fluid > h1:first-child,
+main .container > h1:first-child,
+.browser-tab-content .container-fluid > div:first-child,
+.browser-tab-content .container > div:first-child,
+.browser-tab-content .container-fluid > h1:first-child,
+.browser-tab-content .container > h1:first-child {
+  margin-bottom: 30px;
+}
+
+main .container-fluid h1,
+main .container h1,
+.browser-tab-content .container-fluid h1,
+.browser-tab-content .container h1 {
+  font-size: 26px;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  background: var(--primary-color);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+.card-title {
+  color: var(--dark-text);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-text {
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-outline-primary {
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
+}
+
+/* Home Page Grid */
+/* Home page: centre content vertically and show menu cards in one row */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100vh - 56px - 80px);
+}
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.home-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.home-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+}
+
+.home-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--dark-text);
+  margin-bottom: 0.5rem;
+}
+
+.home-card-description {
+  color: var(--secondary-color);
+  font-size: 0.9rem;
+}
+
+/* Home page dashboard overview tables - compact text */
+.home-dashboard-tables .home-overview-label,
+.home-dashboard-tables .home-overview-value {
+  font-size: 0.8rem;
+}
+.home-dashboard-tables .home-overview-value {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--dark-text);
+  font-family: 'Inter', sans-serif;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.table thead {
+  background: var(--primary-color);
+  color: white;
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:hover {
+  background-color: var(--light-bg);
+}
+
+/* Alerts */
+.alert {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.alert-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.alert-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+/* Footer: Empauer style - full width, white, copyright left, legal links right */
+.footer {
+  width: 100%;
+  background-color: white;
+  color: var(--dark-text);
+  padding: 1rem 0;
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+}
+.footer .container-fluid.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.footer .footer-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+.footer .footer-legal-links a:hover {
+  color: var(--primary-color) !important;
+}
+
+/* Login Page */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 2rem;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Login button: clearly enabled and clickable (avoid ghosted look) */
+.login-card .btn-primary {
+  background-color: var(--primary-dark);
+  border: none;
+  color: white;
+  opacity: 1;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+  padding: 0.75rem 1.25rem;
+}
+
+.login-card .btn-primary:hover,
+.login-card .btn-primary:focus {
+  background-color: #1e7e34;
+  color: white;
+  opacity: 1;
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.5);
+}
+
+.login-card .btn-primary:active {
+  background-color: #1a6b2c;
+  opacity: 1;
+}
+
+/* Add Product: Form Single View – show all section panels on one page.
+   Reset positioning/transforms left by Bootstrap tabs so sections stack in document flow. */
+#formView.section-single-mode #sectionTabsBar {
+  display: none !important;
+}
+#formView.section-single-mode [role="tabpanel"],
+#formView.section-single-mode [id^="sectionPanel"] {
+  display: block !important;
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 1 !important;
+  margin-top: 18px;
+}
+#formView.section-single-mode [id^="sectionPanel"]:first-child {
+  margin-top: 0;
+}
+#formView.section-single-mode .tab-content {
+  position: static !important;
+  top: auto !important;
+  display: flex !important;
+  flex-direction: column;
+}
+
+.text-primary {
+  color: var(--dark-text) !important;
+  font-size: 24px;
+  text-transform: capitalize;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.mt-4 {
+  margin-top: 1.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+  .home-page {
+    min-height: auto;
+  }
+  
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  body {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+/* Sankey Diagram Container */
+.sankey-container {
+  width: 100%;
+  height: 600px;
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  background: var(--light-bg);
+  position: relative;
+  overflow: auto;
+}
+
+.sankey-node {
+  position: absolute;
+  padding: 1rem;
+  background: white;
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  cursor: move;
+  min-width: 150px;
+  box-shadow: var(--shadow);
+}
+
+.sankey-node:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.sankey-node.dragging {
+  opacity: 0.5;
+}
+
+.sankey-connection {
+  position: absolute;
+  pointer-events: none;
+  stroke: var(--primary-color);
+  stroke-width: 2;
+}

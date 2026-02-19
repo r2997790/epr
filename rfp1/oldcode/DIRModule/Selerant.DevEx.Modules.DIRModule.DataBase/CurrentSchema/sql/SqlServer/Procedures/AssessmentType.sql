@@ -1,0 +1,95 @@
+﻿IF EXISTS (
+		SELECT *
+		FROM sys.objects so
+		JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+		WHERE so.NAME = N'DXDIR_PK_ASSESSMENT_TYPE$InsertRecord'
+			AND sc.NAME = N'dbo'
+			AND type IN (N'P')
+		)
+	DROP PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$InsertRecord]
+	 @sCODE VARCHAR(32),
+	 @sDESCRIPTION NVARCHAR(500),
+	 @dcACTIVE TINYINT
+AS
+BEGIN
+	INSERT [dbo].[DXDIR_ASSESSMENT_TYPE]
+	(
+		[CODE],
+		[DESCRIPTION],
+		[ACTIVE]
+	)
+	VALUES
+	(
+		@sCODE,
+		@sDESCRIPTION,
+		@dcACTIVE
+	)
+END
+GO
+
+
+IF EXISTS (
+		SELECT *
+		FROM sys.objects so
+		JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+		WHERE so.NAME = N'DXDIR_PK_ASSESSMENT_TYPE$UpdateRecord'
+			AND sc.NAME = N'dbo'
+			AND type IN (N'P')
+		)
+	DROP PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$UpdateRecord]
+	 @sCODE VARCHAR(32),
+	 @sDESCRIPTION NVARCHAR(500),
+	 @dcACTIVE TINYINT
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_ASSESSMENT_TYPE]
+	SET [DESCRIPTION] = @sDESCRIPTION,
+		[ACTIVE] = @dcACTIVE
+	WHERE [CODE] = @sCODE
+END
+GO
+
+
+IF EXISTS (
+		SELECT *
+		FROM sys.objects so
+		JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+		WHERE so.NAME = N'DXDIR_PK_ASSESSMENT_TYPE$DeleteRecord'
+			AND sc.NAME = N'dbo'
+			AND type IN (N'P')
+		)
+	DROP PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_ASSESSMENT_TYPE$DeleteRecord]
+	 @sCODE VARCHAR(32)
+AS
+BEGIN
+	DELETE [dbo].[DXDIR_ASSESSMENT_TYPE]
+	WHERE [CODE] = @sCODE
+END
+GO

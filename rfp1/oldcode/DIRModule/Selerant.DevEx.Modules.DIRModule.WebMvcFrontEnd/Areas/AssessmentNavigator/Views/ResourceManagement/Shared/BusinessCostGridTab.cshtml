@@ -1,0 +1,35 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement.Shared;
+@using MenuItem = Selerant.DevEx.WebMvcModules.Helpers.MenuItem
+@using ToolbarMenu = Selerant.DevEx.WebMvcModules.Helpers.Menu
+@using System.Web.UI.WebControls
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<BusinessCostGridTabModel>
+@{
+	Model.SetLogicId("BusinessCostGridTabPartial");
+
+	const string partialViewJSTypeFinder = "DX.Ctrl.findParentControlOfType(this, DX.DIRModule.AssessmentNavigator.ResourceManagement.Shared.BusinessCostGridTab)";
+
+	var businessCostToolbar = ToolbarMenu.New("BusinessCostToolbar").SetKnownSkin(ToolbarMenu.KnownSkins.SkNormalMenu)
+							   .AddMenuItem(new MenuItem("NewBusinessCost", @ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("AddBusinessCost"),
+														 partialViewJSTypeFinder + ".AddBusinessCost()"));
+}
+
+@using (Model.BeginRendering(Html))
+{
+	<div class="res-mgmt-partial-business-cost-tab">
+		@if (Model.SecurityObject.CanEditOrDelete)
+		{
+			<div class="container-fluid  category-section-padding">
+				<div id="panelCategoryButtons" class="row">
+					<div class="col-12">
+						@(businessCostToolbar.Render())
+					</div>
+				</div>
+			</div>
+		}
+		<div class="businesscost-grid">
+			@(Model.CreateJqGrid().Render())
+		</div>
+	</div>
+	@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.ResourceNote, Model.Notes)
+}

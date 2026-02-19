@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Cost Analysis";
+    var products = ViewBag.Products as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+}
+
+<style>
+    .report-filter-card { background: var(--light-bg); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
+    .report-page .btn-outline-primary { border-width: 1px; }
+</style>
+
+<div class="container-fluid report-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1><i class="bi bi-currency-dollar"></i> <span data-translate="Cost Analysis Report">Cost Analysis Report</span></h1>
+                    <p class="text-muted mb-0"><span data-translate="Cost analysis by product and packaging">Cost analysis by product and packaging</span></p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Dashboard", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-arrow-left"></i> <span data-translate="Back to Dashboard">Back to Dashboard</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-filter-card">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> <span data-translate="Summary">Summary</span></h5>
+        <p class="mb-0"><span data-translate="Product list for cost review. Cost data can be extended when available.">Product list for cost review. Cost data can be extended when available.</span></p>
+    </div>
+
+    <div class="card" style="border: 1px solid var(--border-color); border-radius: 8px;">
+        <div class="card-header" style="background: var(--primary-color); color: white; font-weight: 600;">
+            <i class="bi bi-currency-dollar"></i> <span data-translate="Products">Products</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th><span data-translate="Name">Name</span></th>
+                            <th><span data-translate="Brand">Brand</span></th>
+                            <th><span data-translate="Category">Category</span></th>
+                            <th><span data-translate="Avg Cost">Avg Cost</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in products)
+                        {
+                            <tr>
+                                <td><a href="@Url.Action("Detail", "Products", new { id = p.Id })" class="text-decoration-none">@p.Name</a></td>
+                                <td>@(p.Brand ?? "—")</td>
+                                <td>@(p.ProductCategory ?? "—")</td>
+                                <td>$0.00</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

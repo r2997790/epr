@@ -1,0 +1,49 @@
+﻿@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.ResourceManagement.Shared;
+@using Selerant.DevEx.Modules.DIRModule.Configuration.Grids;
+@using System.Web.UI.WebControls
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<DestinationsGridTabModel>
+@{
+	if (Model.GridID == GridNames.DESTINATIONS)
+	{
+		Model.SetLogicId("DestinationsGridTabPartial");
+	}
+	else
+	{
+		Model.SetLogicId("NonFoodDestinationsGridTabPartial");
+	}
+
+	var grid = Model.CreateJqGrid();
+	Model.SetJsCustomData("visibleColumns", Model.VisibleColumnsSortIndex);
+}
+
+@using (Model.BeginRendering(Html))
+{
+	<div class="res-mgmt-partial-destination-tab container-fluid">
+		<div class="row">
+			<div class="col-auto">
+				@(Html.ButtonControl("btnManangeDestinations")
+						  .SetKnownSkin(ButtonControlIndexModel.KnownSkins.SkNormal)
+						  .SetSkin("dx-btn")
+						  .SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("ButtonManage_ManageDestinations"))
+				)
+			</div>
+		</div>
+
+		<div class="row destination-grid">
+			<div class="col-12">
+				@(grid.Render())
+			</div>
+		</div>
+		@*@(Html.EmptyDataBlock(Model.GridEmptyBlockID, Model.EmptyGridMessage, false))*@
+		<div class="row ">
+			<div class="col-auto">
+				@(Html.LabelControl("lblRequiredFootnote")
+							.SetText(@ResText.GetResourceModuleByName(ResourceFiles.AssessmentManager).GetLocalizedString("DestinationsPartialView_BreakdownsFootnote"))
+							.SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm))
+			</div>
+		</div>
+	</div>
+	@Html.Partial(DIRModuleInfo.Instance, MVC_DIR.AssessmentNavigator.ResourceManagement.Views.Shared.ResourceNote, Model.Notes)
+
+}

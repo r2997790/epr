@@ -1,0 +1,12 @@
+﻿.DIRModule-merge-dialog-spreadsheet-invalid-cell {
+    background-color: none !important;
+}
+
+.DIRModule-merge-dialog-add-material-span {
+    flex: 1;
+    margin-left: 5px !important;
+}
+
+    .DIRModule-merge-dialog-add-material-span img {
+        cursor: pointer;
+    }

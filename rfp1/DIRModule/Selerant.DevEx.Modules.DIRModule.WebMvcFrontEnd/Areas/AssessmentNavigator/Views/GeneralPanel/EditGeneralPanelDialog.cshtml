@@ -1,0 +1,21 @@
+﻿@using Selerant.DevEx;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Navigators.Views
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.GeneralPanel;
+@using Selerant.DevEx.WebMvcModules.Helpers.jqGrid
+@using System.Web.UI.WebControls
+@using Selerant.DevEx.WebControls;
+@using Menu = Selerant.DevEx.WebMvcModules.Helpers.Menu
+@using Selerant.DevEx.WebModules.RegulatoryManager
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Panels.GeneralPanel.EditGeneralPanelDialogModel>
+
+@{
+    Model.MenuModel
+        .AddButton("CancelButton", @ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("DlgCancel"), "cancel")
+        .AddButton("OkButton", @ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("DlgOk"), "confirm");
+
+    Model.GeneralModelPartial.SetLogicId("GeneralPanelPartial");
+}
+
+@Html.Partial(DIRModuleInfo.Instance, GeneralPanelModel.ASSESMENT_GENERAL_PARTIAL, Model.GeneralModelPartial)

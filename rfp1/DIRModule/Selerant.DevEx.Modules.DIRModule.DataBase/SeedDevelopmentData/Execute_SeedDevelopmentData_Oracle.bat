@@ -1,0 +1,16 @@
+@ECHO off
+ECHO * Executing Oracle seeding dev data...
+ECHO ****************************************************************************************************
+
+SET workingPath=%cd%
+SET logFilePath="%workingPath%\_Output\Execute_SeedDevelopmentData_Oracle.log"
+
+pushd .
+CD "C:\Common\Tools\DbManager\Selerant.DbManager.CLI\bin\Debug"
+@ECHO ON
+
+dbmanager single -n "SeedDevelopmentData.cs" -m "%workingPath%" -p "Oracle|DEVEX_MAIN_ARD/devex123@BLSRV-Oracle03:1522/orcl12c" -s --execute --executeArguments  "INDEXES" "LOBDATA" "1" --logFileMode "CreateNew" --logfile %logFilePath%
+
+@ECHO OFF
+popd
+pause

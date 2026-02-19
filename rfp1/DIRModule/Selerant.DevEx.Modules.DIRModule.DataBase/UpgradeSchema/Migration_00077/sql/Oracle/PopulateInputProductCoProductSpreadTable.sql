@@ -1,0 +1,26 @@
+TRUNCATE TABLE DXDIR_INPUT_PROD_COPROD_SPREAD;
+/
+
+DECLARE
+    v_input_ids DX_PK_UTILITY.DX_NUMBERARRAY;
+BEGIN
+    
+    SELECT ID
+    BULK COLLECT INTO v_input_ids
+    FROM DXDIR_INPUT
+    WHERE PART_OF_PRODUCT_COPRODUCT = 1;
+
+    IF (v_input_ids.COUNT > 0)
+    THEN
+        FOR i IN v_input_ids.FIRST..v_input_ids.LAST
+        LOOP     
+            INSERT INTO DXDIR_INPUT_PROD_COPROD_SPREAD (INPUT_ID, DESTINATION_CODE)
+            VALUES (v_input_ids(i), 'PRODUCT');
+
+			INSERT INTO DXDIR_INPUT_PROD_COPROD_SPREAD (INPUT_ID, DESTINATION_CODE)
+            VALUES (v_input_ids(i), 'COPRODUCT');
+        END LOOP;     
+    END IF;   
+
+END;
+/

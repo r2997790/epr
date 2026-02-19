@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - PackSpec</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/browser-tabs.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/visual-editor.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="@Url.Action("Index", "Home")" data-no-tab="true">
+                    <i class="bi bi-box-seam"></i> PackSpec
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1" style="display: flex; flex-direction: row; gap: 0.5rem; align-items: center;">
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Home")" data-no-tab="true"><i class="bi bi-house"></i> <span data-translate="Home">Home</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "PackagingManagement")"><i class="bi bi-box-seam"></i> <span data-translate="Packaging">Packaging</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index", "Products")"><i class="bi bi-bag"></i> <span data-translate="Products">Products</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Content("~/distribution")"><i class="bi bi-truck"></i> <span data-translate="Distribution">Distribution</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Dashboard", "Reporting")" data-no-tab="true"><i class="bi bi-graph-up-arrow"></i> <span data-translate="Reporting">Reporting</span></a>
+                        </li>
+                        @if (Context.Session.GetString("IsLoggedIn") == "true")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-no-tab="true"><i class="bi bi-shield-lock"></i> <span data-translate="Admin">Admin</span></a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" href="@Url.Action("Index", "VisualEditor")" data-no-tab="false"><i class="bi bi-diagram-3"></i> <span data-translate="Visual Editor">Visual Editor</span></a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Admin/Themes" data-no-tab="true"><i class="bi bi-palette"></i> <span data-translate="Themes">Themes</span></a></li>
+                                    <li><a class="dropdown-item" href="/Admin/License" data-no-tab="true"><i class="bi bi-key"></i> <span data-translate="License Management">License Management</span></a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Legal" data-no-tab="true"><i class="bi bi-file-text"></i> <span data-translate="Legal Notices">Legal Notices</span></a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem;">
+                        @if (Context.Session.GetString("IsLoggedIn") == "true")
+                        {
+                            <li class="nav-item">
+                                <button type="button" class="nav-link btn btn-link border-0 bg-transparent" style="cursor: pointer; padding: 0.5rem 1rem;" onclick="showSettingsDialog(); return false;"><i class="bi bi-gear"></i> <span data-translate="Settings">Settings</span></button>
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" style="display: inline;">
+                                    <button type="submit" class="nav-link btn btn-link" style="border: none; background: none; padding: 0.5rem 1rem;"><i class="bi bi-box-arrow-right"></i> <span data-translate="Logout">Logout</span> (@Context.Session.GetString("Username"))</button>
+                                </form>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    @await Component.InvokeAsync("BrowserTabs")
+
+    <div class="modal fade" id="legalNoticeModal" tabindex="-1" aria-labelledby="legalNoticeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="legalNoticeModalLabel">Legal Notice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="legalNoticeContent" style="white-space: pre-wrap; line-height: 1.6;"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer border-top">
+        <div class="container-fluid footer-content">
+            <div>© 2026 Empauer Pty Ltd</div>
+            <div class="footer-legal-links">
+                <a href="#" class="text-muted small text-decoration-none footer-legal-link" data-legal="Copyright" data-translate="Copyright Notice">Copyright Notice</a>
+                <span class="text-muted">|</span>
+                <a href="#" class="text-muted small text-decoration-none footer-legal-link" data-legal="Disclaimer" data-translate="Disclaimer">Disclaimer</a>
+                <span class="text-muted">|</span>
+                <a href="#" class="text-muted small text-decoration-none footer-legal-link" data-legal="TermsOfUse" data-translate="Terms of Use">Terms of Use</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.showLegalNotice = function(key) {
+            var titles = { Copyright: 'Copyright Notice', Disclaimer: 'Disclaimer', TermsOfUse: 'Terms of Use' };
+            var contents = {
+                Copyright: '© 2026 Empauer Pty Ltd. All rights reserved. This software and documentation are the property of Empauer Pty Ltd.',
+                Disclaimer: 'This application is provided for packaging specification and EPR management. Empauer Pty Ltd does not warrant the accuracy of data. Use at your own risk.',
+                TermsOfUse: 'By using PackSpec you agree to use it in accordance with your license and applicable law. Unauthorised use is prohibited.'
+            };
+            var el = document.getElementById('legalNoticeModal');
+            var labelEl = document.getElementById('legalNoticeModalLabel');
+            var bodyEl = document.getElementById('legalNoticeContent');
+            if (labelEl) labelEl.textContent = titles[key] || 'Legal Notice';
+            if (bodyEl) bodyEl.textContent = contents[key] || '';
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal && el) {
+                var modal = new bootstrap.Modal(el);
+                modal.show();
+            }
+        };
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.footer-legal-link').forEach(function(a) {
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var key = this.getAttribute('data-legal');
+                    if (key && window.showLegalNotice) window.showLegalNotice(key);
+                });
+            });
+        });
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="~/js/localization.js" asp-append-version="true"></script>
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/product-form.js" asp-append-version="true"></script>
+    <script src="~/js/visual-editor/visual-editor-complete.js" asp-append-version="true"></script>
+    <script src="~/js/product-form-visual-view.js" asp-append-version="true"></script>
+    <script src="~/js/distribution/asn-management.js" asp-append-version="true"></script>
+    <script src="~/js/distribution/asn-map-view.js" asp-append-version="true"></script>
+    <script src="~/js/distribution/asn-visual-view.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

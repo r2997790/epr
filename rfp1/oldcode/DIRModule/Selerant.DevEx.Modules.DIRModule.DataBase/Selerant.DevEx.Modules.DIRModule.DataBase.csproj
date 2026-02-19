@@ -1,0 +1,105 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ProjectGuid>{3AA62D0B-F4C2-4923-9600-CBC489B7951C}</ProjectGuid>
+    <TargetFramework>net48</TargetFramework>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <OutputPath>bin\</OutputPath>
+    <Configurations>Debug;Release;DevEx3.10</Configurations>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Selerant.SNK</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Data.DataSetExtensions" Version="4.*" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.*" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
+  </ItemGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DevEx3.10|Any CPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\DevEx3.10\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>Any CPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DevEx3.11|Any CPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\DevEx3.11\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>Any CPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>   
+  <ItemGroup Condition="'$(Configuration)' == 'DevEx3.10'">
+    <Reference Include="Selerant.ApplicationBlocks">
+      <HintPath>..\..\Libraries\3.10\Selerant.ApplicationBlocks.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+    <Content Include="CurrentSchema\*.sql" />
+    <Content Include="UpgradeSchema\*.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="_Output\**" />
+    <EmbeddedResource Remove="_Output\**" />
+    <None Remove="_Output\**" />
+		<None Remove="UpgradeFromMigrations_Oracle.log" />
+		<None Remove="UpgradeFromMigrations_SqlServer.log" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="5.1.2" />
+    <PackageReference Include="Selerant.Build.Tasks.Pack" Version="1.1.19" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Selerant.DevEx.Modules.DIRModule.ModuleBlocks\Selerant.DevEx.Modules.DIRModule.ModuleBlocks.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+		<Content Include="ModuleInfo.xml">
+			<SubType>Designer</SubType>
+		</Content>
+    <Content Include="DropModuleSchemaOracle.sql" />
+    <Content Include="DropModuleSchemaSqlServer.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CreateWithDropSchemaOracle.bat" />
+    <None Include="CreateWithDropSchemaSqlServer.bat" />
+    <None Include="DropModuleSchemaOracle.bat" />
+    <None Include="CreateSchemaOracle.bat" />
+    <None Include="CreateSchemaSQLServer.bat" />
+    <None Include="DropModuleSchemaSqlServer.bat" />
+    <None Include="SeedDevelopmentData\Create_SeedDevelopmentData_Oracle.bat" />
+    <None Include="SeedDevelopmentData\Create_SeedDevelopmentData_SqlServer.bat" />
+    <None Include="SeedDevelopmentData\Execute_SeedDevelopmentData_Oracle.bat" />
+    <None Include="SeedDevelopmentData\Execute_SeedDevelopmentData_SqlServer.bat" />
+    <None Include="Selerant.SNK" />
+    <None Include="UpgradeFromMigrations_Oracle.bat" />
+    <None Include="UpgradeFromMigrations_SqlServer.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="UpgradeSchema\Migration_00075\sql\SqlServer\" />
+    <Folder Include="UpgradeSchema\Migration_00075\sql\Oracle\" />
+    <Folder Include="UpgradeSchema\Migration_00078\sql\SqlServer\" />
+    <Folder Include="UpgradeSchema\Migration_00078\sql\Oracle\" />
+    <Folder Include="UpgradeSchema\Migration_00079\sql\SqlServer\" />
+    <Folder Include="UpgradeSchema\Migration_00079\sql\Oracle\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Selerant.DevEx.BusinessLayer">
+      <HintPath>..\..\Libraries\3.10\Selerant.DevEx.BusinessLayer.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

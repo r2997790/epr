@@ -1,0 +1,123 @@
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_INPUT_CATEGORY$InsertRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$InsertRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_CODE VARCHAR(32),
+	@sTITLE NVARCHAR(512),
+	@sTYPE VARCHAR(24)
+AS
+BEGIN
+	INSERT [dbo].[DXDIR_INPUT_CATEGORY]
+	(
+		[ID],
+		[ASSESSMENT_CODE],
+		[TITLE],
+		[TYPE]
+	)
+	VALUES
+	(
+		@dcID,
+		@sASSESSMENT_CODE,
+		@sTITLE,
+		@sTYPE
+	)
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_INPUT_CATEGORY$UpdateRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$UpdateRecord]
+	@dcID BIGINT,
+	@sASSESSMENT_CODE VARCHAR(32),
+	@sTITLE NVARCHAR(512),
+	@sTYPE VARCHAR(24)
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_INPUT_CATEGORY]
+	SET 
+		[ASSESSMENT_CODE] = @sASSESSMENT_CODE,
+		[TITLE] = @sTITLE,
+		[TYPE] = @sTYPE
+	WHERE [ID] = @dcID
+	
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_INPUT_CATEGORY$DeleteRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$DeleteRecord]
+	@dcID BIGINT
+AS
+BEGIN
+	DELETE FROM [dbo].[DXDIR_INPUT_CATEGORY]
+	WHERE [ID] = @dcID
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_INPUT_CATEGORY$GetNextId'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$GetNextId]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_INPUT_CATEGORY$GetNextId]
+	@dcNextId BIGINT OUTPUT 
+AS
+BEGIN
+	SET @dcNextId = NULL
+
+	DECLARE @dbname NVARCHAR(128) = db_name()
+
+	EXEC DX_PK_UTILITY_SQLSRV$db_sp_get_next_sequence_value @dbname
+		,N'dbo'
+		,N'DXDIR_INPUT_CATEGORY_SEQ'
+		,@dcNextId OUTPUT
+END
+GO

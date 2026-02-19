@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "description": "Default pre-built Sankey flow blueprints shipped with the EPR prototype",
+  "blueprints": [
+    {
+      "key": "materials_flow",
+      "name": "Materials \u2192 Products \u2192 Geography",
+      "purpose": "Explain how raw materials flow through packaging into SKUs and where they are placed on the market.",
+      "nodes": [
+        {
+          "node_key": "materials",
+          "entity_type": "material_classification"
+        },
+        {
+          "node_key": "types",
+          "entity_type": "packaging_type"
+        },
+        {
+          "node_key": "units",
+          "entity_type": "packaging_unit"
+        },
+        {
+          "node_key": "skus",
+          "entity_type": "product"
+        },
+        {
+          "node_key": "geo",
+          "entity_type": "geography"
+        },
+        {
+          "node_key": "jur",
+          "entity_type": "jurisdiction"
+        }
+      ],
+      "edges": [
+        {
+          "from": "materials",
+          "to": "types"
+        },
+        {
+          "from": "types",
+          "to": "units"
+        },
+        {
+          "from": "units",
+          "to": "skus"
+        },
+        {
+          "from": "skus",
+          "to": "geo"
+        },
+        {
+          "from": "geo",
+          "to": "jur"
+        }
+      ],
+      "default_metric": "weight_kg"
+    },
+    {
+      "key": "tax_cost_flow",
+      "name": "Tax & Cost Stack",
+      "purpose": "Show how different tax schemes contribute to total cost by jurisdiction and SKU.",
+      "nodes": [
+        {
+          "node_key": "scheme",
+          "entity_type": "fee_scheme"
+        },
+        {
+          "node_key": "jur",
+          "entity_type": "jurisdiction"
+        },
+        {
+          "node_key": "materials",
+          "entity_type": "material_classification"
+        },
+        {
+          "node_key": "skus",
+          "entity_type": "product"
+        }
+      ],
+      "edges": [
+        {
+          "from": "scheme",
+          "to": "jur"
+        },
+        {
+          "from": "jur",
+          "to": "materials"
+        },
+        {
+          "from": "materials",
+          "to": "skus"
+        }
+      ],
+      "default_metric": "total_tax"
+    },
+    {
+      "key": "geo_rollup",
+      "name": "Geography \u2192 Jurisdiction Rollup",
+      "purpose": "Validate geography nesting and roll up costs or weights into jurisdictions.",
+      "nodes": [
+        {
+          "node_key": "geo",
+          "entity_type": "geography"
+        },
+        {
+          "node_key": "jur",
+          "entity_type": "jurisdiction"
+        }
+      ],
+      "edges": [
+        {
+          "from": "geo",
+          "to": "jur"
+        }
+      ],
+      "default_metric": "epr_fee"
+    },
+    {
+      "key": "scenario_delta",
+      "name": "Scenario Delta (Baseline vs Scenario)",
+      "purpose": "Compare two scenarios and visualise deltas across the packaging system.",
+      "nodes": [
+        {
+          "node_key": "materials",
+          "entity_type": "material_classification"
+        },
+        {
+          "node_key": "skus",
+          "entity_type": "product"
+        },
+        {
+          "node_key": "jur",
+          "entity_type": "jurisdiction"
+        }
+      ],
+      "edges": [
+        {
+          "from": "materials",
+          "to": "skus"
+        },
+        {
+          "from": "skus",
+          "to": "jur"
+        }
+      ],
+      "default_metric": "delta_total_tax"
+    },
+    {
+      "key": "packaging_cost_plus_tax",
+      "name": "Packaging Cost + Tax",
+      "purpose": "Explain total economic impact by combining packaging cost and regulatory tax.",
+      "nodes": [
+        {
+          "node_key": "types",
+          "entity_type": "packaging_type"
+        },
+        {
+          "node_key": "units",
+          "entity_type": "packaging_unit"
+        },
+        {
+          "node_key": "skus",
+          "entity_type": "product"
+        },
+        {
+          "node_key": "jur",
+          "entity_type": "jurisdiction"
+        }
+      ],
+      "edges": [
+        {
+          "from": "types",
+          "to": "units"
+        },
+        {
+          "from": "units",
+          "to": "skus"
+        },
+        {
+          "from": "skus",
+          "to": "jur"
+        }
+      ],
+      "default_metric": "packaging_cost_plus_tax"
+    }
+  ]
+}

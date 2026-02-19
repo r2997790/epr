@@ -1,0 +1,17 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls
+@using Selerant.DevEx.Infrastructure.Modules
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.DIRAdminTools.Models
+@using Selerant.DevEx.Modules.DIRModule.ModuleBlocks._ThisProject
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<AssessmentTypeDialogModel>
+
+@{
+    Model.MenuModel
+    .AddButton("CancelButton", ResText.Controls.GetString("DlgCancel"))
+    .AddButton("SaveButton", ResText.Controls.GetString("BtnSave"), "confirm");
+
+    Model.MenuModel.GetItem("SaveButton").IsVisible = Model.IsEditMode;
+    Model.PropertiesModel.IsEditMode = Model.IsEditMode;
+
+    Html.RenderPartial(ModuleInfoHelper.ToModulePath(DIRModuleInfo.Instance, MVC_DIR.DIRAdminTools.AssessmentTypes.Views.EditAssessmentTypeDialog), Model.PropertiesModel);
+}

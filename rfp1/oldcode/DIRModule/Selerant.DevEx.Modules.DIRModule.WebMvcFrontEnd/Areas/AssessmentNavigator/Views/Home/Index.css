@@ -1,0 +1,7 @@
+﻿.DX_DIRModule_AssessmentNavigator_Home_Index .Container.Left {
+    display: none !important;    
+}
+
+.DX_DIRModule_AssessmentNavigator_Home_Index .NavMainContainer.collapsed .Container.Right {
+    margin-left: 12px;
+}

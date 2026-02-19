@@ -1,0 +1,206 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models;
+@using System.Web.UI.WebControls;
+@using Selerant.DevEx.WebControls;
+@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Helpers;
+@using CopyModel = Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.Copy.CopyModel;
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExDialogView<CopyModel>
+
+@functions
+{
+	public string GetText(string resourceKey, string resourceModule = "DIR_AssessmentManager")
+	{
+		return ResText.GetResourceModuleByName(resourceModule).GetLocalizedString(resourceKey);
+	}
+
+	public LabelControlIndexModel CreateLabelControl(string logicId, string labelTextResourceKey, string module = "DIR_AssessmentManager")
+	{
+		return Html.LabelControl(logicId).SetText(GetText(labelTextResourceKey, module)).SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm);
+	}
+}
+
+<div>
+	<div class="container-fluid container-with-edge-content">
+		<div class="row">
+			<div class="col-6">
+				@*PRODUCT NAME*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblDescription", "DIR_GeneralPanel_ProductName")
+					</div>
+					<div class="col-8">
+						@(Html.TextControl("txtDescription")
+								.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+								.SetLabelLogicId("lblDescription")
+								.SetWidth(Unit.Percentage(100))
+								.SetValidationSettings(new TextValidationSettings().SetIsRequired(true) as TextValidationSettings)
+								.SetValue(Model.Description))
+					</div>
+				</div>
+				@*PRODUCT CLASSIFICATION*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblProductClassification", "DIR_GeneralPanel_ProductClassification")
+					</div>
+					<div class="col-8">
+						@(Html.ObjectReferenceControl("objRefProdClassification")
+								.SetKnownSkin(ObjectReferenceControlIndexModel.KnownSkins.SkForm)
+								.SetScope(DxAttributeScope.PHRASE_TEXT)
+								.SetValidationSettings(new Selerant.DevEx.WebControls.ObjectReferenceValidationSettings() { IsRequired = true })
+								.SetLabelLogicId("lblProductClassification")
+								.SetWidth(Unit.Percentage(100))
+								.SetValue(Model.ProdClassificationPhraseText)
+								.SetFilterMembers(new DxFilterMemberCollection() { DxFilterMember<DxPhraseText>.New(x => x.Subtype, DxFilterMember.FilterType.Include, "DXDIR_ASSESSMENT.PROD_CLASSIF") }))
+					</div>
+				</div>
+				@*INDUSTRY*@
+				<div class="row" style="display: none;">
+					<div class="col-4">
+						@CreateLabelControl("lblProductIndustry", "DIR_GeneralPanel_Industry")
+					</div>
+					<div class="col-8">
+						@(Html.ListOfValuesControl("AssessmentIndustry")
+								.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm)
+								.SetIsMultiValue(false)
+								.FillWithSelectListItems(Model.GetAssessmentTypeList())
+								.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+								.SetLabelLogicId("lblProductIndustry")
+								.SetWidth(Unit.Percentage(100))
+								.SetReadOnly(true)
+								.SetValue(Model.Industry))
+					</div>
+				</div>
+				@*TIMEFRAME*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblAssessmentDataFrameFrom", "DIR_GeneralPanel_TimeFrame")
+					</div>
+					<div class="col-4">
+						@(Html.DateTimeControl("dtAssessmentTimeFrameFrom")
+								.SetKnownSkin(DateTimeControlIndexModel.KnownSkins.SkForm)
+								.SetLabelLogicId("lblAssessmentDataFrameFrom")
+								.SetValidationSettings(new DateTimeValidationSettings() { IsRequired = true })
+								.SetWidth(Unit.Percentage(100))
+								.SetValue(Model.TimeframeFrom))
+
+					</div>
+					<div class="col-4">
+						@(Html.DateTimeControl("dtAssessmentTimeFrameTo")
+								.SetKnownSkin(DateTimeControlIndexModel.KnownSkins.SkForm)
+								.SetValidationSettings(new DateTimeValidationSettings() { IsRequired = true })
+								.SetWidth(Unit.Percentage(100))
+								.SetValue(Model.TimeframeTo))
+					</div>
+				</div>
+				@*LOCATION*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblLocation", "DIR_GeneralPanel_Location")
+					</div>
+					<div class="col-8">
+						@(Html.ObjectReferenceControl("objRefLocation")
+								.SetKnownSkin(ObjectReferenceControlIndexModel.KnownSkins.SkForm)
+								.SetLabelControl("lblLocation")
+								.SetScope(DxAttributeScope.COUNTRY)
+								.SetValidationSettings(new ObjectReferenceValidationSettings() { IsRequired = true })
+								.SetWidth(Unit.Percentage(100))
+								.SetValue(Model.Location))
+					</div>
+				</div>
+				@*DATA QUALITY*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblDataQuality", "DIR_GeneralPanel_DataQuality")
+					</div>
+					<div class="col-8">
+						@(Html.ListOfValuesControl("ddlDataQuality")
+								.SetIsMultiValue(false)
+								.AddItems(Model.GetDataQualityList())
+								.SetValidationSettings(new TextValidationSettings() { IsRequired = true })
+								.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm)
+								.SetWidth(Unit.Percentage(100))
+								.SetValue(Model.DataQuality))
+					</div>
+				</div>
+			</div>
+			<div class="col-6">
+				@*CREATED BY / AUDITOR*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblCreatedBy", "DIR_GeneralPanel_CreatedBy")
+					</div>
+					<div class="col-8">
+						@(Html.ObjectReferenceControl("txtCreatedBy")
+								.SetKnownSkin(ObjectReferenceControlIndexModel.KnownSkins.SkForm)
+								.SetScope(DxAttributeScope.USER)
+								.SetValidationSettings(new ObjectReferenceValidationSettings() { IsRequired = true })
+								.SetWidth(Unit.Percentage(100))
+								.SetReadOnly(true)
+								.SetValue(Model.Completionist))
+					</div>
+				</div>
+				@*PHONE NUMBER*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblPhoneNumber", "PhoneNumber")
+					</div>
+					<div class="col-8">
+						@(Html.TextControl("txtPhoneNumber")
+								.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+								.SetLabelLogicId("lblPhoneNumber")
+								.SetValidationSettings(new TextValidationSettings { MaxLength = 32 })
+								.SetWidth(Unit.Percentage(100))
+								.SetReadOnly(true)
+								.SetValue(Model.Phone))
+					</div>
+				</div>
+				@*COMPANY NAME*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblCompanyName", "CompanyName")
+					</div>
+					<div class="col-8">
+						@(Html.TextControl("txtCompanyName")
+								.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+								.SetLabelLogicId("lblCompanyName")
+								.SetValidationSettings(new TextValidationSettings { MaxLength = 32 })
+								.SetWidth(Unit.Percentage(100))
+								.SetReadOnly(true)
+								.SetValue(Model.CompanyName))
+					</div>
+				</div>
+				@*ORGANIZATION STRUCTURE*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblOrgStructure", "DIR_GeneralPanel_OrgStructure")
+					</div>
+					<div class="col-8">
+						@(Html.ListOfValuesControl("ddlOrgStructure")
+								.SetIsMultiValue(false)
+								.AddItems(Model.GetOrgStructureList())
+								.SetValidationSettings(new TextValidationSettings() { IsRequired = true })
+								.SetKnownSkin(ListOfValuesControlIndexModel.KnownSkins.SkForm)
+								.SetLabelLogicId("lblOrgStructure")
+								.SetWidth(Unit.Percentage(100))
+								.SetReadOnly(true)
+								.SetValue(Model.OrgStructure))
+					</div>
+				</div>
+				@*COMMENTS*@
+				<div class="row">
+					<div class="col-4">
+						@CreateLabelControl("lblComments", "Comments")
+					</div>
+					<div class="col-8">
+						@(Html.TextControl("txtComments")
+								.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+								.SetWidth(Unit.Percentage(100))
+								.SetHeight(75)
+								.SetMultiLine(true)
+								.SetValue(Model.Comments))
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,10 @@
+﻿<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<ExcludeFromPackageFolders Include="FILES_TO_COPY;js\decl;js\declarations">
+			<FromTarget>Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.wpp.targets</FromTarget>
+		</ExcludeFromPackageFolders>
+    <ExcludeFromPackageFiles Include="*.wpp.targets;tsconfig.json;*.snk;T4MVC.tt.hooks.t4">
+      <FromTarget>Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.wpp.targets</FromTarget>
+    </ExcludeFromPackageFiles>
+	</ItemGroup>
+</Project>

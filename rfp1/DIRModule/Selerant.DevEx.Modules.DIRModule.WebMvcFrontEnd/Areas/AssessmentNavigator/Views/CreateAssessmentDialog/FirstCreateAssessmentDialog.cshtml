@@ -1,0 +1,106 @@
+﻿@using Selerant.DevEx.WebMvcModules.Infrastructure.Controls.Models
+@using Selerant.DevEx.Modules.DIRModule.WebMvcFrontEnd.Areas.AssessmentNavigator.Models.ObjectCreation;
+@using System.Web.UI.WebControls;
+
+@inherits Selerant.DevEx.WebMvcModules.Infrastructure.Views.DevExPartialView<FirstCreateAssessmentModel>
+@{
+	Model.ContainerStyle.SetCssClasses("dir-dialog-content");
+}
+
+<div id="Step1st" class="container-fluid dx-step-panel dx-step-panel-hidden">
+	<div class="row">
+		<div class="col-4">
+			@(Html.LabelControl("lblAssessmentUserName")
+                                        .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentUserName"))
+                                        .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                                        .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentUserNameTT"))
+			)
+		</div>
+		<div class="col-8">
+			@(Html.TextControl("AssessmentUserName")
+										.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+										.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+										.SetLabelLogicId("lblAssessment")
+										.SetWidth(Unit.Percentage(100))
+										.SetReadOnly(true)
+										.SetValue(DxUser.CurrentUser.FullName)
+			)
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-4">
+			@(Html.LabelControl("lblAssessmentCompanyName")
+                                        .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentCompanyName"))
+                                        .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                                        .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentCompanyNameTT"))
+			)
+		</div>
+		<div class="col-8">
+			@(Html.TextControl("AssessmentCompanyName")
+										.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+										.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = false })
+										.SetLabelLogicId("lblAssessmentCompanyName")
+										.SetWidth(Unit.Percentage(100)))
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-4">
+			@(Html.LabelControl("lblAssessmentProductName")
+                                        .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentProductName"))
+                                        .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                                        .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentProductNameTT"))
+			)
+		</div>
+		<div class="col-8">
+			@(Html.TextControl("AssessmentProductName")
+										.SetValidationSettings(new Selerant.DevEx.WebControls.TextValidationSettings() { IsRequired = true })
+										.SetKnownSkin(TextControlIndexModel.KnownSkins.SkForm)
+										.SetLabelLogicId("lblAssessmentProductName")
+										.SetWidth(Unit.Percentage(100))
+			)
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-4">
+			@(Html.LabelControl("lblAssessmentProdClassification")
+                                        .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentProdClassification"))
+                                        .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                                        .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentProdClassificationTT"))
+			)
+		</div>
+		<div class="col-8">
+			@(Html.ObjectReferenceControl("AssessmentProdClassification")
+									   .SetKnownSkin(ObjectReferenceControlIndexModel.KnownSkins.SkForm)
+									   .SetScope(DxAttributeScope.PHRASE_TEXT)
+									   .SetValidationSettings(new Selerant.DevEx.WebControls.ObjectReferenceValidationSettings() { IsRequired = true })
+									   .SetLabelLogicId("lblAssessmentProdClassification")
+									   .SetWidth(Unit.Percentage(100))
+									   .SetReadOnly(false)
+									   .SetFilterMembers(new DxFilterMemberCollection() { DxFilterMember<DxPhraseText>.New(x => x.Subtype, DxFilterMember.FilterType.Include, "DXDIR_ASSESSMENT.PROD_CLASSIF") })
+			)
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-4">
+			@(Html.LabelControl("lblAssessmentTimeFrame")
+                                        .SetText(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentTimeFrameFrom"))                                        
+                                        .SetKnownSkin(LabelControlIndexModel.KnownSkins.SkForm)
+                                        .SetHint(@ResText.GetResourceModuleByName("DIR_AssessmentManager").GetLocalizedString("AssessmentTimeFrameFromTT"))
+			)
+		</div>
+		<div class="col-4">
+			@(Html.DateTimeControl("AssessmentTimeFrameFrom")
+										.SetKnownSkin(DateTimeControlIndexModel.KnownSkins.SkForm)
+										.SetValidationSettings(new Selerant.DevEx.WebControls.DateTimeValidationSettings() { IsRequired = true })
+										.SetLabelLogicId("lblAssessmentTimeFrame")
+										.SetWidth(Unit.Percentage(100)))
+		</div>
+		<div class="col-4">
+			@(Html.DateTimeControl("AssessmentTimeFrameTo")
+										.SetKnownSkin(DateTimeControlIndexModel.KnownSkins.SkForm)
+										.SetValidationSettings(new Selerant.DevEx.WebControls.DateTimeValidationSettings() { IsRequired = true })
+										.SetLabelLogicId("lblAssessmentTimeFrameTo")
+										.SetWidth(Unit.Percentage(100)))
+		</div>
+	</div>
+</div>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="bootstrap" Version="5.3.8" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="EPPlus" Version="7.0.0" />
+    <PackageReference Include="jquery" Version="3.7.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- EPR Projects -->
+    <ProjectReference Include="..\EPR.Domain\EPR.Domain.csproj" />
+    <ProjectReference Include="..\EPR.Data\EPR.Data.csproj" />
+    <ProjectReference Include="..\EPR.Application\EPR.Application.csproj" />
+    
+    <!-- EmpauerLocal modules commented out due to build errors - using local implementations -->
+  </ItemGroup>
+
+</Project>

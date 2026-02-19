@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sh:despatchAdviceMessage 
+    xmlns:sh="http://www.gs1.org/ecom/ecom_despatch_advice/2-0" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.gs1.org/ecom/ecom_despatch_advice/2-0 http://www.gs1.org/ecom/ecom_despatch_advice/2-0/DespatchAdvice.xsd">
+    
+    <despatchAdvice>
+        <creationDateTime>2026-02-03T08:30:00Z</creationDateTime>
+        <documentStatusCode>ORIGINAL</documentStatusCode>
+        <documentActionCode>ADD</documentActionCode>
+        
+        <despatchAdviceIdentification>
+            <entityIdentification>ASN20260203001</entityIdentification>
+            <contentOwner>
+                <gln>0614141000001</gln>
+            </contentOwner>
+        </despatchAdviceIdentification>
+        
+        <shipper>
+            <gln>0614141000001</gln>
+            <organizationName>Acme Foods Ltd</organizationName>
+            <address>
+                <streetAddressOne>Factory Road</streetAddressOne>
+                <city>Manchester</city>
+                <postalCode>M1 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipper>
+        
+        <receiver>
+            <gln>0745632000001</gln>
+            <organizationName>MegaMart Supermarkets</organizationName>
+        </receiver>
+        
+        <shipTo>
+            <gln>0745632100001</gln>
+            <organizationName>MegaMart DC North</organizationName>
+            <address>
+                <streetAddressOne>Distribution Way</streetAddressOne>
+                <city>Leeds</city>
+                <postalCode>LS1 1AA</postalCode>
+                <countryCode>GB</countryCode>
+            </address>
+        </shipTo>
+        
+        <despatchInformation>
+            <estimatedDeliveryDateTime>2026-02-04T09:00:00Z</estimatedDeliveryDateTime>
+            <despatchDateTime>2026-02-03T08:30:00Z</despatchDateTime>
+            <actualShipDateTime>2026-02-03T09:00:00Z</actualShipDateTime>
+        </despatchInformation>
+        
+        <transportInformation>
+            <transportMode>ROAD</transportMode>
+            <carrierName>Acme Logistics</carrierName>
+        </transportInformation>
+        
+        <!-- PALLET 1 - To DC North -->
+        <despatchUnit>
+            <logisticUnitIdentification>
+                <sscc>376141410000000001</sscc>
+            </logisticUnitIdentification>
+            
+            <packageTypeCode>PLT</packageTypeCode>
+            
+            <grossWeight unitCode="KGM">159</grossWeight>
+            
+            <finalShipTo>
+                <gln>0745632100001</gln>
+            </finalShipTo>
+            
+            <despatchUnitItemDetail>
+                <lineItemNumber>1</lineItemNumber>
+                <quantityDespatched unitCode="PCE">120</quantityDespatched>
+                <tradeItemIdentification>
+                    <gtin>05012345678900</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <descriptionShort>Baked Beans 24x400g</descriptionShort>
+                </tradeItemDescriptionInformation>
+                <transactionalItemData>
+                    <batchNumber>BATCH2026034</batchNumber>
+                    <itemExpirationDate>2027-02-01</itemExpirationDate>
+                </transactionalItemData>
+                <orderInformation>
+                    <referenceNumber>PO123456</referenceNumber>
+                    <orderLineNumber>1</orderLineNumber>
+                </orderInformation>
+            </despatchUnitItemDetail>
+            
+            <despatchUnitItemDetail>
+                <lineItemNumber>2</lineItemNumber>
+                <quantityDespatched unitCode="PCE">60</quantityDespatched>
+                <tradeItemIdentification>
+                    <gtin>05012345678917</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <descriptionShort>Tomato Soup 12x400g</descriptionShort>
+                </tradeItemDescriptionInformation>
+                <transactionalItemData>
+                    <batchNumber>BATCH2026035</batchNumber>
+                    <itemExpirationDate>2026-12-15</itemExpirationDate>
+                </transactionalItemData>
+                <orderInformation>
+                    <referenceNumber>PO123456</referenceNumber>
+                    <orderLineNumber>2</orderLineNumber>
+                </orderInformation>
+            </despatchUnitItemDetail>
+        </despatchUnit>
+        
+        <!-- PALLET 2 - To DC North -->
+        <despatchUnit>
+            <logisticUnitIdentification>
+                <sscc>376141410000000002</sscc>
+            </logisticUnitIdentification>
+            
+            <packageTypeCode>PLT</packageTypeCode>
+            
+            <grossWeight unitCode="KGM">127</grossWeight>
+            
+            <finalShipTo>
+                <gln>0745632100001</gln>
+            </finalShipTo>
+            
+            <despatchUnitItemDetail>
+                <lineItemNumber>3</lineItemNumber>
+                <quantityDespatched unitCode="PCE">100</quantityDespatched>
+                <tradeItemIdentification>
+                    <gtin>05012345678924</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <descriptionShort>Chicken Soup 12x400g</descriptionShort>
+                </tradeItemDescriptionInformation>
+                <transactionalItemData>
+                    <batchNumber>BATCH2026036</batchNumber>
+                    <itemExpirationDate>2026-11-30</itemExpirationDate>
+                </transactionalItemData>
+                <orderInformation>
+                    <referenceNumber>PO123456</referenceNumber>
+                    <orderLineNumber>3</orderLineNumber>
+                </orderInformation>
+            </despatchUnitItemDetail>
+        </despatchUnit>
+        
+        <!-- PALLET 3 - To DC South (different destination) -->
+        <despatchUnit>
+            <logisticUnitIdentification>
+                <sscc>376141410000000003</sscc>
+            </logisticUnitIdentification>
+            
+            <packageTypeCode>PLT</packageTypeCode>
+            
+            <grossWeight unitCode="KGM">141</grossWeight>
+            
+            <finalShipTo>
+                <gln>0745632200001</gln>
+                <organizationName>MegaMart DC South</organizationName>
+                <address>
+                    <streetAddressOne>Warehouse Close</streetAddressOne>
+                    <city>Southampton</city>
+                    <postalCode>SO14 1AA</postalCode>
+                    <countryCode>GB</countryCode>
+                </address>
+            </finalShipTo>
+            
+            <despatchUnitItemDetail>
+                <lineItemNumber>4</lineItemNumber>
+                <quantityDespatched unitCode="PCE">80</quantityDespatched>
+                <tradeItemIdentification>
+                    <gtin>05012345678900</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <descriptionShort>Baked Beans 24x400g</descriptionShort>
+                </tradeItemDescriptionInformation>
+                <transactionalItemData>
+                    <batchNumber>BATCH2026034</batchNumber>
+                    <itemExpirationDate>2027-02-01</itemExpirationDate>
+                </transactionalItemData>
+                <orderInformation>
+                    <referenceNumber>PO123457</referenceNumber>
+                    <orderLineNumber>1</orderLineNumber>
+                </orderInformation>
+            </despatchUnitItemDetail>
+            
+            <despatchUnitItemDetail>
+                <lineItemNumber>5</lineItemNumber>
+                <quantityDespatched unitCode="PCE">40</quantityDespatched>
+                <tradeItemIdentification>
+                    <gtin>05012345678931</gtin>
+                </tradeItemIdentification>
+                <tradeItemDescriptionInformation>
+                    <descriptionShort>Mushroom Soup 12x400g</descriptionShort>
+                </tradeItemDescriptionInformation>
+                <transactionalItemData>
+                    <batchNumber>BATCH2026037</batchNumber>
+                    <itemExpirationDate>2026-12-20</itemExpirationDate>
+                </transactionalItemData>
+                <orderInformation>
+                    <referenceNumber>PO123457</referenceNumber>
+                    <orderLineNumber>2</orderLineNumber>
+                </orderInformation>
+            </despatchUnitItemDetail>
+        </despatchUnit>
+        
+    </despatchAdvice>
+    
+</sh:despatchAdviceMessage>

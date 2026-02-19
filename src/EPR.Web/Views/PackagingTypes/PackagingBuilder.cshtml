@@ -1,0 +1,321 @@
+@{
+    ViewData["Title"] = "Packaging Builder";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between mb-4">
+        <h1><i class="bi bi-diagram-3"></i> Visual Packaging Builder</h1>
+        <div class="gap-2 d-flex">
+            <button class="btn btn-success" onclick="savePackagingUnit()">
+                <i class="bi bi-save"></i> Save Packaging Unit
+            </button>
+            <button class="btn btn-secondary" onclick="clearBuilder()">
+                <i class="bi bi-x-circle"></i> Clear
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Panel - Available Packaging Types -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-box-seam"></i> Packaging Library</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="searchPackaging" placeholder="Search packaging types...">
+                    </div>
+                    <div id="packaging-library" style="max-height: 600px; overflow-y: auto;">
+                        <div class="packaging-item" draggable="true" data-packaging-id="1">
+                            <i class="bi bi-box"></i> Glass Bottle
+                        </div>
+                        <div class="packaging-item" draggable="true" data-packaging-id="2">
+                            <i class="bi bi-box"></i> Plastic Container
+                        </div>
+                        <div class="packaging-item" draggable="true" data-packaging-id="3">
+                            <i class="bi bi-box"></i> Cardboard Box
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Sankey Diagram Builder -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Packaging Flow Builder</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Packaging Unit Name</label>
+                        <input type="text" class="form-control" id="unitName" placeholder="e.g., Primary Packaging Unit">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unit Level</label>
+                        <select class="form-select" id="unitLevel">
+                            <option value="Primary">Primary</option>
+                            <option value="Secondary">Secondary</option>
+                            <option value="Tertiary">Tertiary</option>
+                            <option value="Quaternary">Quaternary</option>
+                        </select>
+                    </div>
+                    <div id="sankey-builder" class="sankey-container">
+                        <div class="text-center" style="padding: 2rem; color: #6c757d;">
+                            <i class="bi bi-diagram-3" style="font-size: 4rem; opacity: 0.3;"></i>
+                            <p class="mt-3">Drag packaging types from the library to build your packaging unit</p>
+                            <p class="small">Connect items to show the packaging hierarchy</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Properties & Collections -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list-ul"></i> Collections</h5>
+                </div>
+                <div class="card-body">
+                    <div id="collections-list">
+                        <p class="text-muted small">Collections will appear here as you add items</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .packaging-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        cursor: move;
+        transition: all 0.2s;
+    }
+
+    .packaging-item:hover {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+
+    .packaging-item.dragging {
+        opacity: 0.5;
+    }
+
+    .sankey-node {
+        position: absolute;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #28a745;
+        border-radius: 8px;
+        cursor: move;
+        min-width: 150px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 10;
+    }
+
+    .sankey-node:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .sankey-node.selected {
+        border-color: #218838;
+        border-width: 3px;
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+    }
+</style>
+
+<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<script>
+    let nodes = [];
+    let connections = [];
+    let selectedNode = null;
+
+    // Drag and drop handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        const builder = document.getElementById('sankey-builder');
+        const library = document.getElementById('packaging-library');
+
+        // Make library items draggable
+        library.querySelectorAll('.packaging-item').forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+        });
+
+        builder.addEventListener('dragover', handleDragOver);
+        builder.addEventListener('drop', handleDrop);
+        builder.addEventListener('click', handleBuilderClick);
+
+        // Search functionality
+        document.getElementById('searchPackaging').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            library.querySelectorAll('.packaging-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+    });
+
+    function handleDragStart(e) {
+        e.dataTransfer.setData('text/plain', e.target.dataset.packagingId);
+        e.target.classList.add('dragging');
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const packagingId = e.dataTransfer.getData('text/plain');
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        addNodeToBuilder(packagingId, x, y);
+    }
+
+    function addNodeToBuilder(packagingId, x, y) {
+        const node = {
+            id: 'node-' + Date.now(),
+            packagingId: packagingId,
+            x: x,
+            y: y,
+            name: document.querySelector(`[data-packaging-id="${packagingId}"]`).textContent.trim()
+        };
+
+        nodes.push(node);
+        renderBuilder();
+    }
+
+    function renderBuilder() {
+        const builder = document.getElementById('sankey-builder');
+        builder.innerHTML = '';
+
+        nodes.forEach(node => {
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'sankey-node' + (selectedNode === node.id ? ' selected' : '');
+            nodeEl.style.left = node.x + 'px';
+            nodeEl.style.top = node.y + 'px';
+            nodeEl.dataset.nodeId = node.id;
+            nodeEl.innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 0.5rem;">${node.name}</div>
+                <div class="small text-muted">Packaging Type</div>
+                <button class="btn btn-sm btn-danger mt-2" onclick="removeNode('${node.id}')" style="width: 100%;">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            `;
+            nodeEl.addEventListener('mousedown', startDrag);
+            builder.appendChild(nodeEl);
+        });
+
+        updateCollectionsList();
+    }
+
+    let dragNode = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    function startDrag(e) {
+        if (e.target.closest('button')) return;
+        dragNode = e.currentTarget.dataset.nodeId;
+        const node = nodes.find(n => n.id === dragNode);
+        const rect = e.currentTarget.getBoundingClientRect();
+        const builderRect = document.getElementById('sankey-builder').getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+    }
+
+    function handleDrag(e) {
+        if (!dragNode) return;
+        const builder = document.getElementById('sankey-builder');
+        const rect = builder.getBoundingClientRect();
+        const node = nodes.find(n => n.id === dragNode);
+        if (node) {
+            node.x = e.clientX - rect.left - dragOffset.x;
+            node.y = e.clientY - rect.top - dragOffset.y;
+            renderBuilder();
+        }
+    }
+
+    function stopDrag() {
+        dragNode = null;
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
+
+    function handleBuilderClick(e) {
+        if (e.target.closest('.sankey-node')) {
+            selectedNode = e.target.closest('.sankey-node').dataset.nodeId;
+            renderBuilder();
+        } else {
+            selectedNode = null;
+            renderBuilder();
+        }
+    }
+
+    function removeNode(nodeId) {
+        nodes = nodes.filter(n => n.id !== nodeId);
+        connections = connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+        renderBuilder();
+    }
+
+    function updateCollectionsList() {
+        const list = document.getElementById('collections-list');
+        if (nodes.length === 0) {
+            list.innerHTML = '<p class="text-muted small">No items added yet</p>';
+            return;
+        }
+
+        list.innerHTML = nodes.map((node, index) => `
+            <div class="mb-2 p-2 border rounded">
+                <strong>${node.name}</strong>
+                <div class="small text-muted">Item ${index + 1}</div>
+            </div>
+        `).join('');
+    }
+
+    function savePackagingUnit() {
+        const name = document.getElementById('unitName').value;
+        const level = document.getElementById('unitLevel').value;
+
+        if (!name) {
+            alert('Please enter a packaging unit name');
+            return;
+        }
+
+        if (nodes.length === 0) {
+            alert('Please add at least one packaging type');
+            return;
+        }
+
+        // Save logic here
+        alert('Packaging unit saved! (Implementation pending)');
+    }
+
+    function clearBuilder() {
+        if (confirm('Clear all items from the builder?')) {
+            nodes = [];
+            connections = [];
+            selectedNode = null;
+            document.getElementById('unitName').value = '';
+            renderBuilder();
+        }
+    }
+</script>
+
+
+
+
+
+
+
+
+

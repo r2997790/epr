@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Sustainability Report";
+    var totalProducts = ViewBag.TotalProducts as int? ?? 0;
+    var withForms = ViewBag.WithPackagingForms as int? ?? 0;
+    var score = ViewBag.Score as int? ?? 0;
+}
+
+<style>
+    .report-filter-card { background: var(--light-bg); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
+    .report-page .btn-outline-primary { border-width: 1px; }
+    .metric-card { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid var(--border-color); text-align: center; }
+    .metric-value { font-size: 2rem; font-weight: bold; color: var(--primary-color); }
+    .metric-label { color: var(--secondary-color); font-size: 0.9rem; margin-top: 0.25rem; }
+</style>
+
+<div class="container-fluid report-page">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1><i class="bi bi-leaf"></i> <span data-translate="Sustainability Report">Sustainability Report</span></h1>
+                    <p class="text-muted mb-0"><span data-translate="Sustainability and environmental metrics">Sustainability and environmental metrics</span></p>
+                </div>
+                <div>
+                    <a href="@Url.Action("Dashboard", "Reporting")" class="btn btn-outline-primary" data-no-tab="true"><i class="bi bi-arrow-left"></i> <span data-translate="Back to Dashboard">Back to Dashboard</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-filter-card">
+        <h5 class="mb-3"><i class="bi bi-funnel"></i> <span data-translate="Summary">Summary</span></h5>
+        <p class="mb-0"><span data-translate="Overview of sustainability metrics across the product portfolio.">Overview of sustainability metrics across the product portfolio.</span></p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-value">@totalProducts</div>
+                <div class="metric-label"><span data-translate="Total Products">Total Products</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-value">@withForms</div>
+                <div class="metric-label"><span data-translate="With Packaging Forms">With Packaging Forms</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card">
+                <div class="metric-value">@score</div>
+                <div class="metric-label"><span data-translate="Sustainability Score">Sustainability Score</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border: 1px solid var(--border-color); border-radius: 8px;">
+        <div class="card-body">
+            <p class="text-muted mb-0"><span data-translate="Detailed sustainability metrics and certifications can be added here.">Detailed sustainability metrics and certifications can be added here.</span></p>
+        </div>
+    </div>
+</div>

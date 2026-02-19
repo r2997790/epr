@@ -1,0 +1,1228 @@
+﻿CREATE OR REPLACE PACKAGE DXDIR_PK_RESULTCALCULATIONS AS
+
+	TYPE t_cursor IS REF CURSOR;
+
+	FUNCTION GetSumMassInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetSumMassWaterExcludedInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetSumCostInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetSumFoodMassInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetFoodWaterInputToDestination
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		sDESTINATION_CODE VARCHAR2
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetFoodIngMassToCoFoodRescInp
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetSumWeightFromOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetSumWeightWaterExOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetSumWeightPackgWasteOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetSumWeightFoodPartOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetSumWeightEdiblePartOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetCostOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetUtilisedInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetStockHolding
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetFoodMaterialLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetEdibleFoodMatLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetEdibleMatLossToMatLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetMatLossToInputExWater
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION GetPackgLossToFoodInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetPackToGrossProduct
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	PROCEDURE WasteCollectionTreatmentProc
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcRESULT OUT NUMBER
+	);
+
+	FUNCTION WasteCollectionTreatment
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+    FUNCTION RevenueFromOutputIncome
+    (
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	PROCEDURE EstimatedCostOfWaste
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcRESULT OUT NUMBER
+	);
+
+	PROCEDURE GetTotalAndElectricityCost
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcTOTAL_COST OUT NUMBER,
+		dcELECTRICITY_COST OUT NUMBER
+	);
+	
+	FUNCTION GetEnergyCost
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcELECTRICITY_COST NUMBER,
+		dcTOTAL_COST NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION GetMaterialSpend
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcTOTAL_COST NUMBER
+	)
+	RETURN NUMBER;
+	
+	FUNCTION DisposalToPurchase
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER;
+
+	FUNCTION EstimatedWasteToPurchase
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		estimCostOfWaste NUMBER
+	)
+	RETURN NUMBER;
+
+	PROCEDURE GetResultsTable
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		po_cur  IN OUT t_cursor
+	);
+
+	PROCEDURE GetFoodLossesNotIncIndblParts
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		po_cur OUT t_cursor
+	);
+
+	PROCEDURE GetFoodLossesInediblePartsOnly
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		po_cur OUT t_cursor
+	);
+
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY DXDIR_PK_RESULTCALCULATIONS AS 
+
+	FUNCTION GetSumMassInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 3) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(MASS), 0)
+		INTO result
+		FROM DXDIR_INPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID;
+
+	RETURN result;
+	END;
+
+	FUNCTION GetSumMassWaterExcludedInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 3) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(MASS), 0)
+		INTO result
+		FROM DXDIR_INPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  MAT_CODE				 NOT IN ('DIR_FOOD_WATER', 'DIR_NONFOOD_WATER');
+
+	RETURN result;
+	END;
+
+	FUNCTION GetSumCostInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 4) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(COST), 0)
+		INTO result
+		FROM DXDIR_INPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID;
+
+	RETURN result;
+	END;
+
+	FUNCTION GetSumFoodMassInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(30, 3) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(MASS), 0)
+		INTO result
+		FROM DXDIR_INPUT 
+			 INNER JOIN DXDIR_INPUT_CATEGORY
+			 ON DXDIR_INPUT.INPUT_CATEGORY_ID	 = DXDIR_INPUT_CATEGORY.ID
+		WHERE DXDIR_INPUT.ASSESSMENT_CODE		 = sASSESSMENT_CODE AND
+			  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  DXDIR_INPUT_CATEGORY.TYPE			 = 'FOOD';
+
+	RETURN result;
+	END;
+
+	FUNCTION GetFoodWaterInputToDestination
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		sDESTINATION_CODE VARCHAR2
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(MASS * PERCENTAGE / 100), 0)
+		INTO result
+		FROM DXDIR_INPUT
+			 INNER JOIN DXDIR_INPUT_DESTINATION 
+			 ON DXDIR_INPUT.ID					 = DXDIR_INPUT_DESTINATION.INPUT_ID
+			 INNER JOIN DXDIR_INPUT_CATEGORY 
+			 ON DXDIR_INPUT.INPUT_CATEGORY_ID	 = DXDIR_INPUT_CATEGORY.ID
+		WHERE DXDIR_INPUT.ASSESSMENT_CODE				 = sASSESSMENT_CODE AND
+			 DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID			 = dcASSESSMENT_LC_STAGE_ID AND
+			 DXDIR_INPUT.MAT_CODE						 = 'DIR_FOOD_WATER' AND 
+			 DXDIR_INPUT_CATEGORY.TYPE					 = 'FOOD'AND 
+			 DXDIR_INPUT_DESTINATION.DESTINATION_CODE LIKE sDESTINATION_CODE;
+
+	RETURN result;
+	END;
+
+
+	FUNCTION GetFoodIngMassToCoFoodRescInp
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(MASS * (1 - DXDIR_INPUT.INEDIBLE_PARTS) * DXDIR_INPUT_DESTINATION.PERCENTAGE/100), 0)
+		INTO result
+		FROM DXDIR_INPUT
+			 INNER JOIN DXDIR_INPUT_DESTINATION 
+			 ON DXDIR_INPUT_DESTINATION.INPUT_ID	 = DXDIR_INPUT.ID
+			 INNER JOIN DXDIR_INPUT_CATEGORY 
+			 ON DXDIR_INPUT.INPUT_CATEGORY_ID		 = DXDIR_INPUT_CATEGORY.ID 
+		WHERE DXDIR_INPUT_CATEGORY.TYPE					 = 'FOOD'AND 
+			  DXDIR_INPUT.ASSESSMENT_CODE				 = sASSESSMENT_CODE AND 
+			  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID		 = dcASSESSMENT_LC_STAGE_ID AND 
+			 (DXDIR_INPUT_DESTINATION.DESTINATION_CODE LIKE 'COPRODUCT%' OR DXDIR_INPUT_DESTINATION.DESTINATION_CODE = 'FOOD_RESCUE');
+
+	RETURN result;
+	END;
+
+
+	FUNCTION GetSumWeightFromOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 3) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(WEIGHT), 0)
+		INTO result
+		FROM DXDIR_OUTPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+			  ((INPUT_ID IS NOT NULL AND OUTPUT_CATEGORY_ID IN (4,5,6)) OR OUTPUT_CATEGORY_ID IN (2,3,7));
+
+		RETURN result;
+	END;
+	
+	FUNCTION GetSumWeightWaterExOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		sumWeight1 NUMBER(26, 12);
+		sumWeight2 NUMBER(26, 12);
+	BEGIN
+		-- Non Water output rows WEIGHTs except Products, Co-Product and Food Rescue
+		SELECT NVL(SUM(WEIGHT), 0)
+		INTO sumWeight1
+		FROM DXDIR_OUTPUT 
+			 INNER JOIN DXDIR_INPUT 
+			 ON DXDIR_OUTPUT.INPUT_ID = DXDIR_INPUT.ID 
+		WHERE DXDIR_OUTPUT.ASSESSMENT_CODE			 = sASSESSMENT_CODE AND 
+			  DXDIR_OUTPUT.ASSESSMENT_LC_STAGE_ID	 = dcASSESSMENT_LC_STAGE_ID AND 
+			  INPUT_ID								 IS NOT NULL AND 
+			  DXDIR_INPUT.MAT_CODE					 NOT IN ('DIR_FOOD_WATER', 'DIR_NONFOOD_WATER');
+
+		-- Co-Products and Food Rescue
+		SELECT NVL(SUM(WEIGHT), 0)
+		INTO sumWeight2
+		FROM DXDIR_OUTPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+			  OUTPUT_CATEGORY_ID IN (2,3);
+
+		RETURN sumWeight1 + sumWeight2;
+	END;
+	
+	FUNCTION GetSumWeightPackgWasteOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+		INTO result
+		FROM  DXDIR_INPUT 
+			 INNER JOIN DXDIR_OUTPUT 
+			 ON DXDIR_INPUT.ID = DXDIR_OUTPUT.INPUT_ID
+				 INNER JOIN DXDIR_INPUT_CATEGORY 
+				 ON DXDIR_INPUT.INPUT_CATEGORY_ID = DXDIR_INPUT_CATEGORY.ID
+		WHERE DXDIR_OUTPUT.ASSESSMENT_CODE			 = sASSESSMENT_CODE AND 
+			  DXDIR_OUTPUT.ASSESSMENT_LC_STAGE_ID	 = dcASSESSMENT_LC_STAGE_ID AND
+			  DXDIR_OUTPUT.OUTPUT_CATEGORY_ID		 = 6 AND 
+			  DXDIR_OUTPUT.INPUT_ID					 IS NOT NULL AND
+			  DXDIR_INPUT_CATEGORY.TYPE				 <> 'FOOD'  AND
+			  DXDIR_INPUT.PACKAGING                  = 1;
+
+		RETURN result;
+	END;
+	
+	FUNCTION GetSumWeightFoodPartOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 3) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+		INTO result
+		FROM DXDIR_OUTPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  INPUT_ID IS NOT NULL AND OUTPUT_CATEGORY_ID IN  (4, 5);
+
+		RETURN result;
+	END;
+
+
+	FUNCTION GetSumWeightEdiblePartOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(25, 3) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(DXDIR_OUTPUT.WEIGHT), 0)
+		INTO result
+		FROM DXDIR_OUTPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+			  INPUT_ID				 IS NOT NULL AND 
+			  OUTPUT_CATEGORY_ID	 = 4;
+
+		RETURN result;
+	END;
+
+
+	FUNCTION GetCostOutput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 4) := 0;
+	BEGIN
+
+		SELECT NVL(SUM(COST), 0)
+		INTO result
+		FROM DXDIR_OUTPUT
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  ((INPUT_ID IS NOT NULL AND OUTPUT_CATEGORY_ID IN (4,5,6)) OR OUTPUT_CATEGORY_ID IN (2,3,7));
+
+		RETURN result;
+	END;
+
+	/*Row for results grid*/
+	/*Utilised input to gross product ratio*/
+	FUNCTION GetUtilisedInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumWeight NUMBER(26, 12) := 0;
+		sumMass NUMBER(26, 12) := 0;
+	BEGIN
+		sumMass := GetSumMassInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumMass = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumWeight := GetSumWeightFromOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := 1 - sumWeight / sumMass;
+		RETURN result;
+	END;
+
+	/*Stock holding to gross product ratio*/
+	FUNCTION GetStockHolding
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumWeight NUMBER := 0;
+		sumMass NUMBER := 0;
+	BEGIN
+		sumMass := GetSumMassInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumMass = 0 
+		THEN
+			RETURN result;
+		END IF;
+
+		-- Products outputs
+		SELECT NVL(SUM(WEIGHT),0)
+		INTO sumWeight
+		FROM DXDIR_OUTPUT 
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  OUTPUT_CATEGORY_ID = 1;
+
+		result := 1 - sumWeight / sumMass;
+		RETURN result;
+	END;
+
+	/*Food material loss (with inedible parts) to total material loss ratio*/
+	FUNCTION GetFoodMaterialLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumWeight NUMBER := 0;
+		sumMass NUMBER := 0;
+		sumWeightWasteFood NUMBER := 0;
+	BEGIN
+		sumWeight := GetSumWeightFromOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumWeight = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumWeightWasteFood := GetSumWeightFoodPartOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumMass := GetFoodIngMassToCoFoodRescInp(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := (sumMass + sumWeightWasteFood) / sumWeight;
+		RETURN result;
+	END;
+
+	/*Food material loss (without inedible parts) to inputs ratio*/
+	FUNCTION GetEdibleFoodMatLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumFoodMassCo NUMBER := 0;
+		sumMass NUMBER := 0;
+		sumWeightEdiblePart NUMBER := 0;
+	BEGIN
+		sumMass := GetSumMassInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumMass = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumFoodMassCo := GetFoodIngMassToCoFoodRescInp(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumWeightEdiblePart := GetSumWeightEdiblePartOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := (sumWeightEdiblePart + sumFoodMassCo) / sumMass;
+		RETURN result;
+	END;
+
+	/*Food material loss (without inedible parts) to total material loss ratio */
+	FUNCTION GetEdibleMatLossToMatLoss
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumFoodMassCo NUMBER := 0;
+		sumWeight NUMBER := 0;
+		sumWeightEdiblePart NUMBER := 0;
+	BEGIN
+		sumWeight := GetSumWeightFromOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumWeight = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumFoodMassCo := GetFoodIngMassToCoFoodRescInp(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumWeightEdiblePart := GetSumWeightEdiblePartOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := (sumWeightEdiblePart + sumFoodMassCo) / sumWeight;
+		RETURN result;
+	END;
+
+	/*Total material loss (ex water) to material input (ex water) ratio*/
+	FUNCTION GetMatLossToInputExWater
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumMassWaterEx NUMBER := 0;
+		sumWeightExWater NUMBER := 0;
+		waterInputCoProduct NUMBER := 0;
+		waterInputFoodRescue NUMBER := 0;
+	BEGIN
+		sumMassWaterEx := GetSumMassWaterExcludedInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumMassWaterEx = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumWeightExWater := GetSumWeightWaterExOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		waterInputCoProduct := GetFoodWaterInputToDestination(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, 'COPRODUCT%');
+		waterInputFoodRescue := GetFoodWaterInputToDestination(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, 'FOOD_RESCUE');
+
+		result := (sumWeightExWater - waterInputCoProduct - waterInputFoodRescue) / sumMassWaterEx;
+		RETURN result;
+	END;
+
+	/*Packaging material loss to food input ratio*/
+	FUNCTION GetPackgLossToFoodInput
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumMassFood NUMBER(26, 12) := 0;
+		sumWeightPack NUMBER(26, 12) := 0;
+	BEGIN
+		sumMassFood := GetSumFoodMassInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumMassFood = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		sumWeightPack := GetSumWeightPackgWasteOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := sumWeightPack / sumMassFood;
+		RETURN result;
+	END;
+
+	/*Output product packaging to gross product ratio*/
+	FUNCTION GetPackToGrossProduct
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		packNonFoodProductSum NUMBER := 0;
+		productOutputWeight NUMBER := 0;
+	BEGIN
+
+		SELECT NVL(SUM(WEIGHT),0)
+		INTO productOutputWeight
+		FROM DXDIR_OUTPUT
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+			  OUTPUT_CATEGORY_ID	 = 1;
+
+		IF productOutputWeight = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		SELECT NVL(SUM(DXDIR_INPUT.MASS * DXDIR_INPUT_DESTINATION.PERCENTAGE / 100), 0)
+		INTO packNonFoodProductSum
+		FROM DXDIR_INPUT  
+			INNER JOIN DXDIR_INPUT_CATEGORY
+			ON DXDIR_INPUT.INPUT_CATEGORY_ID = DXDIR_INPUT_CATEGORY.ID
+				INNER JOIN DXDIR_INPUT_DESTINATION 
+				ON DXDIR_INPUT.ID = DXDIR_INPUT_DESTINATION.INPUT_ID
+		WHERE DXDIR_INPUT.ASSESSMENT_CODE				 = sASSESSMENT_CODE AND 
+			  DXDIR_INPUT.ASSESSMENT_LC_STAGE_ID		 = dcASSESSMENT_LC_STAGE_ID AND 
+			  DXDIR_INPUT_CATEGORY.TYPE					 <> 'FOOD' AND 
+			  DXDIR_INPUT.PACKAGING						 = 1 AND
+			  DXDIR_INPUT_DESTINATION.DESTINATION_CODE LIKE 'PRODUCT%';
+
+		result := packNonFoodProductSum / productOutputWeight;
+		RETURN result;
+	END;
+
+	PROCEDURE WasteCollectionTreatmentProc
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcRESULT OUT NUMBER
+	)
+	IS
+	BEGIN
+		dcRESULT := WasteCollectionTreatment(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+	END;
+
+	/* Waste removal cost */
+	FUNCTION WasteCollectionTreatment
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+	BEGIN
+	
+		SELECT NVL(SUM(OUTPUT_COST), 0)
+		INTO result
+		FROM
+		(
+			SELECT OUTPUT_COST FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+				  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND
+				  OUTPUT_CATEGORY_ID IN (4,5,6,7) AND
+				  INPUT_ID				 IS NULL
+			UNION ALL
+			SELECT OUTPUT_COST FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+				  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+				  OUTPUT_CATEGORY_ID IN (2, 3)
+		);
+
+		RETURN result;
+	END;
+
+    FUNCTION RevenueFromOutputIncome
+    (
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+    IS
+        result NUMBER(26, 7) := 0;
+        productValuePerMass NUMBER(26, 12);
+    BEGIN
+        productValuePerMass := DXDIR_PK_CALCULATIONS.GetValuePerMass(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, 'PRODUCT');
+    
+        IF (productValuePerMass <> 0)
+        THEN
+            SELECT NVL(SUM(SUM(COST) * SUM(INCOME) / SUM(WEIGHT) / productValuePerMass), 0)
+            INTO result
+            FROM DXDIR_OUTPUT
+            WHERE ASSESSMENT_CODE = sASSESSMENT_CODE
+              AND ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID
+              AND OUTPUT_CATEGORY_ID in (4,5,6)
+                GROUP BY OUTPUT_CATEGORY_ID, DESTINATION_CODE
+                HAVING SUM(INCOME) > 0 AND SUM(WEIGHT) > 0;
+        END IF;
+
+        RETURN result;    
+    END;
+
+	/* Estimated true cost of waste*/
+	PROCEDURE EstimatedCostOfWaste
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcRESULT OUT NUMBER 
+	)
+	IS
+		coProductMargin NUMBER(26, 12);
+		coProductSecondMargin NUMBER(26, 12);
+		foodRescueMargin NUMBER(26, 12);
+		sumCostRelatedWaste  NUMBER(26, 12) := 0;
+		costCoproduct NUMBER(26, 12);
+		costCoproductSecond NUMBER(26, 12);
+		costFoodRescue NUMBER(26, 12);
+
+		wasteCost  NUMBER(26, 4) := 0;
+		sumCostOutput  NUMBER(26, 4) := 0;
+		wasteCollectionTreat NUMBER(26, 4) := 0;
+        revenueFromIncome NUMBER(26, 12) := 0;
+
+	    TYPE r_BussinessCostGridItem IS RECORD
+		(
+			ID					   DXDIR_BUSINESS_COST.ID%TYPE,
+			ASSESSMENT_CODE		   DXDIR_BUSINESS_COST.ASSESSMENT_CODE%TYPE,
+			ASSESSMENT_LC_STAGE_ID DXDIR_BUSINESS_COST.ASSESSMENT_LC_STAGE_ID%TYPE,
+			TYPE				   DXDIR_BUSINESS_COST.TYPE%TYPE,
+			TITLE				   DXDIR_BUSINESS_COST.TITLE%TYPE,
+			SORT_ORDER			   DXDIR_BUSINESS_COST.SORT_ORDER%TYPE,
+			COST				   DXDIR_BUSINESS_COST.COST%TYPE,
+			TOTAL_COST             NUMBER(26, 4),
+			CARRIED_COST		   NUMBER(26, 4),
+			WASTE_COST			   NUMBER(26, 4)
+		);
+
+		bussinessCostGridItem r_BussinessCostGridItem;
+		PO_CUR DXDIR_PK_BUSINESS_COST.t_cursor;
+
+		v_COPRODUCT_DEST_CODE DXDIR_OUTPUT.DESTINATION_CODE%TYPE := 'COPRODUCT';
+		v_COPRODUCT_2ND_DEST_CODE DXDIR_OUTPUT.DESTINATION_CODE%TYPE := 'COPRODUCT_2';
+		v_FOOD_RESCUE_DEST_CODE DXDIR_OUTPUT.DESTINATION_CODE%TYPE := 'FOOD_RESCUE';
+	BEGIN
+		DXDIR_PK_CALCULATIONS.GetMargin(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, v_COPRODUCT_DEST_CODE, coProductMargin);
+		DXDIR_PK_CALCULATIONS.GetMargin(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, v_COPRODUCT_2ND_DEST_CODE, coProductSecondMargin);
+		DXDIR_PK_CALCULATIONS.GetMargin(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, v_FOOD_RESCUE_DEST_CODE, foodRescueMargin);
+
+		BEGIN
+			SELECT NVL(COST, 0)
+			INTO costCoproduct 
+			FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+				  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+				  DESTINATION_CODE       = v_COPRODUCT_DEST_CODE;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				costCoproduct := 0;
+		END;
+
+		BEGIN
+			SELECT NVL(COST, 0)
+			INTO costCoproductSecond 
+			FROM DXDIR_OUTPUT
+			WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+				  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+				  DESTINATION_CODE       = v_COPRODUCT_2ND_DEST_CODE;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				costCoproductSecond := 0;
+		END;
+
+		BEGIN
+		SELECT NVL(COST, 0) 
+		INTO costFoodRescue
+		FROM DXDIR_OUTPUT
+		WHERE ASSESSMENT_CODE = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+			  DESTINATION_CODE = v_FOOD_RESCUE_DEST_CODE;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+				costFoodRescue := 0;
+		END;
+
+		sumCostRelatedWaste	 := costCoproduct * coProductMargin + costCoproductSecond * coProductSecondMargin + costFoodRescue * foodRescueMargin;
+		sumCostOutput		 := GetCostOutput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		wasteCollectionTreat := WasteCollectionTreatment(SASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+        revenueFromIncome    := RevenueFromOutputIncome(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+        
+		DXDIR_PK_BUSINESS_COST.GetCarriedOverBusinessCosts(SASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, PO_CUR);
+
+		LOOP
+			FETCH PO_CUR INTO bussinessCostGridItem;
+			EXIT WHEN PO_CUR%NOTFOUND;
+
+			wasteCost := wasteCost + NVL(bussinessCostGridItem.WASTE_COST, 0);
+		END LOOP;
+
+		dcRESULT := wasteCost + wasteCollectionTreat - sumCostRelatedWaste - revenueFromIncome + sumCostOutput;
+	END;
+
+	PROCEDURE GetTotalAndElectricityCost
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcTOTAL_COST OUT NUMBER,
+		dcELECTRICITY_COST OUT NUMBER
+	)
+	IS
+		TYPE r_BussinessCostGridItem IS RECORD
+		(
+			ID					   DXDIR_BUSINESS_COST.ID%TYPE,
+			ASSESSMENT_CODE		   DXDIR_BUSINESS_COST.ASSESSMENT_CODE%TYPE,
+			ASSESSMENT_LC_STAGE_ID DXDIR_BUSINESS_COST.ASSESSMENT_LC_STAGE_ID%TYPE,
+			TYPE				   DXDIR_BUSINESS_COST.TYPE%TYPE,
+			TITLE				   DXDIR_BUSINESS_COST.TITLE%TYPE,
+			SORT_ORDER			   DXDIR_BUSINESS_COST.SORT_ORDER%TYPE,
+			COST				   DXDIR_BUSINESS_COST.COST%TYPE,
+			TOTAL_COST             NUMBER(26, 4),
+			CARRIED_COST		   NUMBER(26, 4),
+			WASTE_COST			   NUMBER(26, 4)
+		);
+
+		bussinessCostGridItem r_BussinessCostGridItem;
+		PO_CUR DXDIR_PK_BUSINESS_COST.t_cursor;
+		sumTotalCost NUMBER(26, 4) := 0;
+		sumElectricityTotalCost NUMBER(26, 4) := 0;
+	BEGIN
+
+		DXDIR_PK_BUSINESS_COST.GetCarriedOverBusinessCosts(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, PO_CUR);
+
+		LOOP 
+			FETCH PO_CUR INTO bussinessCostGridItem;
+			EXIT WHEN PO_CUR%NOTFOUND;
+
+			IF (bussinessCostGridItem.TITLE IN ('ELECTRICITY', 'GAS'))
+			THEN
+				sumElectricityTotalCost := sumElectricityTotalCost + NVL(bussinessCostGridItem.TOTAL_COST, 0);
+			END IF;
+
+			sumTotalCost := sumTotalCost + NVL(bussinessCostGridItem.TOTAL_COST, 0);
+		END LOOP;
+
+		dcTOTAL_COST := sumTotalCost;
+		dcELECTRICITY_COST := sumElectricityTotalCost;
+	END;
+	
+	/* Energy spend as % of operating costs*/
+	FUNCTION GetEnergyCost
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcELECTRICITY_COST NUMBER,
+		dcTOTAL_COST NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER (24, 12) := 0;
+		sumEnergy NUMBER (24, 12) := 0;
+		sumBusinessCost NUMBER (24, 12) := 0;
+		sumWaste NUMBER (24, 12) := 0;
+		sumCostInput NUMBER (24, 12)  := 0;
+	BEGIN
+		sumEnergy		 := dcELECTRICITY_COST;
+		sumBusinessCost	 := dcTOTAL_COST;
+		sumWaste		 := WasteCollectionTreatment(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumCostInput	 := GetSumCostInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF (sumBusinessCost <> 0 OR sumWaste <> 0 OR sumCostInput <> 0)
+		THEN
+			result := sumEnergy / (sumWaste + sumBusinessCost + sumCostInput);
+		END IF;
+
+		RETURN result;
+	END;
+
+	/* Material spend as % of operating cost*/
+	FUNCTION GetMaterialSpend
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		dcTOTAL_COST NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumWaste NUMBER(26, 12) := 0;
+		sumCostInput NUMBER(26, 12) := 0;
+		sumBusinessCost NUMBER(26, 12) := 0;
+	BEGIN
+		sumWaste			 := WasteCollectionTreatment(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumCostInput		 := GetSumCostInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+		sumBusinessCost		 := dcTOTAL_COST;
+
+		IF (sumWaste <> 0 OR sumBusinessCost <> 0 OR sumCostInput <> 0)
+		THEN
+			result := sumCostInput / (sumWaste + sumBusinessCost + sumCostInput);
+		END IF;
+
+		RETURN result;
+	END;
+	
+	/*Disposal To Purchase Ratio*/
+	FUNCTION DisposalToPurchase
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER(26, 12) := 0;
+		sumCostInput NUMBER := 0;
+		wasteColltreatment NUMBER := 0;
+	BEGIN
+		sumCostInput := GetSumCostInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumCostInput = 0
+		THEN
+			RETURN result;
+		END IF;
+
+		wasteColltreatment := WasteCollectionTreatment(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		result := wasteColltreatment / sumCostInput;
+		RETURN result;
+	END;
+
+	/*Estimated true cost of waste ratio to purchase ratio*/
+	FUNCTION EstimatedWasteToPurchase
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		estimCostOfWaste NUMBER
+	)
+	RETURN NUMBER
+	IS
+		result NUMBER (26, 12) := 0;
+		sumCostInput NUMBER (26, 12);
+	BEGIN
+
+		sumCostInput := GetSumCostInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID);
+
+		IF sumCostInput <> 0
+		THEN
+			result := estimCostOfWaste / sumCostInput;
+		END IF;
+		
+		RETURN result;
+	END;
+
+
+	PROCEDURE GetResultsTable
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		po_cur IN OUT t_cursor
+	)
+	IS
+		estimCostOfWaste NUMBER (26, 12) := 0;
+		sumTotalCost NUMBER(26, 4) := 0;
+		sumElectricityTotalCost NUMBER(26, 4) := 0;
+		v_cursor t_cursor;
+	BEGIN
+		DXDIR_PK_RESULTCALCULATIONS.EstimatedCostOfWaste(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, estimCostOfWaste);
+		DXDIR_PK_RESULTCALCULATIONS.GetTotalAndElectricityCost(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, sumTotalCost, sumElectricityTotalCost);
+
+		BEGIN
+		OPEN v_cursor FOR
+			WITH MYTABLE AS
+			(
+                SELECT 1 AS ROW_ID,
+                       GetUtilisedInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 2 AS ROW_ID,
+                       GetStockHolding(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 3 AS ROW_ID,
+                       GetFoodMaterialLoss(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 4 AS ROW_ID,
+                       GetEdibleFoodMatLoss(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 5 AS ROW_ID,
+                       GetEdibleMatLossToMatLoss(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 6 AS ROW_ID,
+                       GetMatLossToInputExWater(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 7 AS ROW_ID,
+                       GetPackgLossToFoodInput(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 8 AS ROW_ID,
+                       GetPackToGrossProduct(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 9 AS ROW_ID,
+                       estimCostOfWaste AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 10 AS ROW_ID,
+                       WasteCollectionTreatment(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 11 AS ROW_ID,
+                       GetEnergyCost(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, sumElectricityTotalCost, sumTotalCost) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 12 AS ROW_ID,
+                       GetMaterialSpend(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, sumTotalCost) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 13 AS ROW_ID,
+                       DisposalToPurchase(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID) * 100 AS RESULT
+                FROM DUAL
+                UNION ALL
+                SELECT 14 AS ROW_ID,
+                      EstimatedWasteToPurchase(sASSESSMENT_CODE, dcASSESSMENT_LC_STAGE_ID, estimCostOfWaste) * 100 AS RESULT
+                FROM DUAL
+			)
+			SELECT DXDIR_RESULT_ROW.ID,
+				   DXDIR_RESULT_ROW.TITLE,
+				   DXDIR_RESULT_ROW.RESULT_UOM,
+				   DXDIR_RESULT_ROW.RESULT_TYPE,
+				   DXDIR_RESULT_ROW.SORT_ORDER,
+				   RESULT
+			FROM MYTABLE
+				 INNER JOIN DXDIR_RESULT_ROW
+				 ON MYTABLE.ROW_ID = DXDIR_RESULT_ROW.ID;
+		EXCEPTION
+			WHEN NO_DATA_FOUND THEN
+            RETURN;
+		END;
+
+		po_cur := v_cursor;
+	END;
+
+	PROCEDURE GetFoodLossesNotIncIndblParts
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER, 
+		po_cur OUT t_cursor
+	)
+	IS
+	BEGIN
+	
+		OPEN po_cur FOR 
+		SELECT NVL(WEIGHT, 0) AS WEIGHT,
+			   D.CODE AS CODE,
+			   0 AS WASTE,
+			   0 AS SORT_ORDER,
+			   0 AS USED_ON,
+			   D.TITLE
+		FROM DXDIR_OUTPUT O
+			 JOIN DXDIR_OUTPUT_CATEGORY OC
+			 ON OC.ID = O.OUTPUT_CATEGORY_ID
+			 JOIN DXDIR_DESTINATION D
+			 ON O.DESTINATION_CODE	 = D.CODE
+		WHERE ASSESSMENT_CODE		 = sASSESSMENT_CODE AND 
+			  ASSESSMENT_LC_STAGE_ID = dcASSESSMENT_LC_STAGE_ID AND 
+			  OUTPUT_CATEGORY_ID	 IN (2, 3)
+		UNION
+		SELECT NVL(SUM(WEIGHT), 0) AS WEIGHT,
+			   D.CODE AS CODE,
+			   0 AS WASTE,
+			   0 AS SORT_ORDER,
+			   0 AS USED_ON,
+			   D.TITLE
+		FROM DXDIR_OUTPUT O
+			 JOIN DXDIR_DESTINATION D
+			 ON O.DESTINATION_CODE	 = D.CODE
+			 JOIN DXDIR_OUTPUT_CATEGORY OC
+			 ON OC.ID				 = O.OUTPUT_CATEGORY_ID
+		WHERE ASSESSMENT_CODE			 = sASSESSMENT_CODE AND
+			  ASSESSMENT_LC_STAGE_ID	 = dcASSESSMENT_LC_STAGE_ID AND 
+			  OC.TYPE					 = 'FOOD'
+		GROUP BY D.CODE, D.TITLE;
+
+	END;
+
+	PROCEDURE GetFoodLossesInediblePartsOnly
+	(
+		sASSESSMENT_CODE VARCHAR2,
+		dcASSESSMENT_LC_STAGE_ID NUMBER,
+		po_cur OUT t_cursor
+	)
+	IS
+	BEGIN
+		OPEN po_cur FOR
+		SELECT NVL(SUM(O.WEIGHT), 0) AS WEIGHT,
+			   D.CODE AS CODE,
+			   0 AS WASTE,
+			   0 AS SORT_ORDER,
+			   0 AS USED_ON,
+			   D.TITLE
+		FROM DXDIR_OUTPUT O
+			 JOIN DXDIR_DESTINATION D
+				ON O.DESTINATION_CODE = D.CODE
+			 JOIN DXDIR_OUTPUT_CATEGORY OC
+				ON OC.ID = O.OUTPUT_CATEGORY_ID
+		WHERE O.ASSESSMENT_CODE			 = sASSESSMENT_CODE			AND
+			  O.ASSESSMENT_LC_STAGE_ID	 = dcASSESSMENT_LC_STAGE_ID AND 
+			  O.OUTPUT_CATEGORY_ID		 = 5
+		GROUP BY D.CODE, D.TITLE;
+	END;
+END;
+/

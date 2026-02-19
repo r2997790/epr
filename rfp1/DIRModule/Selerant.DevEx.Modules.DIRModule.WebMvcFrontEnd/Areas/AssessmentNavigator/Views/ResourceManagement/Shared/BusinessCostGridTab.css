@@ -1,0 +1,12 @@
+﻿.dir-module-partial-businesscost-tab th img.column-icon-add {
+	float: right;
+	cursor: pointer;
+}
+
+.res-mgmt-partial-business-cost-tab > .category-section-padding {
+    padding: 5px 0 10px;
+}
+
+.res-mgmt-partial-business-cost-tab .padding-top-3px {
+    padding-top: 3px;
+}

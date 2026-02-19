@@ -1,0 +1,123 @@
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_DESTINATION$InsertRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_DESTINATION$InsertRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_DESTINATION$InsertRecord]
+	@sCODE VARCHAR(64),
+	@dcWASTE NUMERIC(1,0),
+	@dcUSED_ON NUMERIC(1,0),
+	@dcSORT_ORDER BIGINT,
+	@sTITLE NVARCHAR(256)
+AS
+BEGIN
+	INSERT [dbo].[DXDIR_DESTINATION]
+	(
+		[CODE],
+		[WASTE],
+		[USED_ON],
+		[SORT_ORDER],
+		[TITLE]
+	)
+	VALUES
+	(
+		@sCODE,
+		@dcWASTE,
+		@dcUSED_ON,
+		@dcSORT_ORDER,
+		@sTITLE
+	)
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_DESTINATION$UpdateRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_DESTINATION$UpdateRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_DESTINATION$UpdateRecord]
+	@sCODE VARCHAR(64),
+	@dcWASTE NUMERIC(1,0),
+	@dcUSED_ON NUMERIC(1,0),
+	@dcSORT_ORDER BIGINT,
+	@sTITLE NVARCHAR(256)
+AS
+BEGIN
+	UPDATE [dbo].[DXDIR_DESTINATION]
+	SET 
+		[WASTE] = @dcWASTE,
+		[USED_ON] = @dcUSED_ON,
+		[SORT_ORDER] = @dcSORT_ORDER,
+		[TITLE] = @sTITLE
+	WHERE [CODE] = @sCODE
+	
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_DESTINATION$DeleteRecord'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_DESTINATION$DeleteRecord]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_DESTINATION$DeleteRecord]
+	@sCODE VARCHAR(64)
+AS
+BEGIN
+	DELETE FROM [dbo].[DXDIR_DESTINATION]
+	WHERE [CODE] = @sCODE
+END
+GO
+
+
+IF EXISTS ( SELECT *
+			FROM sys.objects so
+			JOIN sys.schemas sc ON so.schema_id = sc.schema_id
+			WHERE so.NAME = N'DXDIR_PK_DESTINATION$SelectDestinationSort'
+			  AND so.type IN (N'P') AND sc.NAME = N'dbo' )
+	DROP PROCEDURE [dbo].[DXDIR_PK_DESTINATION$SelectDestinationSort]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[DXDIR_PK_DESTINATION$SelectDestinationSort]
+	@sDESTINATION_CODES DX_Varchar2Table READONLY
+AS
+BEGIN
+	SELECT CODE, SORT_ORDER
+	FROM DXDIR_DESTINATION
+	WHERE CODE IN (SELECT CONTENT FROM @sDESTINATION_CODES);
+END
+GO

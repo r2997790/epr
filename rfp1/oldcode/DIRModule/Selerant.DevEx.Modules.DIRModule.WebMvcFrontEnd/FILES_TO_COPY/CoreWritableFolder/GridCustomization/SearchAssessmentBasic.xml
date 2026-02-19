@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- 
+	This file shows the customization of a flat grid
+-->
+<GridCustomization xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../XmlSchemas/GxCustomGrid.xsd">
+
+  <!-- Description of XML Attributes for the TargetGrid tag: 
+		id				the id of the ExCustomGrid object you are customizing
+		collectiontype	the name of the Business Object which will be used as source of data for the grid
+		pagesize		number of rows to show in the grid
+	-->
+  <TargetGrid id="SearchAssessmentTemplate" collectionType="DxAssessmentCollection" pageSize="20" allowPaging="true" allowSorting="true" allowFiltering="true" enableOfflineExport="true" applySecurity="true" />
+  <!-- Description of XML Attributes for the Localization tag: 
+			locale			filename of the resource file which include locale resources
+	-->
+  <Localization locale="DIR_AssessmentManager" />
+
+  <LevelInfos>
+    <objectList>
+      <!--
+			FLAT LEVEL
+			-->
+      <LevelInfo>
+        <Columns defaultSize="10%">
+          <objectList>
+
+            <!-- Don't remove this column, necessary for jscript management -->
+            <Column id="Icon" header="" hidden="false" targetProperty="DxAssessment" required="false" isConstant="false" isFilteringEnabled="false" isSortingEnabled="false" allowExport="false">
+              <HeaderLayout size="20px" style="" />
+              <DataLayout image="AUTO" controlType="GxImage" />
+            </Column>
+
+            <!--<Column id="Description" header="Description" targetProperty="DxMyScopeBusinessEntity.Description" isContextMenuColumn="true" showValueOnDeniedAccess="true" enabled="false" >-->
+            <Column id="Description" header="AssessmentDescriptionLbl" targetProperty="DxAssessment.Description" isContextMenuColumn="true" showValueOnDeniedAccess="true" enabled="false" customData="SEARCHLINK=true" >
+              <HeaderLayout size="0%" style="" />
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+            <Column id="Code" header="AssessmentCodeLbl" targetProperty="DxAssessment.Code" showValueOnDeniedAccess="true">
+              <HeaderLayout size="10%" style="" />
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+            <Column id="Type" header="AssessmentTypeLbl" targetProperty="DxAssessment.AssessmentTypeDescription" showValueOnDeniedAccess="true">
+              <HeaderLayout size="0%" style="" />
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+            <Column id="Status" header="AssessmentStatusLbl" targetProperty="DxAssessment.StatusDescription" showValueOnDeniedAccess="true">
+              <HeaderLayout size="0%" style="" />
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+            <Column id="ModDate" header="AssessmentModDateLbl" targetProperty="DxAssessment.ModDate" showValueOnDeniedAccess="true">
+              <HeaderLayout size="0%" style="" />
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+            <Column id="DEFAULT_TEMPLATE" header="" targetProperty="">
+              <HeaderLayout size="0%" style="" />
+              <!-- Don't change to ExHyperLink. Grid can be used in a dialog for search -->
+              <DataLayout image="" controlType="GxText" />
+            </Column>
+
+          </objectList>
+        </Columns>
+      </LevelInfo>
+    </objectList>
+  </LevelInfos>
+</GridCustomization>

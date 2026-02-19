@@ -1,0 +1,21 @@
+﻿.dir-module-partial-input-tab .category-icon-add {
+	cursor: pointer;
+}
+
+.dir-module-partial-input-tab .btn-confirm {
+	background: lightgreen;
+	background: rgba(0, 128, 0, 0.3);
+}
+
+.dir-module-partial-input-tab .category-section-padding {
+	padding-bottom: 5px;
+}
+
+.dir-module-partial-input-tab .padding-top-3px {
+	padding-top: 3px;
+}
+
+.lovMultiSelectJqGridFix > .DivItems > .DivItem span {
+	width: 100% !important;
+}
+
