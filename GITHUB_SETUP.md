@@ -1,18 +1,25 @@
-# Push to GitHub
+# Deploy to GitHub & Railway
 
-Your code is committed locally. To push to GitHub:
+## Railway – deployed
 
-## 1. Create a new repository on GitHub
+Your latest code has been deployed to Railway via `railway up`.
+
+- **App URL:** https://delightful-contentment-production.up.railway.app
+- **Project:** https://railway.com/project/b34f398b-f741-4ad5-8615-41a9c297aacf
+
+## GitHub – push your code
+
+### 1. Create a new repository on GitHub
 
 1. Go to [https://github.com/new](https://github.com/new)
 2. Repository name: `EPR` (or your preferred name)
 3. Choose **Public** or **Private**
-4. **Do not** initialize with README, .gitignore, or license (you already have these)
+4. **Do not** initialize with README, .gitignore, or license
 5. Click **Create repository**
 
-## 2. Add remote and push
+### 2. Add remote and push
 
-Run these commands (replace `YOUR_USERNAME` with your GitHub username):
+Replace `YOUR_USERNAME` with your GitHub username:
 
 ```powershell
 cd "c:\Users\nayrs\OneDrive\Desktop\Projects\EPR"
@@ -21,7 +28,7 @@ git branch -M main
 git push -u origin main
 ```
 
-Or if you use SSH:
+Or with SSH:
 
 ```powershell
 git remote add origin git@github.com:YOUR_USERNAME/EPR.git
@@ -29,11 +36,11 @@ git branch -M main
 git push -u origin main
 ```
 
-## 3. Connect Railway to GitHub (optional)
+### 3. Connect Railway to GitHub (optional)
 
-For automatic deployments on push:
+For automatic deployments when you push:
 
 1. Go to [Railway Dashboard](https://railway.com/project/b34f398b-f741-4ad5-8615-41a9c297aacf)
 2. Select the **delightful-contentment** service
 3. Go to **Settings** → **Source**
-4. Connect your GitHub repo and select the branch to deploy from
+4. Connect your GitHub repo and choose the branch to deploy from
