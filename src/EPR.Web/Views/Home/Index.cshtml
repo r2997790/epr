@@ -6,7 +6,74 @@
     var distributionCount = ViewBag.DistributionCount as int? ?? 0;
 }
 
-<div class="container-fluid home-page">
+<!-- Dataset Selection (shown when no dataset loaded) -->
+<div id="datasetSelectionSection" class="container-fluid home-page dataset-selection-page">
+    <h2 class="dataset-selection-heading mb-4"><i class="bi bi-database"></i> Select a Dataset</h2>
+    <div class="dataset-grid">
+        <button type="button" class="dataset-card" data-dataset="Alcoholic Beverages" data-phrase="Loading the drinks..." data-icon="bi-cup-straw">
+            <div class="dataset-card-icon"><i class="bi bi-cup-straw"></i></div>
+            <div class="dataset-card-title">Alcoholic Beverages</div>
+            <div class="dataset-card-count">1,247 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Confectionary" data-phrase="Unwrapping the sweets..." data-icon="bi-gift">
+            <div class="dataset-card-icon"><i class="bi bi-gift"></i></div>
+            <div class="dataset-card-title">Confectionary</div>
+            <div class="dataset-card-count">892 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Electronics" data-phrase="Charging up the gadgets..." data-icon="bi-cpu">
+            <div class="dataset-card-icon"><i class="bi bi-cpu"></i></div>
+            <div class="dataset-card-title">Electronics</div>
+            <div class="dataset-card-count">2,156 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Fresh Produce" data-phrase="Picking the freshest..." data-icon="bi-apple">
+            <div class="dataset-card-icon"><i class="bi bi-apple"></i></div>
+            <div class="dataset-card-title">Fresh Produce</div>
+            <div class="dataset-card-count">734 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Garden" data-phrase="Growing the garden..." data-icon="bi-flower2">
+            <div class="dataset-card-icon"><i class="bi bi-flower2"></i></div>
+            <div class="dataset-card-title">Garden</div>
+            <div class="dataset-card-count">1,089 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Homewares" data-phrase="Arranging the home..." data-icon="bi-house-door">
+            <div class="dataset-card-icon"><i class="bi bi-house-door"></i></div>
+            <div class="dataset-card-title">Homewares</div>
+            <div class="dataset-card-count">1,523 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Personal Care" data-phrase="Preparing your routine..." data-icon="bi-person-hearts">
+            <div class="dataset-card-icon"><i class="bi bi-person-hearts"></i></div>
+            <div class="dataset-card-title">Personal Care</div>
+            <div class="dataset-card-count">2,341 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Pet Care" data-phrase="Fetching pet supplies..." data-icon="bi-heart-pulse">
+            <div class="dataset-card-icon"><i class="bi bi-heart-pulse"></i></div>
+            <div class="dataset-card-title">Pet Care</div>
+            <div class="dataset-card-count">678 records</div>
+        </button>
+        <button type="button" class="dataset-card" data-dataset="Pharmaceuticals" data-phrase="Dispensing the medicine..." data-icon="bi-capsule">
+            <div class="dataset-card-icon"><i class="bi bi-capsule"></i></div>
+            <div class="dataset-card-title">Pharmaceuticals</div>
+            <div class="dataset-card-count">1,902 records</div>
+        </button>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="datasetLoadingModal" tabindex="-1" aria-labelledby="datasetLoadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5 px-4">
+                <div class="dataset-loading-phrase mb-3" id="datasetLoadingPhrase">Loading...</div>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="datasetLoadingProgress" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard (shown after dataset loaded) -->
+<div id="mainDashboardSection" class="container-fluid home-page" style="display: none;">
     <div class="home-grid">
         <a href="@Url.Action("Index", "PackagingManagement")" class="home-card" onclick="if(window.browserTabs) { window.browserTabs.addTab('@Url.Action("Index", "PackagingManagement")', 'Packaging', 'bi-box-seam', 'Packaging'); return false; }">
             <div class="home-card-icon"><i class="bi bi-box-seam" style="font-size: 3rem;"></i></div>
@@ -145,3 +212,90 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+(function() {
+    var STORAGE_KEY = 'epr_dataset_loaded';
+    var DURATION_MS = 5000;
+
+    function isDatasetLoaded() {
+        try {
+            return sessionStorage.getItem(STORAGE_KEY) === 'true';
+        } catch (e) { return false; }
+    }
+
+    function setDatasetLoaded() {
+        try { sessionStorage.setItem(STORAGE_KEY, 'true'); } catch (e) {}
+    }
+
+    function showSection(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = '';
+    }
+
+    function hideSection(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    }
+
+    function initVisibility() {
+        if (isDatasetLoaded()) {
+            hideSection('datasetSelectionSection');
+            showSection('mainDashboardSection');
+        } else {
+            showSection('datasetSelectionSection');
+            hideSection('mainDashboardSection');
+        }
+    }
+
+    function openLoadingModal(phrase) {
+        var modalEl = document.getElementById('datasetLoadingModal');
+        var phraseEl = document.getElementById('datasetLoadingPhrase');
+        var progressEl = document.getElementById('datasetLoadingProgress');
+        if (phraseEl) phraseEl.textContent = phrase;
+        if (progressEl) progressEl.style.width = '0%';
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal && modalEl) {
+            var modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    }
+
+    function closeLoadingModal() {
+        var modalEl = document.getElementById('datasetLoadingModal');
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal && modalEl) {
+            var modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
+    }
+
+    function runFakeLoad(phrase, onComplete) {
+        openLoadingModal(phrase);
+        var progressEl = document.getElementById('datasetLoadingProgress');
+        var start = Date.now();
+        var interval = setInterval(function() {
+            var elapsed = Date.now() - start;
+            var pct = Math.min(100, (elapsed / DURATION_MS) * 100);
+            if (progressEl) progressEl.style.width = pct + '%';
+            if (elapsed >= DURATION_MS) {
+                clearInterval(interval);
+                closeLoadingModal();
+                setDatasetLoaded();
+                if (onComplete) onComplete();
+                initVisibility();
+            }
+        }, 50);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initVisibility();
+        document.querySelectorAll('.dataset-card').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var phrase = this.getAttribute('data-phrase') || 'Loading...';
+                runFakeLoad(phrase);
+            });
+        });
+    });
+})();
+</script>
+}

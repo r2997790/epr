@@ -136,19 +136,48 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database configuration - use PostgreSQL when DATABASE_URL is set (Railway), otherwise SQLite
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-var connectionString = !string.IsNullOrEmpty(databaseUrl)
-    ? databaseUrl
-    : (builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db");
+// Database configuration - use PostgreSQL when DATABASE_URL or PG* vars set (Railway), otherwise SQLite
+var databaseUrl = (Environment.GetEnvironmentVariable("DATABASE_URL") ?? "").Trim();
+var pgHost = (Environment.GetEnvironmentVariable("PGHOST") ?? "").Trim();
+var pgUser = (Environment.GetEnvironmentVariable("PGUSER") ?? "").Trim();
 
-// Ensure Railway PostgreSQL has SSL mode
-var isPostgres = !string.IsNullOrEmpty(databaseUrl) && databaseUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase);
-if (isPostgres && !connectionString.Contains("sslmode", StringComparison.OrdinalIgnoreCase))
+// Build connection string: prefer PG* vars (reliable key-value format), else postgresql:// URL, else SQLite
+string connectionString;
+if (!string.IsNullOrEmpty(pgHost) && !string.IsNullOrEmpty(pgUser))
 {
-    var separator = connectionString.Contains('?') ? "&" : "?";
-    connectionString = connectionString + separator + "sslmode=Require";
+    var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+    var pgPass = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+    var pgDb = Environment.GetEnvironmentVariable("PGDATABASE") ?? "railway";
+    var csb = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = pgHost,
+        Port = int.TryParse(pgPort, out var p) ? p : 5432,
+        Username = pgUser,
+        Password = pgPass,
+        Database = pgDb,
+        SslMode = Npgsql.SslMode.Require
+    };
+    connectionString = csb.ConnectionString;
 }
+else if (databaseUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    try
+    {
+        var csb = new Npgsql.NpgsqlConnectionStringBuilder(databaseUrl);
+        connectionString = csb.ConnectionString;
+    }
+    catch
+    {
+        connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db";
+    }
+}
+else
+{
+    connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db";
+}
+
+var isPostgres = connectionString.StartsWith("postgres", StringComparison.OrdinalIgnoreCase) ||
+    connectionString.StartsWith("Host=", StringComparison.OrdinalIgnoreCase);
 
 builder.Services.AddDbContext<EPRDbContext>(options =>
 {
@@ -888,5 +917,38 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Diagnostic endpoint: check DB connection and admin user (for debugging login issues)
+app.MapGet("/api/health/db", async (EPRDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        var userCount = await db.Users.CountAsync();
+        var admin = await db.Users.FirstOrDefaultAsync(u => u.Username == "admin");
+        var adminExists = admin != null;
+        var adminActive = admin?.IsActive ?? false;
+        var hashLen = admin?.PasswordHash?.Length ?? 0;
+        var verifyOk = admin != null && BCrypt.Net.BCrypt.Verify("admin123", admin.PasswordHash);
+        return Results.Ok(new
+        {
+            databaseConnected = canConnect,
+            userCount,
+            adminExists,
+            adminActive,
+            passwordHashLength = hashLen,
+            passwordVerifyOk = verifyOk,
+            env = Environment.GetEnvironmentVariable("DATABASE_URL") != null ? "postgres" : "sqlite"
+        });
+    }
+    catch (Exception ex)
+    {
+        var dbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+        var pgHost = Environment.GetEnvironmentVariable("PGHOST");
+        var hasDbUrl = !string.IsNullOrEmpty(dbUrl);
+        var dbUrlStart = dbUrl != null && dbUrl.Length > 5 ? dbUrl.Substring(0, 5) : "null";
+        return Results.Ok(new { error = ex.Message, debug = new { hasDbUrl, dbUrlStart, hasPgHost = !string.IsNullOrEmpty(pgHost) } });
+    }
+}).AllowAnonymous();
 
 app.Run();
