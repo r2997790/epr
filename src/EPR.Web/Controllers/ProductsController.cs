@@ -82,13 +82,49 @@ public class ProductsController : Controller
         var productForm = await _context.ProductForms
             .FirstOrDefaultAsync(pf => pf.ProductId == id);
 
+        var relatedAsns = await GetRelatedAsnShipments(product.Gtin, datasetKey);
+
         var vm = new ProductDetailVm
         {
             Product = product,
             ProductForm = productForm,
-            ReturnUrl = returnUrl
+            ReturnUrl = returnUrl,
+            RelatedAsns = relatedAsns
         };
         return View(vm);
+    }
+
+    private static string NormalizeGtin(string? g) =>
+        string.IsNullOrWhiteSpace(g) ? "" : g.Trim().PadLeft(14, '0').Length > 14 ? g.Trim() : g.Trim().PadLeft(14, '0');
+
+    private async Task<List<RelatedAsnItem>> GetRelatedAsnShipments(string? productGtin, string? datasetKey)
+    {
+        var list = new List<RelatedAsnItem>();
+        var normalized = NormalizeGtin(productGtin);
+        if (string.IsNullOrEmpty(normalized)) return list;
+
+        var lineItems = await (
+            from li in _context.AsnLineItems
+            join p in _context.AsnPallets on li.AsnPalletId equals p.Id
+            join s in _context.AsnShipments on p.AsnShipmentId equals s.Id
+            where li.Gtin != null && (string.IsNullOrEmpty(datasetKey) || s.DatasetKey == datasetKey)
+            select new { li.Gtin, s.Id }
+        ).ToListAsync();
+
+        var shipmentIds = lineItems
+            .Where(x => NormalizeGtin(x.Gtin) == normalized)
+            .Select(x => x.Id)
+            .Distinct()
+            .ToList();
+
+        if (shipmentIds.Count == 0) return list;
+
+        return await _context.AsnShipments
+            .Where(s => shipmentIds.Contains(s.Id))
+            .OrderByDescending(s => s.ShipDate)
+            .Take(15)
+            .Select(s => new RelatedAsnItem { Id = s.Id, AsnNumber = s.AsnNumber!, ShipDate = s.ShipDate })
+            .ToListAsync();
     }
 
     public class ProductListItemVm
@@ -117,6 +153,14 @@ public class ProductsController : Controller
         public Product Product { get; set; } = null!;
         public ProductForm? ProductForm { get; set; }
         public string? ReturnUrl { get; set; }
+        public List<RelatedAsnItem> RelatedAsns { get; set; } = new();
+    }
+
+    public class RelatedAsnItem
+    {
+        public int Id { get; set; }
+        public string AsnNumber { get; set; } = "";
+        public DateTime? ShipDate { get; set; }
     }
 }
 

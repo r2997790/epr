@@ -154,7 +154,10 @@ public class DistributionController : Controller
             var gtinToProductId = new Dictionary<string, int>(StringComparer.Ordinal);
             if (lineItemGtins.Count > 0)
             {
-                var products = await _context.Products.Where(x => x.Gtin != null).Select(x => new { x.Gtin, x.Id }).ToListAsync();
+                var productQuery = _context.Products.Where(x => x.Gtin != null);
+            if (!string.IsNullOrEmpty(datasetKey))
+                productQuery = productQuery.Where(x => x.DatasetKey == datasetKey);
+            var products = await productQuery.Select(x => new { x.Gtin, x.Id }).ToListAsync();
                 foreach (var li in lineItemGtins)
                 {
                     var product = products.FirstOrDefault(p => NormalizeGtin(p.Gtin) == li.Normalized);
