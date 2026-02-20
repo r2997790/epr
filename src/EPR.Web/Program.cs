@@ -830,40 +830,59 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Auto-inject sample data when database has no ASN or no product data (no user interaction required)
-using (var seedScope = app.Services.CreateScope())
+// Ensure admin user exists synchronously (required for login)
+using (var adminScope = app.Services.CreateScope())
 {
-    var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
-    var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
-    var hasAsns = false;
-    var hasProducts = false;
-    var hasProductForms = false;
     try
     {
-        hasAsns = await seedContext.AsnShipments.AnyAsync();
-        hasProducts = await seedContext.Products.AnyAsync();
-        hasProductForms = await seedContext.ProductForms.AnyAsync();
+        var adminContext = adminScope.ServiceProvider.GetRequiredService<EPRDbContext>();
+        var userSeeder = new UserSeeder(adminContext);
+        await userSeeder.SeedAsync();
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠ Sample data check skipped: {ex.Message}");
+        Console.WriteLine($"⚠ Admin user seed: {ex.Message}");
     }
-    if (!hasAsns || !hasProducts)
+}
+
+// Run heavy seeding in background so app can start immediately (fixes Railway startup timeout)
+_ = Task.Run(async () =>
+{
+    await Task.Delay(2000);
+    try
     {
+        using var seedScope = app.Services.CreateScope();
+        var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
+        var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        var hasAsns = false;
+        var hasProducts = false;
+        var hasProductForms = false;
         try
         {
-            var scriptLogger = loggerFactory.CreateLogger<CreateDummyAsnData>();
-            var seedScript = new CreateDummyAsnData(seedContext, scriptLogger);
-            await seedScript.ExecuteAsync();
-            Console.WriteLine("✓ Sample data (25 products, 10 ASNs, ProductForms, Distributions) seeded.");
+            hasAsns = await seedContext.AsnShipments.AnyAsync();
+            hasProducts = await seedContext.Products.AnyAsync();
+            hasProductForms = await seedContext.ProductForms.AnyAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"⚠ Sample data seed failed: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
+            Console.WriteLine($"⚠ [Background] Sample data check skipped: {ex.Message}");
+            return;
         }
-    }
-    else if (hasProducts && !hasProductForms)
+        if (!hasAsns || !hasProducts)
+        {
+            try
+            {
+                var scriptLogger = loggerFactory.CreateLogger<CreateDummyAsnData>();
+                var seedScript = new CreateDummyAsnData(seedContext, scriptLogger);
+                await seedScript.ExecuteAsync();
+                Console.WriteLine("✓ [Background] Sample data seeded.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ [Background] Sample data seed failed: {ex.Message}");
+            }
+        }
+        else if (hasProducts && !hasProductForms)
     {
         try
         {
@@ -917,33 +936,26 @@ using (var seedScope = app.Services.CreateScope())
         Console.WriteLine($"⚠ Product–packaging link seed: {ex.Message}");
     }
 
-    // Ensure Electronics dataset (products + ASNs) exists when missing (critical for Distribution page)
-    try
-    {
-        var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
-        if (electronicsAsnCount == 0)
+        try
         {
-            var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
-            await electronicsSeeder.SeedAsync();
-            Console.WriteLine("✓ Electronics dataset (20 products, 12 ASNs, packaging) seeded.");
+            var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
+            if (electronicsAsnCount == 0)
+            {
+                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
+                await electronicsSeeder.SeedAsync();
+                Console.WriteLine("✓ [Background] Electronics dataset seeded.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠ [Background] Electronics dataset: {ex.Message}");
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠ Electronics dataset seed: {ex.Message}");
+        Console.WriteLine($"⚠ [Background] Seeding failed: {ex.Message}");
     }
-
-    // Ensure admin user exists (fallback if init block didn't run)
-    try
-    {
-        var userSeeder = new UserSeeder(seedContext);
-        await userSeeder.SeedAsync();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"⚠ Admin user seed: {ex.Message}");
-    }
-}
+});
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
