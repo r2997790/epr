@@ -284,9 +284,11 @@ main .container h1,
   font-size: 0.9rem;
 }
 
-/* Dataset Selection - 3x3 grid */
+/* Dataset Selection - 3x3 grid (override home-page centering so content appears at top) */
 .dataset-selection-page {
   padding-top: 1rem;
+  justify-content: flex-start;
+  min-height: auto;
 }
 .dataset-selection-heading {
   font-size: 1.75rem;
