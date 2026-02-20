@@ -61,7 +61,7 @@
                                 <button type="button" class="nav-link btn btn-link border-0 bg-transparent" style="cursor: pointer; padding: 0.5rem 1rem;" onclick="showSettingsDialog(); return false;"><i class="bi bi-gear"></i> <span data-translate="Settings">Settings</span></button>
                             </li>
                             <li class="nav-item">
-                                <a href="@Url.Action("Index", "Home")" class="nav-link" data-no-tab="true" onclick="sessionStorage.removeItem('epr_dataset_loaded'); return true;"><i class="bi bi-database-dash"></i> Reset Dataset</a>
+                                <a href="@Url.Action("ResetDataset", "Home")" class="nav-link" data-no-tab="true"><i class="bi bi-database-dash"></i> Reset Dataset</a>
                             </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" style="display: inline;">

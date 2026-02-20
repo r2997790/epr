@@ -14,17 +14,20 @@ public class DistributionController : Controller
 {
     private readonly EPRDbContext _context;
     private readonly AsnParserService _asnParser;
+    private readonly IDatasetService _datasetService;
     // private readonly AsnChainService _chainService; // Disabled until migration is run
     private readonly ILogger<DistributionController> _logger;
 
     public DistributionController(
         EPRDbContext context,
         AsnParserService asnParser,
+        IDatasetService datasetService,
         // AsnChainService chainService, // Disabled until migration is run
         ILogger<DistributionController> logger)
     {
         _context = context;
         _asnParser = asnParser;
+        _datasetService = datasetService;
         // _chainService = chainService; // Disabled until migration is run
         _logger = logger;
     }
@@ -45,12 +48,17 @@ public class DistributionController : Controller
         {
             _logger.LogInformation("GetAsnShipments called");
             
-            // Use cancellation token with timeout to prevent hanging
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            
-            var shipments = await _context.AsnShipments
+            var datasetKey = _datasetService.GetCurrentDataset();
+            var shipmentsQuery = _context.AsnShipments
                 .Include(s => s.Pallets)
                 .ThenInclude(p => p.LineItems)
+                .AsQueryable();
+            if (!string.IsNullOrEmpty(datasetKey))
+                shipmentsQuery = shipmentsQuery.Where(s => s.DatasetKey == datasetKey);
+            
+            // Use cancellation token with timeout to prevent hanging
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            var shipments = await shipmentsQuery
                 .OrderByDescending(s => s.ShipDate)
                 .ToListAsync(cts.Token);
 
@@ -119,10 +127,14 @@ public class DistributionController : Controller
     {
         try
         {
-            var shipment = await _context.AsnShipments
+            var datasetKey = _datasetService.GetCurrentDataset();
+            var query = _context.AsnShipments
                 .Include(s => s.Pallets)
                 .ThenInclude(p => p.LineItems)
-                .FirstOrDefaultAsync(s => s.Id == id);
+                .AsQueryable();
+            if (!string.IsNullOrEmpty(datasetKey))
+                query = query.Where(s => s.DatasetKey == datasetKey);
+            var shipment = await query.FirstOrDefaultAsync(s => s.Id == id);
 
             if (shipment == null)
             {

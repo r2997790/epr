@@ -73,6 +73,11 @@ public class Product
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 
+    /// <summary>
+    /// Dataset key (e.g. Electronics, Fresh Produce) - filters data by selected dataset
+    /// </summary>
+    public string? DatasetKey { get; set; }
+
     // Navigation properties
     public virtual ICollection<ProductPackaging> ProductPackagings { get; set; } = new List<ProductPackaging>();
     public virtual ICollection<ProductPackagingSupplierProduct> ProductPackagingSupplierProducts { get; set; } = new List<ProductPackagingSupplierProduct>();

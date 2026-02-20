@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EPR.Web.Attributes;
 using EPR.Data;
+using EPR.Web.Services;
 
 namespace EPR.Web.Controllers;
 
@@ -9,26 +10,37 @@ namespace EPR.Web.Controllers;
 public class ReportingController : Controller
 {
     private readonly EPRDbContext _context;
+    private readonly IDatasetService _datasetService;
 
-    public ReportingController(EPRDbContext context)
+    public ReportingController(EPRDbContext context, IDatasetService datasetService)
     {
         _context = context;
+        _datasetService = datasetService;
     }
 
     public async Task<IActionResult> Dashboard(string? geography, DateTime? dateFrom, DateTime? dateTo)
     {
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var productsQuery = _context.Products.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var productIds = await productsQuery.Select(p => p.Id).ToListAsync();
+
         var dateFromVal = dateFrom ?? DateTime.UtcNow.AddDays(-30);
         var dateToVal = dateTo ?? DateTime.UtcNow;
         ViewBag.DateFrom = dateFromVal.ToString("yyyy-MM-dd");
         ViewBag.DateTo = dateToVal.ToString("yyyy-MM-dd");
         ViewBag.SelectedGeography = geography ?? "";
 
-        var totalProducts = await _context.Products.CountAsync();
+        var totalProducts = await productsQuery.CountAsync();
         var totalPackagingTypes = await _context.PackagingTypes.CountAsync();
-        var totalAsnShipments = await _context.AsnShipments.CountAsync();
-        var totalProductForms = await _context.ProductForms.CountAsync();
+        var asnQuery = _context.AsnShipments.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            asnQuery = asnQuery.Where(s => s.DatasetKey == datasetKey);
+        var totalAsnShipments = await asnQuery.CountAsync();
+        var totalProductForms = await _context.ProductForms.CountAsync(pf => productIds.Contains(pf.ProductId));
 
-        var productsByCategory = await _context.Products
+        var productsByCategory = await productsQuery
             .Where(p => p.ProductCategory != null && p.ProductCategory != "")
             .GroupBy(p => p.ProductCategory)
             .Select(g => new { Category = g.Key ?? "Other", Count = g.Count() })
@@ -37,7 +49,7 @@ public class ReportingController : Controller
             .ToListAsync();
 
         var packagingByType = await _context.ProductForms
-            .Where(p => p.PackagingType != null && p.PackagingType != "")
+            .Where(p => productIds.Contains(p.ProductId) && p.PackagingType != null && p.PackagingType != "")
             .GroupBy(p => p.PackagingType)
             .Select(g => new { PackagingType = g.Key ?? "Other", Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -49,7 +61,7 @@ public class ReportingController : Controller
 
         // Packaging distribution for doughnut chart (same as packagingByType, all for chart)
         var packagingDistribution = await _context.ProductForms
-            .Where(p => p.PackagingType != null && p.PackagingType != "")
+            .Where(p => productIds.Contains(p.ProductId) && p.PackagingType != null && p.PackagingType != "")
             .GroupBy(p => p.PackagingType)
             .Select(g => new { PackagingType = g.Key ?? "Other", Count = g.Count() })
             .OrderByDescending(x => x.Count)
@@ -58,6 +70,8 @@ public class ReportingController : Controller
         // Geographic distribution for bar chart (from Distributions by StateProvince), optional geography filter
         var distQuery = _context.Distributions
             .Where(d => d.StateProvince != null && d.StateProvince != "");
+        if (!string.IsNullOrEmpty(datasetKey))
+            distQuery = distQuery.Where(d => d.DatasetKey == datasetKey);
         if (!string.IsNullOrEmpty(geography))
             distQuery = distQuery.Where(d => d.StateProvince == geography);
         if (dateFrom.HasValue)
@@ -83,7 +97,7 @@ public class ReportingController : Controller
             : packagingByType.Select(p => new { MaterialType = p.PackagingType, Count = p.Count }).ToList();
 
         // Top "companies" (Brands) for table
-        var topBrands = await _context.Products
+        var topBrands = await productsQuery
             .Where(p => p.Brand != null && p.Brand != "")
             .GroupBy(p => p.Brand)
             .Select(g => new { CompanyName = g.Key ?? "Other", ProductCount = g.Count() })
@@ -100,10 +114,10 @@ public class ReportingController : Controller
 
         // Total weight in tonnes (from ProductForms.TotalPackagingWeight)
         var totalWeightGrams = await _context.ProductForms
-            .Where(p => p.TotalPackagingWeight.HasValue)
+            .Where(p => productIds.Contains(p.ProductId) && p.TotalPackagingWeight.HasValue)
             .SumAsync(p => (double)(p.TotalPackagingWeight ?? 0));
         var totalWeightTonnes = (decimal)(totalWeightGrams / 1_000_000.0);
-        var distinctBrands = await _context.Products.Where(p => p.Brand != null && p.Brand != "").Select(p => p.Brand).Distinct().CountAsync();
+        var distinctBrands = await productsQuery.Where(p => p.Brand != null && p.Brand != "").Select(p => p.Brand).Distinct().CountAsync();
 
         ViewBag.TotalProducts = totalProducts;
         ViewBag.TotalPackagingTypes = totalPackagingTypes;
@@ -129,15 +143,23 @@ public class ReportingController : Controller
     public async Task<IActionResult> PortfolioReport()
     {
         ViewData["Title"] = "Portfolio Report";
-        var products = await _context.Products.AsNoTracking().OrderBy(p => p.Name).Take(500).ToListAsync();
-        ViewBag.TotalCount = await _context.Products.CountAsync();
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var productsQuery = _context.Products.AsNoTracking();
+        if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var products = await productsQuery.OrderBy(p => p.Name).Take(500).ToListAsync();
+        ViewBag.TotalCount = await productsQuery.CountAsync();
         return View(products);
     }
 
     public async Task<IActionResult> CostAnalysisReport()
     {
         ViewData["Title"] = "Cost Analysis";
-        var products = await _context.Products.AsNoTracking().OrderBy(p => p.Name).Take(200).Select(p => new { p.Id, p.Name, p.Brand, p.ProductCategory }).ToListAsync();
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var productsQuery = _context.Products.AsNoTracking();
+        if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var products = await productsQuery.OrderBy(p => p.Name).Take(200).Select(p => new { p.Id, p.Name, p.Brand, p.ProductCategory }).ToListAsync();
         ViewBag.Products = products;
         return View();
     }
@@ -145,8 +167,13 @@ public class ReportingController : Controller
     public async Task<IActionResult> SustainabilityReport()
     {
         ViewData["Title"] = "Sustainability Report";
-        var totalProducts = await _context.Products.CountAsync();
-        var withForms = await _context.ProductForms.CountAsync();
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var productsQuery = _context.Products.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var productIds = await productsQuery.Select(p => p.Id).ToListAsync();
+        var totalProducts = await productsQuery.CountAsync();
+        var withForms = await _context.ProductForms.CountAsync(pf => productIds.Contains(pf.ProductId));
         ViewBag.TotalProducts = totalProducts;
         ViewBag.WithPackagingForms = withForms;
         ViewBag.Score = 72;
@@ -156,7 +183,11 @@ public class ReportingController : Controller
     public async Task<IActionResult> ComplianceReport()
     {
         ViewData["Title"] = "Compliance Report";
-        var totalProducts = await _context.Products.CountAsync();
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var productsQuery = _context.Products.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var totalProducts = await productsQuery.CountAsync();
         ViewBag.TotalProducts = totalProducts;
         ViewBag.ComplianceRate = 0.78m;
         return View();

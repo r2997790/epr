@@ -118,6 +118,11 @@ public class AsnShipment
     /// Used for modeling onward journeys where full visibility may not be known
     /// </summary>
     public bool IsSimulated { get; set; } = false;
+
+    /// <summary>
+    /// Dataset key - filters data by selected dataset
+    /// </summary>
+    public string? DatasetKey { get; set; }
     
     // Navigation properties
     public virtual ICollection<AsnPallet> Pallets { get; set; } = new List<AsnPallet>();

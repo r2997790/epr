@@ -197,6 +197,7 @@ builder.Services.AddScoped<EPR.Application.Services.IAuthenticationService, EPR.
 builder.Services.AddScoped<EPR.Data.Services.MaterialTaxonomyImportService>();
 builder.Services.AddScoped<EPR.Data.Services.PackagingLibraryImportService>();
 builder.Services.AddScoped<EPR.Web.Services.AsnParserService>();
+builder.Services.AddScoped<EPR.Web.Services.IDatasetService, EPR.Web.Services.DatasetService>();
 
 // Session requires IDistributedCache - use in-memory for single instance
 builder.Services.AddDistributedMemoryCache();
@@ -558,6 +559,7 @@ using (var scope = app.Services.CreateScope())
                 ("UnitsPerPackage", "INTEGER"),
                 ("CreatedAt", "TEXT"),
                 ("UpdatedAt", "TEXT"),
+                ("DatasetKey", "TEXT"),
             };
             foreach (var (name, sqlType) in productColumns)
             {
@@ -731,11 +733,73 @@ using (var scope = app.Services.CreateScope())
         {
             Console.WriteLine($"⚠ PackagingSuppliers table check: {ex.Message}");
         }
+
+        // Add DatasetKey to dataset-scoped tables if missing
+        try
+        {
+            var conn = context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+            foreach (var (table, col) in new[] { ("PackagingLibraries", "DatasetKey"), ("PackagingGroups", "DatasetKey"), ("Distributions", "DatasetKey"), ("AsnShipments", "DatasetKey") })
+            {
+                var hasCol = false;
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = $"PRAGMA table_info({table})";
+                    try
+                    {
+                        using var r = await cmd.ExecuteReaderAsync();
+                        while (await r.ReadAsync()) { if (r.GetString(1) == col) { hasCol = true; break; } }
+                    }
+                    catch { /* table may not exist */ }
+                }
+                if (!hasCol)
+                {
+                    try
+                    {
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {col} TEXT";
+                        await cmd.ExecuteNonQueryAsync();
+                        Console.WriteLine($"✓ Added {table}.{col}");
+                    }
+                    catch (Exception ex) { Console.WriteLine($"⚠ {table}.{col}: {ex.Message}"); }
+                }
+            }
+            if (conn.State == System.Data.ConnectionState.Open) await conn.CloseAsync();
+        }
+        catch (Exception ex) { Console.WriteLine($"⚠ DatasetKey migration: {ex.Message}"); }
         } // end if (!isPostgres)
+
+        // PostgreSQL: add DatasetKey columns if missing (for existing DBs)
+        if (isPostgres)
+        {
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""DatasetKey"" varchar(50)");
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""PackagingLibraries"" ADD COLUMN IF NOT EXISTS ""DatasetKey"" varchar(50)");
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""PackagingGroups"" ADD COLUMN IF NOT EXISTS ""DatasetKey"" varchar(50)");
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""Distributions"" ADD COLUMN IF NOT EXISTS ""DatasetKey"" varchar(50)");
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""AsnShipments"" ADD COLUMN IF NOT EXISTS ""DatasetKey"" varchar(50)");
+                Console.WriteLine("✓ DatasetKey columns verified (PostgreSQL)");
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ DatasetKey PostgreSQL: {ex.Message}"); }
+        }
 
             // Always ensure admin user exists with correct password
             var userSeeder = new UserSeeder(context);
             await userSeeder.SeedAsync();
+
+            // Seed Electronics dataset if not already present
+            try
+            {
+                var electronicsCount = await context.Products.CountAsync(p => p.DatasetKey == "Electronics");
+                if (electronicsCount == 0)
+                {
+                    var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(context);
+                    await electronicsSeeder.SeedAsync();
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Electronics dataset seed: {ex.Message}"); }
+
             initDone = true;
         }
         catch (SqliteException ex) when (attempt == 0 && ex.Message.Contains("malformed", StringComparison.OrdinalIgnoreCase))

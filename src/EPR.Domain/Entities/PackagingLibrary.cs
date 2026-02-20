@@ -35,6 +35,11 @@ public class PackagingLibrary
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Dataset key - filters data by selected dataset
+    /// </summary>
+    public string? DatasetKey { get; set; }
     
     // Navigation properties
     public virtual MaterialTaxonomy? MaterialTaxonomy { get; set; }

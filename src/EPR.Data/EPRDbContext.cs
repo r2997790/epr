@@ -333,8 +333,10 @@ public class EPRDbContext : DbContext
             entity.Property(e => e.ProductWeightUnit).HasMaxLength(10);
             entity.Property(e => e.ProductVolumeUnit).HasMaxLength(10);
             entity.Property(e => e.ParentUnitGtin).HasMaxLength(14);
+            entity.Property(e => e.DatasetKey).HasMaxLength(50);
             entity.HasIndex(e => e.Sku).IsUnique();
             entity.HasIndex(e => e.Gtin);
+            entity.HasIndex(e => e.DatasetKey);
         });
 
         // ProductForm configuration
@@ -400,6 +402,8 @@ public class EPRDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.JurisdictionId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(e => e.DatasetKey).HasMaxLength(50);
+            entity.HasIndex(e => e.DatasetKey);
         });
 
         // RecyclingData configuration
@@ -433,7 +437,9 @@ public class EPRDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.MaterialTaxonomyId)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.DatasetKey).HasMaxLength(50);
             entity.HasIndex(e => e.TaxonomyCode);
+            entity.HasIndex(e => e.DatasetKey);
         });
 
         // PackagingGroup configuration
@@ -455,7 +461,9 @@ public class EPRDbContext : DbContext
             entity.Property(e => e.ExampleReference).HasMaxLength(500);
             entity.Property(e => e.Source).HasMaxLength(500);
             entity.Property(e => e.Url).HasMaxLength(1000);
+            entity.Property(e => e.DatasetKey).HasMaxLength(50);
             entity.HasIndex(e => e.PackId).IsUnique();
+            entity.HasIndex(e => e.DatasetKey);
         });
 
         // PackagingGroupItem configuration
@@ -504,8 +512,10 @@ public class EPRDbContext : DbContext
             entity.Property(e => e.SourceFormat).IsRequired().HasMaxLength(20);
             entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
             entity.Property(e => e.IsSimulated).IsRequired().HasDefaultValue(false);
+            entity.Property(e => e.DatasetKey).HasMaxLength(50);
             
             entity.HasIndex(e => e.AsnNumber);
+            entity.HasIndex(e => e.DatasetKey);
             entity.HasIndex(e => e.ShipDate);
             entity.HasIndex(e => e.Status);
             entity.HasIndex(e => e.IsSimulated);

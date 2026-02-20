@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using EPR.Web.Attributes;
 using EPR.Data;
 using EPR.Domain.Entities;
+using EPR.Web.Services;
 
 namespace EPR.Web.Controllers;
 
@@ -10,10 +11,12 @@ namespace EPR.Web.Controllers;
 public class ProductsController : Controller
 {
     private readonly EPRDbContext _context;
+    private readonly IDatasetService _datasetService;
 
-    public ProductsController(EPRDbContext context)
+    public ProductsController(EPRDbContext context, IDatasetService datasetService)
     {
         _context = context;
+        _datasetService = datasetService;
     }
 
     public async Task<IActionResult> Index(string search = "", int page = 1, int pageSize = 12)
@@ -22,7 +25,10 @@ public class ProductsController : Controller
         if (pageSize <= 0 || pageSize > maxPageSize) pageSize = 12;
         if (page <= 0) page = 1;
 
+        var datasetKey = _datasetService.GetCurrentDataset();
         var query = _context.Products.AsNoTracking();
+        if (!string.IsNullOrEmpty(datasetKey))
+            query = query.Where(p => p.DatasetKey == datasetKey);
         var searchTerm = (search ?? "").Trim();
         if (!string.IsNullOrEmpty(searchTerm))
         {
@@ -65,7 +71,11 @@ public class ProductsController : Controller
 
     public async Task<IActionResult> Detail(int id, string? returnUrl = null)
     {
-        var product = await _context.Products.FindAsync(id);
+        var datasetKey = _datasetService.GetCurrentDataset();
+        var query = _context.Products.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            query = query.Where(p => p.DatasetKey == datasetKey);
+        var product = await query.FirstOrDefaultAsync(p => p.Id == id);
         if (product == null)
             return NotFound();
 

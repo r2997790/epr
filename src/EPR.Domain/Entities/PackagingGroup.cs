@@ -90,6 +90,11 @@ public class PackagingGroup
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>
+    /// Dataset key - filters data by selected dataset
+    /// </summary>
+    public string? DatasetKey { get; set; }
     
     // Navigation properties
     public virtual ICollection<PackagingGroupItem> Items { get; set; } = new List<PackagingGroupItem>();

@@ -1,5 +1,7 @@
 @{
     ViewData["Title"] = "Home";
+    var datasetKey = ViewBag.DatasetKey as string;
+    var hasDataset = !string.IsNullOrEmpty(datasetKey);
     var totalProducts = ViewBag.TotalProducts as int? ?? 0;
     var productsByType = ViewBag.ProductsByType as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
     var packagingByWeight = ViewBag.PackagingByWeight as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
@@ -7,7 +9,7 @@
 }
 
 <!-- Dataset Selection (shown when no dataset loaded) -->
-<div id="datasetSelectionSection" class="container-fluid home-page dataset-selection-page">
+<div id="datasetSelectionSection" class="container-fluid home-page dataset-selection-page" style="@(hasDataset ? "display: none;" : "")">
     <h2 class="dataset-selection-heading mb-4"><i class="bi bi-database"></i> Select a Dataset</h2>
     <div class="dataset-grid">
         <button type="button" class="dataset-card" data-dataset="Alcoholic Beverages" data-phrase="Loading the drinks..." data-icon="bi-cup-straw">
@@ -23,7 +25,7 @@
         <button type="button" class="dataset-card" data-dataset="Electronics" data-phrase="Charging up the gadgets..." data-icon="bi-cpu">
             <div class="dataset-card-icon"><i class="bi bi-cpu"></i></div>
             <div class="dataset-card-title">Electronics</div>
-            <div class="dataset-card-count">2,156 records</div>
+            <div class="dataset-card-count">20 products</div>
         </button>
         <button type="button" class="dataset-card" data-dataset="Fresh Produce" data-phrase="Picking the freshest..." data-icon="bi-apple">
             <div class="dataset-card-icon"><i class="bi bi-apple"></i></div>
@@ -73,7 +75,7 @@
 </div>
 
 <!-- Main Dashboard (shown after dataset loaded) -->
-<div id="mainDashboardSection" class="container-fluid home-page" style="display: none;">
+<div id="mainDashboardSection" class="container-fluid home-page" style="@(hasDataset ? "" : "display: none;")">
     <div class="home-grid">
         <a href="@Url.Action("Index", "PackagingManagement")" class="home-card" onclick="if(window.browserTabs) { window.browserTabs.addTab('@Url.Action("Index", "PackagingManagement")', 'Packaging', 'bi-box-seam', 'Packaging'); return false; }">
             <div class="home-card-icon"><i class="bi bi-box-seam" style="font-size: 3rem;"></i></div>
@@ -216,38 +218,7 @@
 @section Scripts {
 <script>
 (function() {
-    var STORAGE_KEY = 'epr_dataset_loaded';
     var DURATION_MS = 5000;
-
-    function isDatasetLoaded() {
-        try {
-            return sessionStorage.getItem(STORAGE_KEY) === 'true';
-        } catch (e) { return false; }
-    }
-
-    function setDatasetLoaded() {
-        try { sessionStorage.setItem(STORAGE_KEY, 'true'); } catch (e) {}
-    }
-
-    function showSection(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = '';
-    }
-
-    function hideSection(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    }
-
-    function initVisibility() {
-        if (isDatasetLoaded()) {
-            hideSection('datasetSelectionSection');
-            showSection('mainDashboardSection');
-        } else {
-            showSection('datasetSelectionSection');
-            hideSection('mainDashboardSection');
-        }
-    }
 
     function openLoadingModal(phrase) {
         var modalEl = document.getElementById('datasetLoadingModal');
@@ -280,19 +251,33 @@
             if (elapsed >= DURATION_MS) {
                 clearInterval(interval);
                 closeLoadingModal();
-                setDatasetLoaded();
                 if (onComplete) onComplete();
-                initVisibility();
             }
         }, 50);
     }
 
+    function selectDataset(btn) {
+        var datasetKey = btn.getAttribute('data-dataset') || '';
+        var phrase = btn.getAttribute('data-phrase') || 'Loading...';
+        var token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        fetch('/api/dataset/select', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ datasetKey: datasetKey }),
+            credentials: 'same-origin'
+        }).then(function(r) {
+            if (!r.ok) throw new Error('Failed to set dataset');
+            runFakeLoad(phrase, function() { window.location.reload(); });
+        }).catch(function(err) {
+            console.error(err);
+            runFakeLoad(phrase, function() { window.location.reload(); });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        initVisibility();
         document.querySelectorAll('.dataset-card').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                var phrase = this.getAttribute('data-phrase') || 'Loading...';
-                runFakeLoad(phrase);
+                selectDataset(this);
             });
         });
     });

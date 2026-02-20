@@ -21,6 +21,11 @@ public class Distribution
     public int? JurisdictionId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Dataset key - filters data by selected dataset
+    /// </summary>
+    public string? DatasetKey { get; set; }
+
     // Navigation properties
     public virtual Product Product { get; set; } = null!;
     public virtual PackagingUnit PackagingUnit { get; set; } = null!;
