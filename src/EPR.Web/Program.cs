@@ -917,6 +917,22 @@ using (var seedScope = app.Services.CreateScope())
         Console.WriteLine($"⚠ Product–packaging link seed: {ex.Message}");
     }
 
+    // Ensure Electronics dataset (products + ASNs) exists when missing (critical for Distribution page)
+    try
+    {
+        var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
+        if (electronicsAsnCount == 0)
+        {
+            var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
+            await electronicsSeeder.SeedAsync();
+            Console.WriteLine("✓ Electronics dataset (20 products, 12 ASNs, packaging) seeded.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠ Electronics dataset seed: {ex.Message}");
+    }
+
     // Ensure admin user exists (fallback if init block didn't run)
     try
     {

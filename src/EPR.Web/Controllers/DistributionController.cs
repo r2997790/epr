@@ -611,10 +611,18 @@ public class DistributionController : Controller
             var scriptLogger = loggerFactory.CreateLogger<Scripts.CreateDummyAsnData>();
             var script = new Scripts.CreateDummyAsnData(_context, scriptLogger);
             await script.ExecuteAsync();
+
+            // Ensure Electronics ASNs exist (for when user has Electronics dataset selected)
+            var electronicsAsnCount = await _context.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
+            if (electronicsAsnCount == 0)
+            {
+                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
+                await electronicsSeeder.SeedAsync();
+            }
             
             return Json(new { 
                 success = true, 
-                message = "Dummy data created successfully. Refresh the page to see new ASNs." 
+                message = "Sample data created successfully. Refresh the page to see new ASNs." 
             });
         }
         catch (Exception ex)
