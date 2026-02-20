@@ -284,11 +284,17 @@ main .container h1,
   font-size: 0.9rem;
 }
 
-/* Dataset Selection - 3x3 grid (override home-page centering so content appears at top) */
+/* Dataset Selection - 3x3 grid centered vertically and horizontally */
 .dataset-selection-page {
-  padding-top: 1rem;
-  justify-content: flex-start;
-  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 56px - 80px);
+  padding: 2rem 1rem;
+}
+.dataset-selection-page .dataset-selection-heading {
+  margin-bottom: 1.5rem;
 }
 .dataset-selection-heading {
   font-size: 1.75rem;

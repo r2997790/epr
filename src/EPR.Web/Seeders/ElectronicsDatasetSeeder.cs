@@ -20,10 +20,12 @@ public class ElectronicsDatasetSeeder
 
     public async Task SeedAsync()
     {
-        // Skip if already seeded
-        if (await _context.Products.AnyAsync(p => p.DatasetKey == DatasetKey))
+        // If already seeded, still update product images if missing
+        var existingCount = await _context.Products.CountAsync(p => p.DatasetKey == DatasetKey);
+        if (existingCount > 0)
         {
-            Console.WriteLine("Electronics dataset already seeded");
+            await UpdateProductImagesIfMissing();
+            Console.WriteLine("Electronics dataset verified (images updated if needed)");
             return;
         }
 
@@ -83,35 +85,35 @@ public class ElectronicsDatasetSeeder
         var manchesterGeo = await EnsureGeography("MAN", "Manchester", ukJurisdiction.Id);
         var birminghamGeo = await EnsureGeography("BIR", "Birmingham", ukJurisdiction.Id);
 
-        // 20 Electronics products
+        // 20 Electronics products with placeholder images (picsum.photos - unique per product)
         var products = new[]
         {
-            ("ELEC-001", "Wireless Bluetooth Earbuds Pro", "TechSound", "50601234567890"),
-            ("ELEC-002", "USB-C Fast Charger 65W", "PowerFlow", "50601234567891"),
-            ("ELEC-003", "Portable Power Bank 20000mAh", "PowerFlow", "50601234567892"),
-            ("ELEC-004", "HD Webcam 1080p", "VisionTech", "50601234567893"),
-            ("ELEC-005", "Mechanical Gaming Keyboard", "KeyMaster", "50601234567894"),
-            ("ELEC-006", "Wireless Mouse Ergonomic", "KeyMaster", "50601234567895"),
-            ("ELEC-007", "Bluetooth Speaker Waterproof", "TechSound", "50601234567896"),
-            ("ELEC-008", "Tablet Stand Adjustable", "DeskPro", "50601234567897"),
-            ("ELEC-009", "Phone Holder Car Mount", "DeskPro", "50601234567898"),
-            ("ELEC-010", "HDMI Cable 2m", "CableTech", "50601234567899"),
-            ("ELEC-011", "USB Hub 4-Port", "CableTech", "50601234567900"),
-            ("ELEC-012", "Screen Protector Glass", "VisionTech", "50601234567901"),
-            ("ELEC-013", "Laptop Sleeve 15\"", "DeskPro", "50601234567902"),
-            ("ELEC-014", "Smart Watch Band Silicone", "WearTech", "50601234567903"),
-            ("ELEC-015", "Earbud Tips Set S/M/L", "TechSound", "50601234567904"),
-            ("ELEC-016", "Cable Organiser Box", "DeskPro", "50601234567905"),
-            ("ELEC-017", "LED Desk Lamp USB", "LightPro", "50601234567906"),
-            ("ELEC-018", "Webcam Cover Slider", "VisionTech", "50601234567907"),
-            ("ELEC-019", "Laptop Cooling Pad", "DeskPro", "50601234567908"),
-            ("ELEC-020", "Multi-Port Adapter USB-C", "CableTech", "50601234567909"),
+            ("ELEC-001", "Wireless Bluetooth Earbuds Pro", "TechSound", "50601234567890", "https://picsum.photos/seed/elec-earbuds/200/200"),
+            ("ELEC-002", "USB-C Fast Charger 65W", "PowerFlow", "50601234567891", "https://picsum.photos/seed/elec-charger/200/200"),
+            ("ELEC-003", "Portable Power Bank 20000mAh", "PowerFlow", "50601234567892", "https://picsum.photos/seed/elec-powerbank/200/200"),
+            ("ELEC-004", "HD Webcam 1080p", "VisionTech", "50601234567893", "https://picsum.photos/seed/elec-webcam/200/200"),
+            ("ELEC-005", "Mechanical Gaming Keyboard", "KeyMaster", "50601234567894", "https://picsum.photos/seed/elec-keyboard/200/200"),
+            ("ELEC-006", "Wireless Mouse Ergonomic", "KeyMaster", "50601234567895", "https://picsum.photos/seed/elec-mouse/200/200"),
+            ("ELEC-007", "Bluetooth Speaker Waterproof", "TechSound", "50601234567896", "https://picsum.photos/seed/elec-speaker/200/200"),
+            ("ELEC-008", "Tablet Stand Adjustable", "DeskPro", "50601234567897", "https://picsum.photos/seed/elec-stand/200/200"),
+            ("ELEC-009", "Phone Holder Car Mount", "DeskPro", "50601234567898", "https://picsum.photos/seed/elec-phoneholder/200/200"),
+            ("ELEC-010", "HDMI Cable 2m", "CableTech", "50601234567899", "https://picsum.photos/seed/elec-hdmi/200/200"),
+            ("ELEC-011", "USB Hub 4-Port", "CableTech", "50601234567900", "https://picsum.photos/seed/elec-usbhub/200/200"),
+            ("ELEC-012", "Screen Protector Glass", "VisionTech", "50601234567901", "https://picsum.photos/seed/elec-screen/200/200"),
+            ("ELEC-013", "Laptop Sleeve 15\"", "DeskPro", "50601234567902", "https://picsum.photos/seed/elec-sleeve/200/200"),
+            ("ELEC-014", "Smart Watch Band Silicone", "WearTech", "50601234567903", "https://picsum.photos/seed/elec-watch/200/200"),
+            ("ELEC-015", "Earbud Tips Set S/M/L", "TechSound", "50601234567904", "https://picsum.photos/seed/elec-tips/200/200"),
+            ("ELEC-016", "Cable Organiser Box", "DeskPro", "50601234567905", "https://picsum.photos/seed/elec-organiser/200/200"),
+            ("ELEC-017", "LED Desk Lamp USB", "LightPro", "50601234567906", "https://picsum.photos/seed/elec-lamp/200/200"),
+            ("ELEC-018", "Webcam Cover Slider", "VisionTech", "50601234567907", "https://picsum.photos/seed/elec-cover/200/200"),
+            ("ELEC-019", "Laptop Cooling Pad", "DeskPro", "50601234567908", "https://picsum.photos/seed/elec-cooling/200/200"),
+            ("ELEC-020", "Multi-Port Adapter USB-C", "CableTech", "50601234567909", "https://picsum.photos/seed/elec-adapter/200/200"),
         };
 
         var productEntities = new List<Product>();
-        foreach (var (sku, name, brand, gtin) in products)
+        foreach (var (sku, name, brand, gtin, imageUrl) in products)
         {
-            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey);
+            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl);
             productEntities.Add(p);
 
             // ProductForm
@@ -150,6 +152,43 @@ public class ElectronicsDatasetSeeder
 
         await _context.SaveChangesAsync();
         Console.WriteLine($"✓ Electronics dataset seeded: 20 products, packaging, distribution, ASNs");
+    }
+
+    private async Task UpdateProductImagesIfMissing()
+    {
+        var productImages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["ELEC-001"] = "https://picsum.photos/seed/elec-earbuds/200/200",
+            ["ELEC-002"] = "https://picsum.photos/seed/elec-charger/200/200",
+            ["ELEC-003"] = "https://picsum.photos/seed/elec-powerbank/200/200",
+            ["ELEC-004"] = "https://picsum.photos/seed/elec-webcam/200/200",
+            ["ELEC-005"] = "https://picsum.photos/seed/elec-keyboard/200/200",
+            ["ELEC-006"] = "https://picsum.photos/seed/elec-mouse/200/200",
+            ["ELEC-007"] = "https://picsum.photos/seed/elec-speaker/200/200",
+            ["ELEC-008"] = "https://picsum.photos/seed/elec-stand/200/200",
+            ["ELEC-009"] = "https://picsum.photos/seed/elec-phoneholder/200/200",
+            ["ELEC-010"] = "https://picsum.photos/seed/elec-hdmi/200/200",
+            ["ELEC-011"] = "https://picsum.photos/seed/elec-usbhub/200/200",
+            ["ELEC-012"] = "https://picsum.photos/seed/elec-screen/200/200",
+            ["ELEC-013"] = "https://picsum.photos/seed/elec-sleeve/200/200",
+            ["ELEC-014"] = "https://picsum.photos/seed/elec-watch/200/200",
+            ["ELEC-015"] = "https://picsum.photos/seed/elec-tips/200/200",
+            ["ELEC-016"] = "https://picsum.photos/seed/elec-organiser/200/200",
+            ["ELEC-017"] = "https://picsum.photos/seed/elec-lamp/200/200",
+            ["ELEC-018"] = "https://picsum.photos/seed/elec-cover/200/200",
+            ["ELEC-019"] = "https://picsum.photos/seed/elec-cooling/200/200",
+            ["ELEC-020"] = "https://picsum.photos/seed/elec-adapter/200/200",
+        };
+        var products = await _context.Products.Where(p => p.DatasetKey == DatasetKey && (p.ImageUrl == null || p.ImageUrl == "")).ToListAsync();
+        foreach (var p in products)
+        {
+            if (p.Sku != null && productImages.TryGetValue(p.Sku, out var url))
+            {
+                p.ImageUrl = url;
+            }
+        }
+        if (products.Count > 0)
+            await _context.SaveChangesAsync();
     }
 
     private async Task<MaterialTaxonomy> EnsureMaterialTaxonomy(string code, string displayName, int level)
@@ -297,7 +336,7 @@ public class ElectronicsDatasetSeeder
         return g;
     }
 
-    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey)
+    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null)
     {
         var p = await _context.Products.FirstOrDefaultAsync(x => x.Sku == sku);
         if (p == null)
@@ -311,9 +350,15 @@ public class ElectronicsDatasetSeeder
                 ProductCategory = "Electronics",
                 ProductSubCategory = "Consumer Electronics",
                 CountryOfOrigin = "CN",
-                DatasetKey = datasetKey
+                DatasetKey = datasetKey,
+                ImageUrl = imageUrl
             };
             _context.Products.Add(p);
+            await _context.SaveChangesAsync();
+        }
+        else if (!string.IsNullOrEmpty(imageUrl) && string.IsNullOrEmpty(p.ImageUrl))
+        {
+            p.ImageUrl = imageUrl;
             await _context.SaveChangesAsync();
         }
         return p;
