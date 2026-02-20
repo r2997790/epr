@@ -848,12 +848,29 @@ using (var adminScope = app.Services.CreateScope())
 // Run heavy seeding in background so app can start immediately (fixes Railway startup timeout)
 _ = Task.Run(async () =>
 {
-    await Task.Delay(2000);
+    await Task.Delay(1500);
     try
     {
         using var seedScope = app.Services.CreateScope();
         var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
         var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+
+        // Run Electronics first so Distribution tab has data when Electronics is selected
+        try
+        {
+            var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
+            if (electronicsAsnCount == 0)
+            {
+                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
+                await electronicsSeeder.SeedAsync();
+                Console.WriteLine("✓ [Background] Electronics dataset (20 products, 12 ASNs) seeded.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠ [Background] Electronics dataset: {ex.Message}");
+        }
+
         var hasAsns = false;
         var hasProducts = false;
         var hasProductForms = false;
@@ -873,8 +890,8 @@ _ = Task.Run(async () =>
             try
             {
                 var scriptLogger = loggerFactory.CreateLogger<CreateDummyAsnData>();
-                var seedScript = new CreateDummyAsnData(seedContext, scriptLogger);
-                await seedScript.ExecuteAsync();
+                var script = new CreateDummyAsnData(seedContext, scriptLogger);
+                await script.ExecuteAsync();
                 Console.WriteLine("✓ [Background] Sample data seeded.");
             }
             catch (Exception ex)
@@ -935,21 +952,6 @@ _ = Task.Run(async () =>
     {
         Console.WriteLine($"⚠ Product–packaging link seed: {ex.Message}");
     }
-
-        try
-        {
-            var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
-            if (electronicsAsnCount == 0)
-            {
-                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
-                await electronicsSeeder.SeedAsync();
-                Console.WriteLine("✓ [Background] Electronics dataset seeded.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠ [Background] Electronics dataset: {ex.Message}");
-        }
     }
     catch (Exception ex)
     {
