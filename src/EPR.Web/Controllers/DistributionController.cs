@@ -44,17 +44,24 @@ public class DistributionController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAsnShipments()
     {
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
         try
         {
             _logger.LogInformation("GetAsnShipments called");
-            
+
             var datasetKey = _datasetService.GetCurrentDataset();
             var shipmentsQuery = _context.AsnShipments
                 .Include(s => s.Pallets)
                 .ThenInclude(p => p.LineItems)
                 .AsQueryable();
-            if (!string.IsNullOrEmpty(datasetKey))
+            // When a dataset is selected (e.g. Electronics), show only that dataset's ASNs
+            var requiresDataset = string.IsNullOrEmpty(datasetKey);
+            if (!requiresDataset)
                 shipmentsQuery = shipmentsQuery.Where(s => s.DatasetKey == datasetKey);
+            else
+                shipmentsQuery = shipmentsQuery.Where(s => false); // Require dataset selection
             
             // Use cancellation token with timeout to prevent hanging
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -103,9 +110,9 @@ public class DistributionController : Controller
             }).ToList();
 
             _logger.LogInformation($"Returning {result.Count} shipments to client");
-            
+
             Response.ContentType = "application/json";
-            return Json(new { success = true, data = result });
+            return Json(new { success = true, data = result, requiresDataset = requiresDataset });
         }
         catch (OperationCanceledException)
         {
@@ -125,6 +132,9 @@ public class DistributionController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAsnShipment(int id)
     {
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
         try
         {
             var datasetKey = _datasetService.GetCurrentDataset();
@@ -134,6 +144,8 @@ public class DistributionController : Controller
                 .AsQueryable();
             if (!string.IsNullOrEmpty(datasetKey))
                 query = query.Where(s => s.DatasetKey == datasetKey);
+            else
+                query = query.Where(s => false); // Require dataset selection
             var shipment = await query.FirstOrDefaultAsync(s => s.Id == id);
 
             if (shipment == null)
@@ -435,6 +447,9 @@ public class DistributionController : Controller
                 }
             };
 
+            Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
             Response.ContentType = "application/json";
             return Json(new { success = true, data = packagingData });
         }
@@ -452,12 +467,21 @@ public class DistributionController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAsnProductPackaging(int asnId)
     {
+        Response.Headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
+        Response.Headers["Pragma"] = "no-cache";
+        Response.Headers["Expires"] = "0";
         try
         {
-            var shipment = await _context.AsnShipments
+            var datasetKey = _datasetService.GetCurrentDataset();
+            var query = _context.AsnShipments
                 .Include(s => s.Pallets)
                 .ThenInclude(p => p.LineItems)
-                .FirstOrDefaultAsync(s => s.Id == asnId);
+                .AsQueryable();
+            if (!string.IsNullOrEmpty(datasetKey))
+                query = query.Where(s => s.DatasetKey == datasetKey);
+            else
+                query = query.Where(s => false);
+            var shipment = await query.FirstOrDefaultAsync(s => s.Id == asnId);
 
             if (shipment == null)
             {

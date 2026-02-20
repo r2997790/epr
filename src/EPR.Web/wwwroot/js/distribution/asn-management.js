@@ -507,11 +507,12 @@
             
             if (result.success) {
                 currentShipments = result.data || [];
-                console.log('✅ Loaded ' + currentShipments.length + ' shipments');
+                const requiresDataset = result.requiresDataset === true;
+                console.log('✅ Loaded ' + currentShipments.length + ' shipments' + (requiresDataset ? ' (dataset required)' : ''));
                 console.log('🎨 Rendering shipments...');
-                
+
                 // Render data FIRST
-                renderShipmentsList(currentShipments);
+                renderShipmentsList(currentShipments, requiresDataset);
                 
                 // Then hide loading indicator AFTER data is rendered
                 console.log('⏹️ Hiding loading indicator after rendering...');
@@ -585,9 +586,9 @@
         }
     }
 
-    function renderShipmentsList(shipments) {
-        console.log('📋 Rendering shipments list, count:', shipments ? shipments.length : 0);
-        
+    function renderShipmentsList(shipments, requiresDataset) {
+        console.log('📋 Rendering shipments list, count:', shipments ? shipments.length : 0, 'requiresDataset:', !!requiresDataset);
+
         const tbody = document.getElementById('shipmentsTableBody');
         const shipmentsContainer = document.getElementById('shipmentsContainer');
         const noShipmentsEl = document.getElementById('noShipments');
@@ -617,6 +618,12 @@
         if (!shipments || shipments.length === 0) {
             console.log('📭 No shipments to display');
             if (noShipmentsEl) {
+                const msgEl = noShipmentsEl.querySelector('p');
+                if (msgEl) {
+                    msgEl.innerHTML = requiresDataset
+                        ? 'Please select a dataset (e.g. <a href="/">Electronics</a>) from the home page to view ASN shipments.'
+                        : 'No ASN shipments found. Upload an ASN file or click Create Sample Data to get started.';
+                }
                 noShipmentsEl.style.display = 'block';
                 console.log('✓ Showing "no shipments" message');
             }
