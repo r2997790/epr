@@ -144,9 +144,10 @@ public class ElectronicsDatasetSeeder
         }
 
         // ASN Shipments - comprehensive set cross-referenced to all products and packaging
+        // GLN must be 13 chars (varchar 13); SSCC must be 18 chars
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("50609876543210", "TechRetail DC London", "London"), ("50609876543211", "ElectroStore Manchester", "Manchester"), ("50609876543212", "GadgetHub Birmingham", "Birmingham") };
-        var shippers = new[] { ("50609876543213", "TechPack Solutions Ltd"), ("50609876543214", "PowerFlow Distribution"), ("50609876543215", "CableTech Logistics") };
+        var receivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
+        var shippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
@@ -163,7 +164,7 @@ public class ElectronicsDatasetSeeder
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{i}{p}", recName, recCity, "GB", p + 1);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -190,8 +191,8 @@ public class ElectronicsDatasetSeeder
         if (productEntities.Count == 0) return;
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("50609876543210", "TechRetail DC London", "London"), ("50609876543211", "ElectroStore Manchester", "Manchester"), ("50609876543212", "GadgetHub Birmingham", "Birmingham") };
-        var shippers = new[] { ("50609876543213", "TechPack Solutions Ltd"), ("50609876543214", "PowerFlow Distribution"), ("50609876543215", "CableTech Logistics") };
+        var receivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
+        var shippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
@@ -208,7 +209,7 @@ public class ElectronicsDatasetSeeder
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{i}{p}", recName, recCity, "GB", p + 1);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -506,7 +507,7 @@ public class ElectronicsDatasetSeeder
         return s;
     }
 
-    private async Task<AsnPallet> EnsureAsnPallet(int shipmentId, string sscc, string destName, string destCity, string destCountry, int seq)
+    private async Task<AsnPallet> EnsureAsnPallet(int shipmentId, string sscc, string destName, string destCity, string destCountry, int seq, string destGln)
     {
         var p = new AsnPallet
         {
@@ -514,7 +515,7 @@ public class ElectronicsDatasetSeeder
             Sscc = sscc,
             PackageTypeCode = "PLT",
             GrossWeight = 25m,
-            DestinationGln = "50609876543210",
+            DestinationGln = destGln,
             DestinationName = destName,
             DestinationCity = destCity,
             DestinationCountryCode = destCountry,
