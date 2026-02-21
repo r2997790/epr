@@ -788,14 +788,15 @@ using (var scope = app.Services.CreateScope())
             var userSeeder = new UserSeeder(context);
             await userSeeder.SeedAsync();
 
-            // Seed Electronics dataset if not already present
+            // Seed Electronics dataset synchronously so Distribution has ASN data before first request
             try
             {
-                var electronicsCount = await context.Products.CountAsync(p => p.DatasetKey == "Electronics");
-                if (electronicsCount == 0)
+                var electronicsAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
+                if (electronicsAsnCount == 0)
                 {
                     var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(context);
                     await electronicsSeeder.SeedAsync();
+                    Console.WriteLine("✓ Electronics dataset (20 products, 12 ASNs) seeded at startup.");
                 }
             }
             catch (Exception ex) { Console.WriteLine($"⚠ Electronics dataset seed: {ex.Message}"); }
