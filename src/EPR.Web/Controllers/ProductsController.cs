@@ -84,12 +84,24 @@ public class ProductsController : Controller
 
         var relatedAsns = await GetRelatedAsnShipments(product.Gtin, datasetKey);
 
+        var packagingUnits = await _context.ProductPackagings
+            .Where(pp => pp.ProductId == id)
+            .Include(pp => pp.PackagingUnit)
+            .Select(pp => new PackagingUnitItem
+            {
+                Id = pp.PackagingUnit.Id,
+                Name = pp.PackagingUnit.Name ?? "",
+                UnitLevel = pp.PackagingUnit.UnitLevel ?? ""
+            })
+            .ToListAsync();
+
         var vm = new ProductDetailVm
         {
             Product = product,
             ProductForm = productForm,
             ReturnUrl = returnUrl,
-            RelatedAsns = relatedAsns
+            RelatedAsns = relatedAsns,
+            PackagingUnits = packagingUnits
         };
         return View(vm);
     }
@@ -154,6 +166,14 @@ public class ProductsController : Controller
         public ProductForm? ProductForm { get; set; }
         public string? ReturnUrl { get; set; }
         public List<RelatedAsnItem> RelatedAsns { get; set; } = new();
+        public List<PackagingUnitItem> PackagingUnits { get; set; } = new();
+    }
+
+    public class PackagingUnitItem
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string UnitLevel { get; set; } = "";
     }
 
     public class RelatedAsnItem
