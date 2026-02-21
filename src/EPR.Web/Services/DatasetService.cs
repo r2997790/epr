@@ -59,7 +59,7 @@ public class DatasetService : IDatasetService
             ctx.Response.Cookies.Append(CookieKey, datasetKey, new CookieOptions
             {
                 HttpOnly = true,
-                SecurePolicy = CookieSecurePolicy.SameAsRequest,
+                Secure = ctx.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 MaxAge = TimeSpan.FromDays(CookieMaxAgeDays),
                 Path = "/"
