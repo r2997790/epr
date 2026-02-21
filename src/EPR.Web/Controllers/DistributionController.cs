@@ -52,16 +52,16 @@ public class DistributionController : Controller
             _logger.LogInformation("GetAsnShipments called");
 
             var datasetKey = _datasetService.GetCurrentDataset();
+            // Default to Electronics for Distribution so users always see data (Electronics is the only seeded dataset)
+            if (string.IsNullOrEmpty(datasetKey))
+                datasetKey = "Electronics";
+            var requiresDataset = false; // We default to Electronics, so never block with "select dataset"
+
             var shipmentsQuery = _context.AsnShipments
                 .Include(s => s.Pallets)
                 .ThenInclude(p => p.LineItems)
                 .AsQueryable();
-            // When a dataset is selected (e.g. Electronics), show only that dataset's ASNs
-            var requiresDataset = string.IsNullOrEmpty(datasetKey);
-            if (!requiresDataset)
-                shipmentsQuery = shipmentsQuery.Where(s => s.DatasetKey == datasetKey);
-            else
-                shipmentsQuery = shipmentsQuery.Where(s => false); // Require dataset selection
+            shipmentsQuery = shipmentsQuery.Where(s => s.DatasetKey == datasetKey);
             
             // Use cancellation token with timeout to prevent hanging
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -69,8 +69,8 @@ public class DistributionController : Controller
                 .OrderByDescending(s => s.ShipDate)
                 .ToListAsync(cts.Token);
 
-            // Lazy-seed Electronics ASNs when selected but none exist (fixes empty Distribution tab)
-            if (!requiresDataset && datasetKey == "Electronics" && shipments.Count == 0)
+            // Lazy-seed Electronics ASNs when none exist (fixes empty Distribution tab)
+            if (datasetKey == "Electronics" && shipments.Count == 0)
             {
                 try
                 {

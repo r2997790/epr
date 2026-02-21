@@ -2,6 +2,7 @@ namespace EPR.Web.Services;
 
 /// <summary>
 /// Service to get/set the current dataset for the user session.
+/// Uses both session and cookie so dataset persists across Railway multi-instance and tab loads.
 /// </summary>
 public interface IDatasetService
 {
@@ -13,6 +14,8 @@ public interface IDatasetService
 public class DatasetService : IDatasetService
 {
     public const string SessionKey = "DatasetKey";
+    public const string CookieKey = "EPR_DatasetKey";
+    private const int CookieMaxAgeDays = 30;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public DatasetService(IHttpContextAccessor httpContextAccessor)
@@ -22,18 +25,45 @@ public class DatasetService : IDatasetService
 
     public string? GetCurrentDataset()
     {
-        return _httpContextAccessor.HttpContext?.Session?.GetString(SessionKey);
+        var ctx = _httpContextAccessor.HttpContext;
+        if (ctx == null) return null;
+
+        // Session first (primary)
+        var fromSession = ctx.Session?.GetString(SessionKey);
+        if (!string.IsNullOrEmpty(fromSession)) return fromSession;
+
+        // Cookie fallback (persists across instances, tab loads, and when session is lost)
+        if (ctx.Request.Cookies.TryGetValue(CookieKey, out var fromCookie) && !string.IsNullOrEmpty(fromCookie))
+            return fromCookie;
+
+        return null;
     }
 
     public void SetCurrentDataset(string? datasetKey)
     {
-        if (_httpContextAccessor.HttpContext?.Session != null)
+        var ctx = _httpContextAccessor.HttpContext;
+        if (ctx == null) return;
+
+        if (ctx.Session != null)
         {
             if (string.IsNullOrEmpty(datasetKey))
-                _httpContextAccessor.HttpContext.Session.Remove(SessionKey);
+                ctx.Session.Remove(SessionKey);
             else
-                _httpContextAccessor.HttpContext.Session.SetString(SessionKey, datasetKey);
+                ctx.Session.SetString(SessionKey, datasetKey);
         }
+
+        // Also set/clear cookie so dataset persists across Railway instances and tab loads
+        if (string.IsNullOrEmpty(datasetKey))
+            ctx.Response.Cookies.Delete(CookieKey);
+        else
+            ctx.Response.Cookies.Append(CookieKey, datasetKey, new CookieOptions
+            {
+                HttpOnly = true,
+                SecurePolicy = CookieSecurePolicy.SameAsRequest,
+                SameSite = SameSiteMode.Lax,
+                MaxAge = TimeSpan.FromDays(CookieMaxAgeDays),
+                Path = "/"
+            });
     }
 
     public void ClearCurrentDataset()

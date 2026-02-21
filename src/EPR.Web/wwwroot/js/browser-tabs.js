@@ -236,6 +236,7 @@
             
             const self = this;
             fetch(url, {
+                credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
             })
                 .then(response => response.text())
