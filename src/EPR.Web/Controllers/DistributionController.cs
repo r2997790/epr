@@ -69,6 +69,28 @@ public class DistributionController : Controller
                 .OrderByDescending(s => s.ShipDate)
                 .ToListAsync(cts.Token);
 
+            // Lazy-seed Electronics ASNs when selected but none exist (fixes empty Distribution tab)
+            if (!requiresDataset && datasetKey == "Electronics" && shipments.Count == 0)
+            {
+                try
+                {
+                    var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
+                    await electronicsSeeder.SeedAsync();
+                    shipmentsQuery = _context.AsnShipments
+                        .Include(s => s.Pallets)
+                        .ThenInclude(p => p.LineItems)
+                        .Where(s => s.DatasetKey == "Electronics");
+                    shipments = await shipmentsQuery
+                        .OrderByDescending(s => s.ShipDate)
+                        .ToListAsync(cts.Token);
+                    _logger.LogInformation("Lazy-seeded Electronics ASNs, retrieved {Count} shipments", shipments.Count);
+                }
+                catch (Exception seedEx)
+                {
+                    _logger.LogWarning(seedEx, "Lazy Electronics ASN seed failed");
+                }
+            }
+
             _logger.LogInformation("Retrieved {Count} shipments from database", shipments.Count);
 
             // Process the data in memory to avoid SQL APPLY operation
