@@ -1796,3 +1796,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
     window.switchPackagingTab = switchTab;
     window.navigateToRecord = navigateToRecord;
     window.selectRecord = selectRecord;
+    window.tableRowKeydown = tableRowKeydown;
+    window.sortTable = sortTable;
+    window.changePage = changePage;
+})();

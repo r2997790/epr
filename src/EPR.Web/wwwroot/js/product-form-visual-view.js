@@ -940,7 +940,7 @@
                             }
                         } catch (err) {
                             console.error('[Product Visual View] Error creating packaging node:', err);
-                            continue; // Skip this component if node creation fails
+                            return; // Skip this component if node creation fails (forEach callback)
                         }
                     }
 

@@ -277,6 +277,15 @@
                         const src = s.getAttribute('src');
                         if (src && !scriptSrcs.includes(src)) scriptSrcs.push(src);
                     });
+                    const existingPaths = new Set(Array.from(document.scripts).map(s => {
+                        const u = s.src || s.getAttribute('src');
+                        return u ? u.split('?')[0] : null;
+                    }).filter(Boolean));
+                    const scriptSrcsToInject = scriptSrcs.filter(src => {
+                        const full = src.startsWith('http') || src.startsWith('//') ? src : (src.startsWith('/') ? (window.location.origin + src) : (window.location.origin + '/' + src));
+                        const path = full.split('?')[0];
+                        return !existingPaths.has(path);
+                    });
                     try {
                         scriptContents.forEach(text => {
                             try {
@@ -285,7 +294,7 @@
                                 contentContainer.appendChild(script);
                             } catch (err) { debugLog('Script exec error', err); }
                         });
-                        scriptSrcs.forEach(src => {
+                        scriptSrcsToInject.forEach(src => {
                             const script = document.createElement('script');
                             script.src = src.startsWith('http') || src.startsWith('//') ? src : (src.startsWith('/') ? (window.location.origin + src) : (window.location.origin + '/' + src));
                             contentContainer.appendChild(script);
