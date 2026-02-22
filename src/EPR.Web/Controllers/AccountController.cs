@@ -1,4 +1,5 @@
 using EPR.Application.Services;
+using EPR.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EPR.Web.Controllers;
@@ -6,11 +7,13 @@ namespace EPR.Web.Controllers;
 public class AccountController : Controller
 {
     private readonly IAuthenticationService _authService;
+    private readonly IDatasetService _datasetService;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(IAuthenticationService authService, ILogger<AccountController> logger)
+    public AccountController(IAuthenticationService authService, IDatasetService datasetService, ILogger<AccountController> logger)
     {
         _authService = authService;
+        _datasetService = datasetService;
         _logger = logger;
     }
 
@@ -44,6 +47,9 @@ public class AccountController : Controller
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetString("IsLoggedIn", "true");
 
+            // Clear dataset so user is prompted to select one after login
+            _datasetService.ClearCurrentDataset();
+
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
@@ -63,6 +69,7 @@ public class AccountController : Controller
     [HttpPost]
     public IActionResult Logout()
     {
+        _datasetService.ClearCurrentDataset();
         HttpContext.Session.Clear();
         return RedirectToAction("Login");
     }
