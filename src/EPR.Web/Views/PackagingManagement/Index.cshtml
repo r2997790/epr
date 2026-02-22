@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Packaging Management";
     var type = ViewData["Type"] as string ?? "suppliers";
     var page = (int)(ViewData["Page"] ?? 1);
@@ -741,16 +741,5 @@
 }
 
 @section Scripts {
-    <script>
-        window.PACKAGING_INIT = {
-            type: @Html.Raw(Json.Serialize(type)),
-            page: @(page),
-            pageSize: @(pageSize),
-            sortBy: @Html.Raw(Json.Serialize(sortBy)),
-            sortDir: @Html.Raw(Json.Serialize(sortDir)),
-            filter: @Html.Raw(Json.Serialize(filter ?? "")),
-            visualEditorUrl: '@(Url.Action("Index", "VisualEditor"))?embedded=1'
-        };
-    </script>
-    <script src="~/js/packaging/packaging-management.js" asp-append-version="true"></script>
+    @* PACKAGING_INIT and packaging-management.js are loaded in _Layout when controller is PackagingManagement *@
 }

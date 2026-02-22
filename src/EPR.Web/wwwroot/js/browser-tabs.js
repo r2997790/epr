@@ -306,7 +306,7 @@
                     if (tab) {
                         tab.content = content;
                         tab.scriptContents = scriptContents;
-                        tab.scriptSrcs = scriptSrcs;
+                        tab.scriptSrcs = scriptSrcsToInject;
                         tab.isLoaded = true;
                     }
                     window.history.pushState({ tabId: tabId }, '', url);

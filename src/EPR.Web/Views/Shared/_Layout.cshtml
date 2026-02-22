@@ -157,6 +157,21 @@
     <script src="~/js/distribution/asn-map-view.js" asp-append-version="true"></script>
     <script src="~/js/distribution/asn-visual-view.js" asp-append-version="true"></script>
     }
+    @if (controller == "PackagingManagement")
+    {
+    <script>
+        window.PACKAGING_INIT = {
+            type: @Html.Raw(Json.Serialize(ViewContext.ViewData["Type"] ?? "suppliers")),
+            page: @((int)(ViewContext.ViewData["Page"] ?? 1)),
+            pageSize: @((int)(ViewContext.ViewData["PageSize"] ?? 25)),
+            sortBy: @Html.Raw(Json.Serialize(ViewContext.ViewData["SortBy"] ?? "name")),
+            sortDir: @Html.Raw(Json.Serialize(ViewContext.ViewData["SortDir"] ?? "asc")),
+            filter: @Html.Raw(Json.Serialize(ViewContext.ViewData["Filter"] ?? "")),
+            visualEditorUrl: '@(Url.Action("Index", "VisualEditor"))?embedded=1'
+        };
+    </script>
+    <script src="~/js/packaging/packaging-management.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
