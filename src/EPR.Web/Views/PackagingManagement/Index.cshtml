@@ -2,7 +2,7 @@
     ViewData["Title"] = "Packaging Management";
     var type = ViewData["Type"] as string ?? "suppliers";
     var page = (int)(ViewData["Page"] ?? 1);
-    var pageSize = (int)(ViewData["PageSize"] ?? 20);
+    var pageSize = (int)(ViewData["PageSize"] ?? 25);
     var sortBy = ViewData["SortBy"] as string ?? "name";
     var sortDir = ViewData["SortDir"] as string ?? "asc";
     var filter = ViewData["Filter"] as string ?? "";
@@ -95,7 +95,7 @@
             </div>
         </div>
         <!-- Top Pane: Table View -->
-        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 200px; overflow: hidden; flex: 1 1 0;">
+        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 750px; overflow: hidden; flex: 1 1 0;">
             <div class="p-3 border-bottom packaging-pane-header flex-shrink-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0" id="tablePaneTitle">@(type == "suppliers" ? "Supplier List" : "Summary Table")</h5>
@@ -118,7 +118,7 @@
                     </div>
                 </div>
             </div>
-            <div class="p-3 packaging-table-content" style="min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden;">
+            <div class="p-3 packaging-table-content" style="min-height: 625px; flex: 1; overflow-y: auto; overflow-x: hidden;">
                 <table class="table table-hover table-striped" id="dataTable" role="grid">
                     <thead id="tableHead">
                         <tr>

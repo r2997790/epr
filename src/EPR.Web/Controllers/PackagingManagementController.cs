@@ -21,7 +21,7 @@ public class PackagingManagementController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index(string type = "suppliers", int page = 1, int pageSize = 20, string sortBy = "name", string sortDir = "asc", string filter = "")
+    public IActionResult Index(string type = "suppliers", int page = 1, int pageSize = 25, string sortBy = "name", string sortDir = "asc", string filter = "")
     {
         ViewData["Type"] = type;
         ViewData["Page"] = page;
@@ -34,7 +34,7 @@ public class PackagingManagementController : Controller
 
     [HttpGet]
     [Route("api/packaging-management/list/{type}")]
-    public async Task<IActionResult> GetList(string type, int page = 1, int pageSize = 20, string sortBy = "name", string sortDir = "asc", string filter = "")
+    public async Task<IActionResult> GetList(string type, int page = 1, int pageSize = 25, string sortBy = "name", string sortDir = "asc", string filter = "")
     {
         try
         {
