@@ -234,6 +234,16 @@
         }
         
         /**
+         * Close all tabs and clear state
+         */
+        closeAllTabs() {
+            this.tabs = [];
+            this.activeTabId = null;
+            this.saveState();
+            debugLog('All tabs closed');
+        }
+        
+        /**
          * Get all tabs
          */
         getTabs() {

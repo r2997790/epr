@@ -855,6 +855,39 @@ using (var scope = app.Services.CreateScope())
                 }
             }
             catch (Exception ex) { Console.WriteLine($"⚠ Homewares dataset seed: {ex.Message}"); }
+            try
+            {
+                var pcAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Personal Care");
+                if (pcAsnCount == 0)
+                {
+                    var pcSeeder = new EPR.Web.Seeders.PersonalCareDatasetSeeder(context);
+                    await pcSeeder.SeedAsync();
+                    Console.WriteLine("✓ Personal Care dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Personal Care dataset seed: {ex.Message}"); }
+            try
+            {
+                var petAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Pet Care");
+                if (petAsnCount == 0)
+                {
+                    var petSeeder = new EPR.Web.Seeders.PetCareDatasetSeeder(context);
+                    await petSeeder.SeedAsync();
+                    Console.WriteLine("✓ Pet Care dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Pet Care dataset seed: {ex.Message}"); }
+            try
+            {
+                var pharmAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Pharmaceuticals");
+                if (pharmAsnCount == 0)
+                {
+                    var pharmSeeder = new EPR.Web.Seeders.PharmaceuticalsDatasetSeeder(context);
+                    await pharmSeeder.SeedAsync();
+                    Console.WriteLine("✓ Pharmaceuticals dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Pharmaceuticals dataset seed: {ex.Message}"); }
 
             initDone = true;
         }
@@ -911,8 +944,8 @@ _ = Task.Run(async () =>
         var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
         var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
 
-        // Run integrated datasets (Electronics, Alcoholic Beverages, Confectionary, Fresh Produce, Garden, Homewares)
-        foreach (var (key, name) in new[] { ("Electronics", "Electronics"), ("Alcoholic Beverages", "Alcoholic Beverages"), ("Confectionary", "Confectionary"), ("Fresh Produce", "Fresh Produce"), ("Garden", "Garden"), ("Homewares", "Homewares") })
+        // Run integrated datasets (Electronics, Alcoholic Beverages, Confectionary, Fresh Produce, Garden, Homewares, Personal Care, Pet Care, Pharmaceuticals)
+        foreach (var (key, name) in new[] { ("Electronics", "Electronics"), ("Alcoholic Beverages", "Alcoholic Beverages"), ("Confectionary", "Confectionary"), ("Fresh Produce", "Fresh Produce"), ("Garden", "Garden"), ("Homewares", "Homewares"), ("Personal Care", "Personal Care"), ("Pet Care", "Pet Care"), ("Pharmaceuticals", "Pharmaceuticals") })
         {
             try
             {
@@ -948,6 +981,21 @@ _ = Task.Run(async () =>
                     {
                         var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(seedContext);
                         await hwSeeder.SeedAsync();
+                    }
+                    else if (key == "Personal Care")
+                    {
+                        var pcSeeder = new EPR.Web.Seeders.PersonalCareDatasetSeeder(seedContext);
+                        await pcSeeder.SeedAsync();
+                    }
+                    else if (key == "Pet Care")
+                    {
+                        var petSeeder = new EPR.Web.Seeders.PetCareDatasetSeeder(seedContext);
+                        await petSeeder.SeedAsync();
+                    }
+                    else if (key == "Pharmaceuticals")
+                    {
+                        var pharmSeeder = new EPR.Web.Seeders.PharmaceuticalsDatasetSeeder(seedContext);
+                        await pharmSeeder.SeedAsync();
                     }
                     Console.WriteLine($"✓ [Background] {name} dataset (20 products, 12 ASNs) seeded.");
                 }

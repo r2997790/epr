@@ -175,20 +175,32 @@
                 
                 // If all tabs closed, redirect to home
                 if (this.core.getTabs().length === 0) {
-                    const contentArea = document.getElementById('browserTabContent');
-                    if (contentArea) {
-                        contentArea.style.display = 'none';
-                    }
-                    document.body.classList.remove('has-tabs');
-                    const mainContent = document.querySelector('main');
-                    if (mainContent) {
-                        mainContent.style.display = 'block';
-                    }
-                    
+                    this.hideTabsAndShowMain();
                     if (!this.navigationManager.isHomePage(window.location.href)) {
                         window.location.href = '/';
                     }
                 }
+            }
+        }
+        
+        /**
+         * Close all tabs, clear state, and show main content
+         */
+        closeAllTabs() {
+            this.core.closeAllTabs();
+            this.renderTabs();
+            this.hideTabsAndShowMain();
+        }
+        
+        hideTabsAndShowMain() {
+            const contentArea = document.getElementById('browserTabContent');
+            if (contentArea) {
+                contentArea.style.display = 'none';
+            }
+            document.body.classList.remove('has-tabs');
+            const mainContent = document.querySelector('main');
+            if (mainContent) {
+                mainContent.style.display = 'block';
             }
         }
         

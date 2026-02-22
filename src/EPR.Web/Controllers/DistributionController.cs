@@ -70,7 +70,7 @@ public class DistributionController : Controller
                 .ToListAsync(cts.Token);
 
             // Lazy-seed integrated dataset when none exist
-            var integratedDatasets = new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares" };
+            var integratedDatasets = new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares", "Personal Care", "Pet Care", "Pharmaceuticals" };
             if (shipments.Count == 0 && integratedDatasets.Contains(datasetKey))
             {
                 try
@@ -104,6 +104,21 @@ public class DistributionController : Controller
                     {
                         var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(_context);
                         await hwSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Personal Care")
+                    {
+                        var pcSeeder = new EPR.Web.Seeders.PersonalCareDatasetSeeder(_context);
+                        await pcSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Pet Care")
+                    {
+                        var petSeeder = new EPR.Web.Seeders.PetCareDatasetSeeder(_context);
+                        await petSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Pharmaceuticals")
+                    {
+                        var pharmSeeder = new EPR.Web.Seeders.PharmaceuticalsDatasetSeeder(_context);
+                        await pharmSeeder.SeedAsync();
                     }
                     shipmentsQuery = _context.AsnShipments
                         .Include(s => s.Pallets)
@@ -688,7 +703,7 @@ public class DistributionController : Controller
             await script.ExecuteAsync();
 
             // Ensure integrated datasets exist
-            foreach (var key in new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares" })
+            foreach (var key in new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares", "Personal Care", "Pet Care", "Pharmaceuticals" })
             {
                 var asnCount = await _context.AsnShipments.CountAsync(s => s.DatasetKey == key);
                 if (asnCount == 0)
@@ -722,6 +737,21 @@ public class DistributionController : Controller
                     {
                         var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(_context);
                         await hwSeeder.SeedAsync();
+                    }
+                    else if (key == "Personal Care")
+                    {
+                        var pcSeeder = new EPR.Web.Seeders.PersonalCareDatasetSeeder(_context);
+                        await pcSeeder.SeedAsync();
+                    }
+                    else if (key == "Pet Care")
+                    {
+                        var petSeeder = new EPR.Web.Seeders.PetCareDatasetSeeder(_context);
+                        await petSeeder.SeedAsync();
+                    }
+                    else if (key == "Pharmaceuticals")
+                    {
+                        var pharmSeeder = new EPR.Web.Seeders.PharmaceuticalsDatasetSeeder(_context);
+                        await pharmSeeder.SeedAsync();
                     }
                 }
             }
