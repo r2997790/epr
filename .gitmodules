@@ -1,3 +1,12 @@
 [submodule "EmpauerLocal"]
 	path = EmpauerLocal
 	url = https://github.com/r2997790/empauer-local.git
+[submodule "empauer"]
+	path = empauer
+	url = https://github.com/r2997790/empauer-local.git
+[submodule "rfp1/EmpauerLocal"]
+	path = rfp1/EmpauerLocal
+	url = https://github.com/r2997790/empauer-local.git
+[submodule "rfp1/PackagingAudit"]
+	path = rfp1/PackagingAudit
+	url = https://github.com/r2997790/packaging-audit.git
