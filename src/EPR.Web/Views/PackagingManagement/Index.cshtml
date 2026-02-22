@@ -73,10 +73,10 @@
     </div>
 
     <!-- Split Pane Container (table + detail) -->
-    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" ? "d-none" : "")" style="min-height: 0; --detail-pane-height: 40%;">
+    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" ? "d-none" : "")" style="min-height: 0; --detail-pane-height: 40%; background: #fff;">
         <!-- Taxonomy Tree (packaging-taxonomy tab only) -->
         <div id="taxonomyTreeContainer" class="flex-grow-1 border rounded packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "" : "d-none")" style="min-height: 0; overflow: hidden;">
-            <div class="p-3 border-bottom packaging-pane-header">
+            <div class="p-3 border-bottom packaging-pane-header flex-shrink-0">
                 <h5 class="mb-0">Packaging Taxonomy</h5>
                 <small class="text-muted d-block mt-1">Full hierarchy from raw materials to packaging groups</small>
                 <div class="d-flex gap-2 mt-2 flex-wrap">
@@ -90,13 +90,13 @@
                     </div>
                 </div>
             </div>
-            <div id="taxonomyTreeContent" class="p-3" style="overflow-y: auto;">
+            <div id="taxonomyTreeContent" class="p-3" style="overflow-y: auto; overflow-x: hidden; min-height: 0; flex: 1;">
                 <div class="text-muted text-center py-4">Loading taxonomy...</div>
             </div>
         </div>
         <!-- Top Pane: Table View -->
-        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 200px; overflow: hidden; flex: 1 1 0;">
-            <div class="p-3 border-bottom packaging-pane-header">
+        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 200px; overflow: hidden; flex: 1 1 0;">
+            <div class="p-3 border-bottom packaging-pane-header flex-shrink-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0" id="tablePaneTitle">@(type == "suppliers" ? "Supplier List" : "Summary Table")</h5>
                     <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -118,7 +118,7 @@
                     </div>
                 </div>
             </div>
-            <div class="p-3" style="overflow-y: auto; height: calc(100% - 60px);">
+            <div class="p-3 packaging-table-content" style="min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden;">
                 <table class="table table-hover table-striped" id="dataTable" role="grid">
                     <thead id="tableHead">
                         <tr>
@@ -137,7 +137,7 @@
                 </table>
                 <div id="cardViewContainer" class="table-card-view d-none"></div>
             </div>
-            <div class="p-3 border-top packaging-pane-header">
+            <div class="p-3 border-top packaging-pane-header flex-shrink-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <span id="recordCount">0</span> records
@@ -154,8 +154,8 @@
         <!-- Resize handle between table and detail -->
         <div id="splitResizeHandle" class="packaging-resize-handle @(type == "packaging-taxonomy" ? "d-none" : "")" title="Drag to resize" aria-label="Resize panes"></div>
         <!-- Bottom Pane: Detail View -->
-        <div id="detailPane" class="border rounded packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="flex: 0 0 40%; min-height: 200px; overflow: hidden;" data-detail-height="40">
-            <div class="p-3 border-bottom packaging-pane-header d-flex justify-content-between align-items-center">
+        <div id="detailPane" class="border rounded packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "d-none" : "")" style="flex: 0 0 40%; min-height: 200px; overflow: hidden;" data-detail-height="40">
+            <div class="p-3 border-bottom packaging-pane-header d-flex justify-content-between align-items-center flex-shrink-0">
                 <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
                     <button id="detailPaneToggleBtn" type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Collapse detail pane" aria-label="Collapse detail pane">
                         <i class="bi bi-chevron-down" id="detailPaneToggleIcon"></i>
@@ -174,7 +174,7 @@
                 </button>
                 </div>
             </div>
-            <div class="detail-pane-body p-3" style="overflow-y: auto; height: calc(100% - 50px);">
+            <div class="detail-pane-body p-3" style="min-height: 0; flex: 1; overflow-y: auto; overflow-x: hidden;">
                 <div id="detailContent" class="text-muted text-center packaging-detail-empty">
                     <p class="mb-2">Select a record from the table to view details</p>
                     <small>Or use the Add button above to create a new record</small>
@@ -678,11 +678,16 @@
         .taxonomy-tree .tree-node.folder .tree-icon { color: #2d6a4f; }
         .taxonomy-tree .tree-node .tree-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .taxonomy-tree .tree-node .tree-badge { font-size: 0.75rem; color: #6c757d; flex-shrink: 0; }
-        /* Packaging page - consistent with other pages (light-bg) */
-        .packaging-management-page { background-color: var(--light-bg); }
+        /* Packaging page - white throughout for visual continuity */
+        .packaging-management-page { background-color: #fff; }
         .packaging-management-pane { background-color: #fff; }
-        .packaging-pane-header { background-color: var(--light-bg); }
+        .packaging-pane-header { background-color: #fff; border-color: #dee2e6; }
         .packaging-detail-empty { padding: 2rem 1rem; }
+        /* Scrollbars only when content overflows; thin when they appear */
+        .packaging-table-content,
+        .detail-pane-body { overflow-x: hidden; scrollbar-width: thin; }
+        .packaging-table-content::-webkit-scrollbar,
+        .detail-pane-body::-webkit-scrollbar { width: 6px; height: 6px; }
         .packaging-resize-handle {
             height: 6px;
             cursor: row-resize;
