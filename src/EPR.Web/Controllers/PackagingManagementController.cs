@@ -1104,6 +1104,39 @@ public class PackagingManagementController : Controller
         }
     }
 
+    [HttpPut]
+    [Route("api/packaging-management/raw-materials/{id}")]
+    public async Task<IActionResult> UpdateRawMaterial(int id, [FromBody] CreateRawMaterialRequest request)
+    {
+        try
+        {
+            var material = await _context.MaterialTaxonomies.FindAsync(id);
+            if (material == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(request.Name)) material.DisplayName = request.Name.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Code)) material.Code = request.Code.Trim();
+            material.Description = request.Description ?? material.Description;
+            if (request.Level.HasValue) material.Level = request.Level.Value;
+            material.ParentTaxonomyId = request.ParentTaxonomyId > 0 ? request.ParentTaxonomyId : null;
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message, success = false });
+        }
+    }
+
+    [HttpDelete]
+    [Route("api/packaging-management/raw-materials/{id}")]
+    public async Task<IActionResult> DeleteRawMaterial(int id)
+    {
+        var material = await _context.MaterialTaxonomies.FindAsync(id);
+        if (material == null) return NotFound();
+        material.IsActive = false;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
     [HttpPost]
     [Route("api/packaging-management/packaging-items")]
     public async Task<IActionResult> CreatePackagingItem([FromBody] CreatePackagingItemRequest request)
@@ -1157,6 +1190,66 @@ public class PackagingManagementController : Controller
         }
     }
 
+    [HttpPut]
+    [Route("api/packaging-management/packaging-items/{id}")]
+    public async Task<IActionResult> UpdatePackagingItem(int id, [FromBody] CreatePackagingItemRequest request)
+    {
+        try
+        {
+            var item = await _context.PackagingLibraries.FindAsync(id);
+            if (item == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(request.Name)) item.Name = request.Name.Trim();
+            if (!string.IsNullOrWhiteSpace(request.TaxonomyCode)) item.TaxonomyCode = request.TaxonomyCode.Trim();
+            item.Weight = request.Weight ?? item.Weight;
+            item.MaterialTaxonomyId = request.MaterialTaxonomyId > 0 ? request.MaterialTaxonomyId : null;
+            if (request.MaterialTaxonomyIds != null)
+            {
+                var existing = await _context.PackagingLibraryMaterials.Where(plm => plm.PackagingLibraryId == id).ToListAsync();
+                _context.PackagingLibraryMaterials.RemoveRange(existing);
+                int order = 0;
+                foreach (var mid in request.MaterialTaxonomyIds.Where(m => m > 0))
+                {
+                    _context.PackagingLibraryMaterials.Add(new PackagingLibraryMaterial
+                    {
+                        PackagingLibraryId = id,
+                        MaterialTaxonomyId = mid,
+                        SortOrder = order++
+                    });
+                }
+            }
+            if (request.PackagingSupplierProductIds != null)
+            {
+                var existing = await _context.PackagingLibrarySupplierProducts.Where(plsp => plsp.PackagingLibraryId == id).ToListAsync();
+                _context.PackagingLibrarySupplierProducts.RemoveRange(existing);
+                foreach (var pid in request.PackagingSupplierProductIds.Where(p => p > 0))
+                {
+                    _context.PackagingLibrarySupplierProducts.Add(new PackagingLibrarySupplierProduct
+                    {
+                        PackagingLibraryId = id,
+                        PackagingSupplierProductId = pid
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message, success = false });
+        }
+    }
+
+    [HttpDelete]
+    [Route("api/packaging-management/packaging-items/{id}")]
+    public async Task<IActionResult> DeletePackagingItem(int id)
+    {
+        var item = await _context.PackagingLibraries.FindAsync(id);
+        if (item == null) return NotFound();
+        item.IsActive = false;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
     [HttpPost]
     [Route("api/packaging-management/packaging-groups")]
     public async Task<IActionResult> CreatePackagingGroup([FromBody] CreatePackagingGroupRequest request)
@@ -1194,6 +1287,52 @@ public class PackagingManagementController : Controller
         {
             return Json(new { error = ex.Message, success = false });
         }
+    }
+
+    [HttpPut]
+    [Route("api/packaging-management/packaging-groups/{id}")]
+    public async Task<IActionResult> UpdatePackagingGroup(int id, [FromBody] CreatePackagingGroupRequest request)
+    {
+        try
+        {
+            var group = await _context.PackagingGroups.FindAsync(id);
+            if (group == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(request.Name)) group.Name = request.Name.Trim();
+            if (!string.IsNullOrWhiteSpace(request.PackId)) group.PackId = request.PackId.Trim();
+            group.PackagingLayer = request.PackagingLayer ?? group.PackagingLayer;
+            if (request.PackagingLibraryIds != null)
+            {
+                var existing = await _context.PackagingGroupItems.Where(gi => gi.PackagingGroupId == id).ToListAsync();
+                _context.PackagingGroupItems.RemoveRange(existing);
+                int order = 0;
+                foreach (var lid in request.PackagingLibraryIds.Where(l => l > 0))
+                {
+                    _context.PackagingGroupItems.Add(new PackagingGroupItem
+                    {
+                        PackagingGroupId = id,
+                        PackagingLibraryId = lid,
+                        SortOrder = order++
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message, success = false });
+        }
+    }
+
+    [HttpDelete]
+    [Route("api/packaging-management/packaging-groups/{id}")]
+    public async Task<IActionResult> DeletePackagingGroup(int id)
+    {
+        var group = await _context.PackagingGroups.FindAsync(id);
+        if (group == null) return NotFound();
+        group.IsActive = false;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
     }
 
     [HttpPost]
@@ -1242,6 +1381,62 @@ public class PackagingManagementController : Controller
         {
             return Json(new { error = ex.Message, success = false });
         }
+    }
+
+    [HttpPut]
+    [Route("api/packaging-management/suppliers/{id}")]
+    public async Task<IActionResult> UpdateSupplier(int id, [FromBody] CreateSupplierRequest request)
+    {
+        try
+        {
+            var supplier = await _context.PackagingSuppliers.FindAsync(id);
+            if (supplier == null) return NotFound();
+            if (!string.IsNullOrWhiteSpace(request.Name)) supplier.Name = request.Name.Trim();
+            supplier.Address = request.Address ?? supplier.Address;
+            supplier.City = request.City ?? supplier.City;
+            supplier.State = request.State ?? supplier.State;
+            supplier.Country = request.Country ?? supplier.Country;
+            supplier.Phone = request.Phone ?? supplier.Phone;
+            supplier.Email = request.Email ?? supplier.Email;
+            supplier.Website = request.Website ?? supplier.Website;
+            supplier.SuppliedBySupplierId = request.SuppliedBySupplierId;
+            supplier.UpdatedAt = DateTime.UtcNow;
+            if (request.Contacts != null)
+            {
+                var existing = await _context.PackagingSupplierContacts.Where(c => c.PackagingSupplierId == id).ToListAsync();
+                _context.PackagingSupplierContacts.RemoveRange(existing);
+                foreach (var c in request.Contacts)
+                {
+                    if (string.IsNullOrWhiteSpace(c.Name)) continue;
+                    _context.PackagingSupplierContacts.Add(new PackagingSupplierContact
+                    {
+                        PackagingSupplierId = id,
+                        Name = c.Name.Trim(),
+                        Title = c.Title,
+                        Phone = c.Phone,
+                        Email = c.Email
+                    });
+                }
+            }
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message, success = false });
+        }
+    }
+
+    [HttpDelete]
+    [Route("api/packaging-management/suppliers/{id}")]
+    public async Task<IActionResult> DeleteSupplier(int id)
+    {
+        var supplier = await _context.PackagingSuppliers.FindAsync(id);
+        if (supplier == null) return NotFound();
+        supplier.IsActive = false;
+        supplier.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
     }
 
     [HttpPost]

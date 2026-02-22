@@ -61,7 +61,7 @@
             <button id="addPackagingGroupBtn" class="btn btn-primary @(type != "packaging-groups" ? "d-none" : "")" title="Add Packaging Group">
                 <i class="bi bi-plus-lg"></i> Add Packaging Group
             </button>
-            <button id="toggleLayoutBtn" class="btn btn-outline-secondary" title="Toggle Layout">
+            <button id="toggleLayoutBtn" class="btn btn-outline-secondary" title="Switch to side-by-side layout" data-bs-toggle="tooltip" aria-label="Toggle layout">
                 <i class="bi bi-arrows-expand" id="layoutIcon"></i>
             </button>
         </div>
@@ -73,32 +73,53 @@
     </div>
 
     <!-- Split Pane Container (table + detail) -->
-    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" ? "d-none" : "")" style="min-height: 0;">
+    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" ? "d-none" : "")" style="min-height: 0; --detail-pane-height: 40%;">
         <!-- Taxonomy Tree (packaging-taxonomy tab only) -->
         <div id="taxonomyTreeContainer" class="flex-grow-1 border rounded packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "" : "d-none")" style="min-height: 0; overflow: hidden;">
             <div class="p-3 border-bottom packaging-pane-header">
                 <h5 class="mb-0">Packaging Taxonomy</h5>
                 <small class="text-muted d-block mt-1">Full hierarchy from raw materials to packaging groups</small>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="taxonomyTreeSearch" class="form-control" placeholder="Search in tree..." aria-label="Search taxonomy">
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" id="taxonomyExpandAll" title="Expand all">Expand all</button>
+                        <button type="button" class="btn btn-outline-secondary" id="taxonomyCollapseAll" title="Collapse all">Collapse all</button>
+                    </div>
+                </div>
             </div>
             <div id="taxonomyTreeContent" class="p-3" style="overflow-y: auto;">
                 <div class="text-muted text-center py-4">Loading taxonomy...</div>
             </div>
         </div>
         <!-- Top Pane: Table View -->
-        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 0; overflow: hidden;">
+        <div id="tablePane" class="flex-grow-1 border rounded mb-2 packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="min-height: 200px; overflow: hidden; flex: 1 1 0;">
             <div class="p-3 border-bottom packaging-pane-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0" id="tablePaneTitle">@(type == "suppliers" ? "Supplier List" : "Summary Table")</h5>
-                    <div class="d-flex gap-2">
-                        <input type="text" id="filterInput" class="form-control form-control-sm" placeholder="Filter..." value="@filter" style="width: 200px;">
-                        <button id="clearFilterBtn" class="btn btn-sm btn-outline-secondary">
+                    <div class="d-flex gap-2 align-items-center flex-wrap">
+                        <div class="input-group input-group-sm" style="width: 220px;">
+                            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" id="filterInput" class="form-control form-control-sm" placeholder="Filter by name, code..." value="@filter" aria-label="Filter records">
+                        </div>
+                        <div id="filterBadge" class="d-none align-items-center gap-1">
+                            <span class="badge bg-primary">Filter: <span id="filterBadgeText"></span></span>
+                            <button id="clearFilterBadgeBtn" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Clear filter"><i class="bi bi-x"></i></button>
+                        </div>
+                        <button id="clearFilterBtn" class="btn btn-sm btn-outline-secondary" title="Clear filter" aria-label="Clear filter">
                             <i class="bi bi-x"></i>
                         </button>
+                        <div class="btn-group btn-group-sm ms-1" role="group" aria-label="View mode">
+                            <button type="button" class="btn btn-outline-secondary active" id="tableViewBtn" title="Table view" aria-label="Table view" aria-pressed="true"><i class="bi bi-table"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="cardViewBtn" title="Card view" aria-label="Card view" aria-pressed="false"><i class="bi bi-grid-3x3-gap"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="p-3" style="overflow-y: auto; height: calc(100% - 60px);">
-                <table class="table table-hover table-striped">
+                <table class="table table-hover table-striped" id="dataTable" role="grid">
                     <thead id="tableHead">
                         <tr>
                             <!-- Headers will be populated by JavaScript -->
@@ -106,15 +127,15 @@
                     </thead>
                     <tbody id="tableBody">
                         <tr>
-                            <td colspan="100%" class="text-center">
-                                <div class="spinner-border spinner-border-sm" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                Loading...
+                            <td colspan="100%" class="text-center py-4">
+                                <div class="skeleton skeleton-text short mx-auto mb-2"></div>
+                                <div class="skeleton skeleton-text medium mx-auto mb-2"></div>
+                                <div class="skeleton skeleton-text long mx-auto" style="width:40%;"></div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                <div id="cardViewContainer" class="table-card-view d-none"></div>
             </div>
             <div class="p-3 border-top packaging-pane-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -130,88 +151,135 @@
             </div>
         </div>
 
+        <!-- Resize handle between table and detail -->
+        <div id="splitResizeHandle" class="packaging-resize-handle @(type == "packaging-taxonomy" ? "d-none" : "")" title="Drag to resize" aria-label="Resize panes"></div>
         <!-- Bottom Pane: Detail View -->
-        <div id="detailPane" class="border rounded packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="height: 40%; min-height: 300px; overflow: hidden;">
+        <div id="detailPane" class="border rounded packaging-management-pane @(type == "packaging-taxonomy" ? "d-none" : "")" style="flex: 0 0 40%; min-height: 200px; overflow: hidden;" data-detail-height="40">
             <div class="p-3 border-bottom packaging-pane-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0" id="detailPaneTitle">@(type == "suppliers" ? "Packaging Supplier" : type == "raw-materials" ? "Raw Material" : type == "packaging-items" ? "Packaging Item" : type == "packaging-groups" ? "Packaging Group" : "Record Details")</h5>
-                <button id="addProductBtn" class="btn btn-success btn-sm @(type != "suppliers" ? "d-none" : "")" title="Add Packaging" disabled>
-                    <i class="bi bi-plus-lg"></i> Add Packaging
+                <div class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+                    <button id="detailPaneToggleBtn" type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Collapse detail pane" aria-label="Collapse detail pane">
+                        <i class="bi bi-chevron-down" id="detailPaneToggleIcon"></i>
+                    </button>
+                    <button id="detailBackBtn" type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 d-none" title="Back" aria-label="Back to previous"><i class="bi bi-arrow-left"></i></button>
+                    <button id="mobileBackToListBtn" type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 packaging-mobile-back-btn" title="Back to list" aria-label="Back to list"><i class="bi bi-arrow-left"></i> Back</button>
+                    <div class="d-flex align-items-center gap-1 min-w-0" id="detailBreadcrumb">
+                        <h5 class="mb-0 text-truncate" id="detailPaneTitle">@(type == "suppliers" ? "Packaging Supplier" : type == "raw-materials" ? "Raw Material" : type == "packaging-items" ? "Packaging Item" : type == "packaging-groups" ? "Packaging Group" : "Record Details")</h5>
+                    </div>
+                </div>
+                <div class="d-flex gap-1 align-items-center">
+                    <button id="editRecordBtn" class="btn btn-outline-primary btn-sm d-none" title="Edit" aria-label="Edit record"><i class="bi bi-pencil"></i> Edit</button>
+                    <button id="deleteRecordBtn" class="btn btn-outline-danger btn-sm d-none" title="Delete" aria-label="Delete record"><i class="bi bi-trash"></i> Delete</button>
+                    <button id="addProductBtn" class="btn btn-success btn-sm @(type != "suppliers" ? "d-none" : "")" title="Add Product" disabled aria-label="Add product to supplier">
+                    <i class="bi bi-plus-lg"></i> Add Product
                 </button>
+                </div>
             </div>
-            <div class="p-3" style="overflow-y: auto; height: calc(100% - 50px);">
-                <div id="detailContent" class="text-muted text-center">
-                    Select a record from the table to view details
+            <div class="detail-pane-body p-3" style="overflow-y: auto; height: calc(100% - 50px);">
+                <div id="detailContent" class="text-muted text-center packaging-detail-empty">
+                    <p class="mb-2">Select a record from the table to view details</p>
+                    <small>Or use the Add button above to create a new record</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Add Supplier Modal -->
-<div class="modal fade" id="addSupplierModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add Packaging Supplier</h5>
+                <h5 class="modal-title">Confirm Delete</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-2">
-                    <div class="col-12">
-                        <label class="form-label">Name *</label>
-                        <input type="text" id="supplierName" class="form-control" required placeholder="Company name">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Street Address</label>
-                        <input type="text" id="supplierAddress" class="form-control" placeholder="Street address">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">City</label>
-                        <input type="text" id="supplierCity" class="form-control" placeholder="City">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">State / Province</label>
-                        <input type="text" id="supplierState" class="form-control" placeholder="State">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Country</label>
-                        <input type="text" id="supplierCountry" class="form-control" placeholder="Country">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Phone</label>
-                        <input type="text" id="supplierPhone" class="form-control" placeholder="+44 ...">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Email</label>
-                        <input type="email" id="supplierEmail" class="form-control" placeholder="sales@company.com">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Website</label>
-                        <input type="url" id="supplierWebsite" class="form-control" placeholder="https://...">
+                <p id="deleteConfirmMessage" class="mb-0">Are you sure you want to delete this record?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Supplier Modal (multi-step) -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSupplierModalLabel">Add Packaging Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="supplier-modal-steps mb-3">
+                    <div class="supplier-step-indicator d-flex align-items-center justify-content-center gap-2">
+                        <span class="supplier-step-badge active" data-step="1" aria-current="step">1. Company</span>
+                        <span class="supplier-step-arrow">→</span>
+                        <span class="supplier-step-badge" data-step="2">2. Contacts</span>
                     </div>
                 </div>
-                <hr class="my-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label mb-0">Contact Persons</label>
-                    <button type="button" class="btn btn-secondary btn-sm" id="addContactRowBtn">
-                        <i class="bi bi-plus-lg"></i> Add Contact
-                    </button>
-                </div>
-                <div id="contactRowsContainer">
-                    <div class="contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center">
-                        <div class="row g-2 flex-grow-1">
-                            <div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name"></div>
-                            <div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title"></div>
-                            <div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone"></div>
-                            <div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email"></div>
+                <div id="supplierStep1" class="supplier-step-content">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label" for="supplierName">Name *</label>
+                            <input type="text" id="supplierName" class="form-control" required placeholder="Company name" aria-required="true">
                         </div>
-                        <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact"><i class="bi bi-x-lg"></i></button>
+                        <div class="col-12">
+                            <label class="form-label" for="supplierAddress">Street Address</label>
+                            <input type="text" id="supplierAddress" class="form-control" placeholder="Street address">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="supplierCity">City</label>
+                            <input type="text" id="supplierCity" class="form-control" placeholder="City">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="supplierState">State / Province</label>
+                            <input type="text" id="supplierState" class="form-control" placeholder="State">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="supplierCountry">Country</label>
+                            <input type="text" id="supplierCountry" class="form-control" placeholder="Country">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="supplierPhone">Phone</label>
+                            <input type="text" id="supplierPhone" class="form-control" placeholder="+44 ...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="supplierEmail">Email</label>
+                            <input type="email" id="supplierEmail" class="form-control" placeholder="sales@company.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="supplierWebsite">Website</label>
+                            <input type="url" id="supplierWebsite" class="form-control" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+                <div id="supplierStep2" class="supplier-step-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">Contact Persons</label>
+                        <button type="button" class="btn btn-secondary btn-sm" id="addContactRowBtn" aria-label="Add contact person">
+                            <i class="bi bi-plus-lg"></i> Add Contact
+                        </button>
+                    </div>
+                    <div id="contactRowsContainer">
+                        <div class="contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center">
+                            <div class="row g-2 flex-grow-1">
+                                <div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name" aria-label="Contact name"></div>
+                                <div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title" aria-label="Contact title"></div>
+                                <div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone" aria-label="Contact phone"></div>
+                                <div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email" aria-label="Contact email"></div>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact" aria-label="Remove contact"><i class="bi bi-x-lg"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveSupplierBtn">Save Supplier</button>
+                <button type="button" class="btn btn-outline-primary" id="supplierStepPrevBtn" style="display:none;">← Back</button>
+                <button type="button" class="btn btn-outline-primary" id="supplierStepNextBtn">Next →</button>
+                <button type="button" class="btn btn-primary" id="saveSupplierBtn" style="display:none;">Save Supplier</button>
             </div>
         </div>
     </div>
@@ -232,8 +300,9 @@
                         <input type="text" id="rawMaterialName" class="form-control" required placeholder="e.g. High-Density Polyethylene">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Code *</label>
+                        <label class="form-label" for="rawMaterialCode">Code *</label>
                         <input type="text" id="rawMaterialCode" class="form-control" required placeholder="e.g. HDPE">
+                        <small class="form-text text-muted">Short identifier used in taxonomy (e.g. PET, HDPE, PAP)</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Level</label>
@@ -280,8 +349,9 @@
                         <input type="text" id="packagingItemName" class="form-control" required placeholder="e.g. HDPE Cap 28mm">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Taxonomy Code *</label>
+                        <label class="form-label" for="packagingItemTaxonomyCode">Taxonomy Code *</label>
                         <input type="text" id="packagingItemTaxonomyCode" class="form-control" required placeholder="e.g. HDPE.CAP.28">
+                        <small class="form-text text-muted">Format: Material.Type.Size (e.g. PET.CAP.28, HDPE.BOTTLE.500)</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Weight (g)</label>
@@ -324,8 +394,9 @@
                         <input type="text" id="packagingGroupName" class="form-control" required placeholder="e.g. Bottle + Cap + Label">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Pack ID *</label>
+                        <label class="form-label" for="packagingGroupPackId">Pack ID *</label>
                         <input type="text" id="packagingGroupPackId" class="form-control" required placeholder="e.g. BTL-CAP-LBL-001">
+                        <small class="form-text text-muted">Unique identifier for the pack (e.g. BTL-CAP-LBL-001)</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Packaging Layer</label>
@@ -370,8 +441,9 @@
                     <input type="text" id="productCode" class="form-control" placeholder="SKU or product code">
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Taxonomy Code</label>
+                    <label class="form-label" for="productTaxonomyCode">Taxonomy Code</label>
                     <input type="text" id="productTaxonomyCode" class="form-control" placeholder="e.g. PET, HDPE, PAP">
+                    <small class="form-text text-muted">Material type (e.g. PET, HDPE, PAP)</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -390,14 +462,30 @@
         
         .split-horizontal #tablePane {
             width: 60%;
-            margin-right: 0.5rem;
+            margin-right: 0;
             margin-bottom: 0;
         }
-        
+        .split-horizontal #splitResizeHandle {
+            width: 6px;
+            height: auto;
+            cursor: col-resize;
+            flex: 0 0 6px;
+        }
+        .split-horizontal #splitResizeHandle::after {
+            width: 2px;
+            height: 20%;
+            margin: 40% 2px;
+        }
         .split-horizontal #detailPane {
             width: 40%;
             height: 100% !important;
+            flex: 1 1 auto !important;
         }
+        
+        .supplier-step-badge { padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem; background: #e9ecef; color: #6c757d; }
+        .supplier-step-badge.active { background: #0d6efd; color: #fff; }
+        .supplier-step-arrow { color: #adb5bd; font-size: 0.75rem; }
+        .form-text.text-muted { font-size: 0.8rem; margin-top: 0.15rem; }
         
         .sortable {
             cursor: pointer;
@@ -409,21 +497,33 @@
         }
         
         .sort-asc::after {
-            content: " ▲";
-            font-size: 0.8em;
+            content: "";
+            display: inline-block;
+            margin-left: 0.25rem;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 5px solid currentColor;
         }
         
         .sort-desc::after {
-            content: " ▼";
-            font-size: 0.8em;
+            content: "";
+            display: inline-block;
+            margin-left: 0.25rem;
+            width: 0; height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 5px solid currentColor;
         }
         
         .table tbody tr {
             cursor: pointer;
+            transition: box-shadow 0.15s ease, background-color 0.15s ease;
         }
         
         .table tbody tr:hover {
             background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
         
         .table tbody tr.selected {
@@ -540,6 +640,23 @@
             border-radius: 0.25rem;
             border-left: 3px solid #6c757d;
         }
+        .supply-chain-flow {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .supply-chain-step {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        .supply-chain-step.product { background: #e7f3ff; color: #0d6efd; font-weight: 600; }
+        .supply-chain-step.supplier { background: #cfe2ff; color: #084298; }
+        .supply-chain-step.upstream { background: #d1e7dd; color: #0f5132; }
+        .supply-chain-arrow { color: #6c757d; font-size: 0.75rem; margin: 0 0.15rem; }
         .supply-chain-product { font-weight: 600; }
         .supply-chain-supplier { color: #0d6efd; }
         .supply-chain-upstream { color: #198754; }
@@ -565,6 +682,56 @@
         .packaging-management-page { background-color: var(--light-bg); }
         .packaging-management-pane { background-color: #fff; }
         .packaging-pane-header { background-color: var(--light-bg); }
+        .packaging-detail-empty { padding: 2rem 1rem; }
+        .packaging-resize-handle {
+            height: 6px;
+            cursor: row-resize;
+            background: var(--border-color);
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .packaging-resize-handle:hover { background: var(--primary-color); }
+        .packaging-resize-handle::after {
+            content: '';
+            display: block;
+            height: 2px;
+            margin: 2px 20%;
+            background: #adb5bd;
+            border-radius: 1px;
+        }
+        #detailPane.collapsed { flex: 0 0 auto !important; min-height: 0 !important; }
+        #detailPane.collapsed .detail-pane-body { display: none !important; }
+        #detailPane.collapsed .packaging-pane-header { margin-bottom: 0; }
+        
+        /* Table polish - truncation with tooltip */
+        .table td.text-truncate-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Card view */
+        .table-card-view { display: none; }
+        .table-card-view .table-card { border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; margin-bottom: 0.75rem; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+        .table-card-view .table-card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.08); border-color: #0d6efd; }
+        .table-card-view .table-card.selected { border-color: #0d6efd; background: #e7f3ff; }
+        .table-card-view .table-card-title { font-weight: 600; margin-bottom: 0.5rem; }
+        .table-card-view .table-card-meta { font-size: 0.875rem; color: #6c757d; }
+        
+        /* Loading skeletons */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-pulse 1.5s ease-in-out infinite; border-radius: 0.25rem; }
+        .skeleton-text { height: 1rem; margin-bottom: 0.5rem; }
+        .skeleton-text.short { width: 60%; }
+        .skeleton-text.medium { width: 80%; }
+        .skeleton-text.long { width: 100%; }
+        @@keyframes skeleton-pulse { 0%, 100% { background-position: 200% 0; } 50% { background-position: -200% 0; } }
+        
+        /* Responsive - viewport < 992px */
+        @@media (max-width: 991.98px) {
+            .split-horizontal { flex-direction: column !important; }
+            .split-horizontal #tablePane, .split-horizontal #detailPane { width: 100% !important; }
+            #splitContainer.packaging-mobile-detail-open #tablePane { display: none !important; }
+            #splitContainer.packaging-mobile-detail-open #detailPane { display: block !important; flex: 1 1 auto !important; }
+            #splitContainer.packaging-mobile-detail-open #splitResizeHandle { display: none !important; }
+            .packaging-mobile-back-btn { display: inline-flex !important; }
+        }
+        .packaging-mobile-back-btn { display: none; }
     </style>
 }
 
@@ -580,13 +747,16 @@
         let selectedSupplierId = null;
         let selectedSupplierName = null;
         let isHorizontalLayout = false;
+        let navigationHistory = [];
         let dataCache = {};
         const CACHE_TTL_MS = 5 * 60 * 1000;
         const visualEditorUrl = '@(Url.Action("Index", "VisualEditor"))?embedded=1';
 
         // Initialize (run immediately if doc already loaded, e.g. when opened in browser tab)
         function initPackaging() {
-            if (currentType !== 'visual-editor') {
+            if (currentType !== 'visual-editor' && currentType !== 'packaging-taxonomy') {
+                updateFilterPlaceholder();
+                updateFilterBadge();
                 loadData();
             } else {
                 const frame = document.getElementById('visualEditorFrame');
@@ -600,6 +770,7 @@
             setupAddModals();
             setupTabSwitching();
             setupDetailNavigation();
+            setupEditDeleteButtons();
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPackaging);
@@ -631,7 +802,8 @@
             } catch (e) { /* same-origin only */ }
             selectedId = null;
             selectedSupplierId = null;
-            document.getElementById('detailContent').innerHTML = 'Select a record from the table to view details';
+            navigationHistory = [];
+            showEmptyDetailState();
 
             document.querySelectorAll('#packagingManagementTabs .nav-link').forEach(l => {
                 l.classList.toggle('active', l.getAttribute('data-type') === type);
@@ -659,13 +831,15 @@
                     const needsLoad = !frame.src || frame.src === 'about:blank' || !frame.src.includes('VisualEditor');
                     if (needsLoad) frame.src = visualEditorUrl;
                 }
-            } else if (type === 'packaging-taxonomy') {
+            } else             if (type === 'packaging-taxonomy') {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (taxonomyContainer) taxonomyContainer.classList.remove('d-none');
                 if (tablePane) tablePane.classList.add('d-none');
                 if (detailPane) detailPane.classList.add('d-none');
+                const resizeHandle = document.getElementById('splitResizeHandle');
+                if (resizeHandle) resizeHandle.classList.add('d-none');
                 loadTaxonomyTree();
             } else {
                 visualContainer.classList.add('d-none');
@@ -674,12 +848,17 @@
                 if (taxonomyContainer) taxonomyContainer.classList.add('d-none');
                 if (tablePane) tablePane.classList.remove('d-none');
                 if (detailPane) detailPane.classList.remove('d-none');
+                const resizeHandle = document.getElementById('splitResizeHandle');
+                if (resizeHandle) resizeHandle.classList.remove('d-none');
                 if (addSupplierBtn) addSupplierBtn.classList.toggle('d-none', type !== 'suppliers');
                 if (addRawMaterialBtn) addRawMaterialBtn.classList.toggle('d-none', type !== 'raw-materials');
                 if (addPackagingItemBtn) addPackagingItemBtn.classList.toggle('d-none', type !== 'packaging-items');
                 if (addPackagingGroupBtn) addPackagingGroupBtn.classList.toggle('d-none', type !== 'packaging-groups');
                 addProductBtn.classList.toggle('d-none', type !== 'suppliers');
                 addProductBtn.disabled = true;
+
+                updateFilterPlaceholder();
+                updateFilterBadge();
 
                 const titles = { 'suppliers': 'Supplier List', 'raw-materials': 'Summary Table', 'packaging-items': 'Summary Table', 'packaging-groups': 'Summary Table' };
                 const detailTitles = { 'suppliers': 'Packaging Supplier', 'raw-materials': 'Raw Material', 'packaging-items': 'Packaging Item', 'packaging-groups': 'Packaging Group' };
@@ -697,7 +876,114 @@
             }
         }
 
+        const FILTER_PLACEHOLDERS = {
+            'suppliers': 'Filter by name, city, country...',
+            'raw-materials': 'Filter by name, code...',
+            'packaging-items': 'Filter by name, taxonomy code...',
+            'packaging-groups': 'Filter by name, pack ID...'
+        };
+        const EMPTY_DETAIL_MESSAGES = {
+            'suppliers': { main: 'Select a supplier to view details.', hint: 'Add your first packaging supplier to start building your supply chain.' },
+            'raw-materials': { main: 'Select a raw material to view details.', hint: 'Define raw materials (e.g. PET, HDPE) that your packaging items are made from.' },
+            'packaging-items': { main: 'Select a packaging item to view details.', hint: 'Add packaging items (e.g. bottles, caps) and link them to raw materials.' },
+            'packaging-groups': { main: 'Select a packaging group to view details.', hint: 'Group packaging items into packs (e.g. bottle + cap + label).' }
+        };
+        const EMPTY_TABLE_CTAS = {
+            'suppliers': { msg: 'No suppliers yet.', cta: 'Add your first packaging supplier', btnId: 'addSupplierBtn' },
+            'raw-materials': { msg: 'No raw materials defined.', cta: 'Add your first raw material', btnId: 'addRawMaterialBtn' },
+            'packaging-items': { msg: 'No packaging items yet.', cta: 'Add your first packaging item', btnId: 'addPackagingItemBtn' },
+            'packaging-groups': { msg: 'No packaging groups yet.', cta: 'Add your first packaging group', btnId: 'addPackagingGroupBtn' }
+        };
+        function updateFilterPlaceholder() {
+            const input = document.getElementById('filterInput');
+            if (input) input.placeholder = FILTER_PLACEHOLDERS[currentType] || 'Filter...';
+        }
+        function updateFilterBadge() {
+            const badge = document.getElementById('filterBadge');
+            const badgeText = document.getElementById('filterBadgeText');
+            if (badge && badgeText) {
+                if (currentFilter && currentFilter.trim()) {
+                    badge.classList.remove('d-none');
+                    badge.classList.add('d-flex');
+                    badgeText.textContent = "'" + (currentFilter.length > 20 ? currentFilter.substring(0, 17) + '...' : currentFilter) + "'";
+                } else {
+                    badge.classList.add('d-none');
+                    badge.classList.remove('d-flex');
+                }
+            }
+        }
+        function showEmptyDetailState() {
+            const container = document.getElementById('detailContent');
+            const msg = EMPTY_DETAIL_MESSAGES[currentType];
+            if (container && msg) {
+                container.innerHTML = '<div class="packaging-detail-empty"><p class="mb-2">' + escapeHtml(msg.main) + '</p><small class="text-muted">' + escapeHtml(msg.hint) + '</small></div>';
+                container.classList.add('text-center');
+            } else if (container) {
+                container.innerHTML = '<div class="packaging-detail-empty text-center"><p class="mb-0">Select a record from the table to view details</p></div>';
+            }
+            document.getElementById('editRecordBtn')?.classList.add('d-none');
+            document.getElementById('deleteRecordBtn')?.classList.add('d-none');
+        }
         function setupEventListeners() {
+            // Table / Card view toggle
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            if (tableViewBtn && cardViewBtn) {
+                tableViewBtn.addEventListener('click', function() {
+                    isCardView = false;
+                    tableViewBtn.classList.add('active');
+                    tableViewBtn.setAttribute('aria-pressed', 'true');
+                    cardViewBtn.classList.remove('active');
+                    cardViewBtn.setAttribute('aria-pressed', 'false');
+                    const cacheKey = currentType + '-' + currentPage + '-' + currentFilter;
+                    if (dataCache[cacheKey]) renderTable(dataCache[cacheKey].data);
+                });
+                cardViewBtn.addEventListener('click', function() {
+                    isCardView = true;
+                    cardViewBtn.classList.add('active');
+                    cardViewBtn.setAttribute('aria-pressed', 'true');
+                    tableViewBtn.classList.remove('active');
+                    tableViewBtn.setAttribute('aria-pressed', 'false');
+                    const cacheKey = currentType + '-' + currentPage + '-' + currentFilter;
+                    if (dataCache[cacheKey]) renderTable(dataCache[cacheKey].data);
+                });
+            }
+            
+            // Mobile back to list (responsive)
+            const mobileBackBtn = document.getElementById('mobileBackToListBtn');
+            const splitContainer = document.getElementById('splitContainer');
+            if (mobileBackBtn && splitContainer) {
+                mobileBackBtn.addEventListener('click', function() {
+                    splitContainer.classList.remove('packaging-mobile-detail-open');
+                });
+            }
+            
+            // Keyboard navigation for table
+            const tablePane = document.getElementById('tablePane');
+            if (tablePane) {
+                tablePane.addEventListener('keydown', function(e) {
+                    if (e.target.closest('input, select, textarea, button')) return;
+                    const rows = Array.from(document.querySelectorAll('#tableBody tr:not([style*="display: none"])')).filter(r => !r.querySelector('td[colspan="100"]'));
+                    if (rows.length === 0) return;
+                    const idx = rows.findIndex(r => r.classList.contains('selected'));
+                    let nextIdx = -1;
+                    if (e.key === 'ArrowDown' && idx < rows.length - 1) nextIdx = idx + 1;
+                    else if (e.key === 'ArrowUp' && idx > 0) nextIdx = idx - 1;
+                    else if (e.key === 'Home') nextIdx = 0;
+                    else if (e.key === 'End') nextIdx = rows.length - 1;
+                    if (nextIdx >= 0) {
+                        e.preventDefault();
+                        const row = rows[nextIdx];
+                        const id = row.getAttribute('data-id') || row.getAttribute('onclick')?.match(/selectRecord\((\d+)/)?.[1];
+                        const typeMatch = row.getAttribute('onclick')?.match(/selectRecord\(\d+,\s*'([^']+)'/);
+                        const typeOverride = typeMatch ? typeMatch[1] : null;
+                        if (id) selectRecord(parseInt(id, 10), typeOverride);
+                        row.setAttribute('tabindex', '0');
+                        row.focus();
+                    }
+                });
+            }
+            
             // Filter input
             const filterInput = document.getElementById('filterInput');
             if (!filterInput) return;
@@ -707,18 +993,23 @@
                 filterTimeout = setTimeout(() => {
                     currentFilter = this.value;
                     currentPage = 1;
+                    updateFilterBadge();
                     loadData();
-                }, 500);
+                }, 300);
             });
 
             // Clear filter
             const clearFilterBtn = document.getElementById('clearFilterBtn');
-            if (clearFilterBtn) clearFilterBtn.addEventListener('click', function() {
+            const clearFilterBadgeBtn = document.getElementById('clearFilterBadgeBtn');
+            function doClearFilter() {
                 filterInput.value = '';
                 currentFilter = '';
                 currentPage = 1;
+                updateFilterBadge();
                 loadData();
-            });
+            }
+            if (clearFilterBtn) clearFilterBtn.addEventListener('click', doClearFilter);
+            if (clearFilterBadgeBtn) clearFilterBadgeBtn.addEventListener('click', doClearFilter);
 
             // Toggle layout
             const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
@@ -730,11 +1021,74 @@
                 if (isHorizontalLayout) {
                     container.classList.add('split-horizontal');
                     icon.className = 'bi bi-arrows-collapse';
+                    toggleLayoutBtn.title = 'Switch to stacked layout';
                 } else {
                     container.classList.remove('split-horizontal');
                     icon.className = 'bi bi-arrows-expand';
+                    toggleLayoutBtn.title = 'Switch to side-by-side layout';
                 }
+                try { localStorage.setItem('packagingLayoutHorizontal', isHorizontalLayout ? '1' : '0'); } catch (e) {}
             });
+
+            // Detail pane collapse toggle
+            const detailPaneToggleBtn = document.getElementById('detailPaneToggleBtn');
+            const detailPaneToggleIcon = document.getElementById('detailPaneToggleIcon');
+            const detailPaneEl = document.getElementById('detailPane');
+            if (detailPaneToggleBtn && detailPaneEl) {
+                const collapsed = localStorage.getItem('packagingDetailCollapsed') === '1';
+                if (collapsed) {
+                    detailPaneEl.classList.add('collapsed');
+                    if (detailPaneToggleIcon) detailPaneToggleIcon.className = 'bi bi-chevron-up';
+                    detailPaneToggleBtn.title = 'Expand detail pane';
+                }
+                detailPaneToggleBtn.addEventListener('click', function() {
+                    detailPaneEl.classList.toggle('collapsed');
+                    const isCollapsed = detailPaneEl.classList.contains('collapsed');
+                    if (detailPaneToggleIcon) {
+                        detailPaneToggleIcon.className = isCollapsed ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+                    }
+                    detailPaneToggleBtn.title = isCollapsed ? 'Expand detail pane' : 'Collapse detail pane';
+                    try { localStorage.setItem('packagingDetailCollapsed', isCollapsed ? '1' : '0'); } catch (e) {}
+                });
+            }
+
+            // Resize handle
+            const resizeHandle = document.getElementById('splitResizeHandle');
+            if (resizeHandle && detailPaneEl) {
+                let isResizing = false;
+                resizeHandle.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    isResizing = true;
+                    document.body.style.cursor = 'row-resize';
+                    document.body.style.userSelect = 'none';
+                });
+                document.addEventListener('mousemove', function(e) {
+                    if (!isResizing) return;
+                    const container = document.getElementById('splitContainer');
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    const containerHeight = rect.height;
+                    const fromBottom = rect.bottom - e.clientY;
+                    const pct = Math.max(20, Math.min(80, (fromBottom / containerHeight) * 100));
+                    detailPaneEl.style.flex = '0 0 ' + pct + '%';
+                    detailPaneEl.style.minHeight = '200px';
+                    try { localStorage.setItem('packagingDetailHeight', String(pct)); } catch (e) {}
+                });
+                document.addEventListener('mouseup', function() {
+                    if (isResizing) {
+                        isResizing = false;
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                    }
+                });
+                try {
+                    const saved = localStorage.getItem('packagingDetailHeight');
+                    if (saved) {
+                        const pct = parseFloat(saved);
+                        if (pct >= 20 && pct <= 80) detailPaneEl.style.flex = '0 0 ' + pct + '%';
+                    }
+                } catch (e) {}
+            }
         }
 
         function loadData() {
@@ -744,11 +1098,20 @@
             
             console.log('[Packaging Management] Loading data from:', url);
             
-            // Show loading state
+            // Show loading skeletons
             const tbody = document.getElementById('tableBody');
+            const cardView = document.getElementById('cardViewContainer');
+            const dataTable = document.getElementById('dataTable');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="100%" class="text-center"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div> Loading...</td></tr>';
+                const colCount = Math.max(1, document.querySelectorAll('#tableHead tr th').length) || 4;
+                let skeletonRows = '';
+                for (let i = 0; i < 5; i++) {
+                    skeletonRows += '<tr><td colspan="' + colCount + '"><div class="d-flex gap-3"><div class="skeleton skeleton-text" style="width:20%;"></div><div class="skeleton skeleton-text" style="width:15%;"></div><div class="skeleton skeleton-text" style="width:30%;"></div></div></td></tr>';
+                }
+                tbody.innerHTML = skeletonRows;
             }
+            if (cardView) cardView.classList.add('d-none');
+            if (dataTable) dataTable.classList.remove('d-none');
             
             fetch(url)
                 .then(response => {
@@ -796,7 +1159,7 @@
         function loadTaxonomyTree() {
             const container = document.getElementById('taxonomyTreeContent');
             if (!container) return;
-            container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading taxonomy...</p></div>';
+            container.innerHTML = '<div class="py-4"><div class="skeleton skeleton-text short mb-2"></div><div class="skeleton skeleton-text medium mb-2"></div><div class="skeleton skeleton-text long mb-2"></div><div class="skeleton skeleton-text short" style="width:60%;"></div></div>';
             fetch('/api/packaging-management/taxonomy-tree')
                 .then(r => r.json())
                 .then(data => {
@@ -805,6 +1168,41 @@
                         return;
                     }
                     container.innerHTML = renderTaxonomyTree(data.tree || [], data.orphanItems || [], data.standaloneGroups || [], data.allPackagingItems || [], data.allPackagingGroups || []);
+                    document.getElementById('taxonomyExpandAll')?.addEventListener('click', function() {
+                        container.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.remove('d-none'));
+                        container.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▼');
+                        container.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2-open tree-icon');
+                    });
+                    document.getElementById('taxonomyCollapseAll')?.addEventListener('click', function() {
+                        container.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.add('d-none'));
+                        container.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▶');
+                        container.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2 tree-icon');
+                    });
+                    document.getElementById('taxonomyTreeSearch')?.addEventListener('input', function() {
+                        const q = (this.value || '').toLowerCase().trim();
+                        container.querySelectorAll('.taxonomy-tree .tree-node').forEach(n => n.style.display = '');
+                        container.querySelectorAll('.taxonomy-tree li').forEach(li => li.style.display = '');
+                        if (!q) return;
+                        const allNodes = container.querySelectorAll('.tree-node[data-nav-id]');
+                        const matchingIds = new Set();
+                        allNodes.forEach(n => {
+                            const label = (n.querySelector('.tree-label')?.textContent || '').toLowerCase();
+                            if (label.includes(q)) {
+                                let el = n.closest('li');
+                                while (el) {
+                                    const node = el.querySelector(':scope > .tree-node');
+                                    if (node) matchingIds.add(node);
+                                    el = el.parentElement?.closest('li');
+                                }
+                            }
+                        });
+                        allNodes.forEach(n => {
+                            if (!matchingIds.has(n)) {
+                                const li = n.closest('li');
+                                if (li && !matchingIds.has(li.querySelector(':scope > .tree-node'))) li.style.display = 'none';
+                            }
+                        });
+                    });
                     container.querySelectorAll('.tree-node').forEach(el => {
                         el.addEventListener('click', function(e) {
                             const li = this.closest('li');
@@ -822,7 +1220,7 @@
                             }
                             const id = parseInt(this.getAttribute('data-nav-id'), 10);
                             const type = this.getAttribute('data-nav-type');
-                            if (id && type && window.navigateToRecord) navigateToRecord(id, type);
+                            if (id && type && window.navigateToRecord) navigateToRecord(id, type, true);
                         });
                     });
                 })
@@ -832,6 +1230,13 @@
         }
 
         function renderTaxonomyTree(tree, orphanItems, standaloneGroups, allPackagingItems, allPackagingGroups) {
+            function countNodes(node) {
+                let n = 1;
+                (node.children || []).forEach(c => n += countNodes(c));
+                (node.packagingItems || []).forEach(() => n++);
+                (node.packagingGroups || []).forEach(() => n++);
+                return n;
+            }
             function renderNode(node, depth, isExpanded) {
                 const childList = node.children || [];
                 const itemList = node.packagingItems || [];
@@ -867,15 +1272,16 @@
             }
             let html = '<ul class="taxonomy-tree">';
             html += '<li><div class="tree-node folder" data-has-children="true" role="button" tabindex="0">';
-            html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">root</span></div>';
+            html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">Packaging Hierarchy</span></div>';
             html += '<ul>';
+            const rawCount = tree.reduce((acc, n) => acc + countNodes(n), 0);
             html += '<li><div class="tree-node folder" data-has-children="true" role="button" tabindex="0">';
-            html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">Raw materials</span></div><ul>';
+            html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">Raw materials</span><span class="tree-badge">(' + rawCount + ')</span></div><ul>';
             tree.forEach(n => html += renderNode(n, 0, true));
             html += '</ul></li>';
             if (orphanItems && orphanItems.length > 0) {
                 html += '<li><div class="tree-node folder" data-has-children="true" role="button" tabindex="0">';
-                html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">Uncategorized packaging items</span></div><ul>';
+                html += '<span class="tree-toggle">▼</span><i class="bi bi-folder2-open tree-icon"></i><span class="tree-label">Packaging items (no raw material)</span><span class="tree-badge">(' + orphanItems.length + ')</span></div><ul>';
                 orphanItems.forEach(n => html += renderNode(n, 0, false));
                 html += '</ul></li>';
             }
@@ -887,13 +1293,13 @@
             }
             if (allPackagingItems && allPackagingItems.length > 0) {
                 html += '<li><div class="tree-node folder" data-has-children="true" role="button" tabindex="0">';
-                html += '<span class="tree-toggle">▶</span><i class="bi bi-folder2 tree-icon"></i><span class="tree-label">All packaging items</span></div><ul class="d-none">';
+                html += '<span class="tree-toggle">▶</span><i class="bi bi-folder2 tree-icon"></i><span class="tree-label">All packaging items</span><span class="tree-badge">(' + allPackagingItems.length + ')</span></div><ul class="d-none">';
                 allPackagingItems.forEach(n => html += renderNode(n, 0, false));
                 html += '</ul></li>';
             }
             if (allPackagingGroups && allPackagingGroups.length > 0) {
                 html += '<li><div class="tree-node folder" data-has-children="true" role="button" tabindex="0">';
-                html += '<span class="tree-toggle">▶</span><i class="bi bi-folder2 tree-icon"></i><span class="tree-label">All packaging groups</span></div><ul class="d-none">';
+                html += '<span class="tree-toggle">▶</span><i class="bi bi-folder2 tree-icon"></i><span class="tree-label">All packaging groups</span><span class="tree-badge">(' + allPackagingGroups.length + ')</span></div><ul class="d-none">';
                 allPackagingGroups.forEach(g => html += renderNode(g, 0, false));
                 html += '</ul></li>';
             }
@@ -901,12 +1307,25 @@
             return html;
         }
 
+        let isCardView = false;
         function renderTable(data) {
             const tbody = document.getElementById('tableBody');
             const thead = document.getElementById('tableHead');
+            const cardView = document.getElementById('cardViewContainer');
+            const dataTable = document.getElementById('dataTable');
             
             if (!data.items || data.items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-muted">No records found</td></tr>';
+                const emptyCta = EMPTY_TABLE_CTAS[currentType];
+                if (emptyCta) {
+                    const btn = document.getElementById(emptyCta.btnId);
+                    const btnHtml = btn ? '<button type="button" class="btn btn-primary mt-3" onclick="document.getElementById(\'' + emptyCta.btnId + '\').click()"><i class="bi bi-plus-lg"></i> ' + escapeHtml(emptyCta.cta) + '</button>' : '';
+                    tbody.innerHTML = '<tr><td colspan="100%" class="text-center py-5"><p class="text-muted mb-0">' + escapeHtml(emptyCta.msg) + '</p>' + btnHtml + '</td></tr>';
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-muted py-4">No records found</td></tr>';
+                }
+                thead.innerHTML = '<tr></tr>';
+                if (cardView) cardView.classList.add('d-none');
+                if (dataTable) dataTable.classList.remove('d-none');
                 return;
             }
 
@@ -950,11 +1369,14 @@
             }
 
             // Render headers
-            thead.innerHTML = '<tr>' + headers.map(h => {
-                let html = `<th`;
+            thead.innerHTML = '<tr role="row">' + headers.map((h, i) => {
+                let html = `<th role="columnheader"`;
                 if (h.sortable) {
                     html += ` class="sortable ${currentSortBy === h.key ? (currentSortDir === 'asc' ? 'sort-asc' : 'sort-desc') : ''}"`;
                     html += ` onclick="sortTable('${h.key}')"`;
+                    html += ` onkeydown="if(event.key==='Enter'||event.key===' ') { event.preventDefault(); sortTable('${h.key}'); }"`;
+                    const sortState = currentSortBy === h.key ? (currentSortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+                    html += ` aria-sort="${sortState}" tabindex="0"`;
                 }
                 html += `>${h.label}</th>`;
                 return html;
@@ -970,9 +1392,9 @@
                 // Determine the type for detail loading - child rows in raw-materials are always raw-materials
                 const detailType = (currentType === 'raw-materials' && isChild) ? 'raw-materials' : currentType;
                 
-                let row = '<tr onclick="selectRecord(' + item.id + ', \'' + detailType + '\')"';
+                let row = '<tr onclick="selectRecord(' + item.id + ', \'' + detailType + '\')" onkeydown="tableRowKeydown(event, ' + item.id + ', \'' + detailType + '\')" data-id="' + item.id + '" role="row" tabindex="0"';
                 if (selectedId === item.id) {
-                    row += ' class="selected"';
+                    row += ' class="selected" aria-selected="true"';
                 }
                 if (isChild) {
                     row += ' class="child-row" style="background-color: #f8f9fa;"';
@@ -1053,16 +1475,54 @@
                         if (isChild && header.key !== 'name') {
                             cellContent = `<span style="padding-left: ${indentPx}rem;">${escapeHtml(value)}</span>`;
                         } else {
-                            cellContent = escapeHtml(value);
+                            const str = String(value);
+                            const escaped = escapeHtml(str);
+                            if (str.length > 35 && !isChild) {
+                                cellContent = '<span class="text-truncate-cell d-inline-block" style="max-width:180px;" title="' + escaped.replace(/"/g, '&quot;') + '">' + escaped + '</span>';
+                            } else {
+                                cellContent = escaped;
+                            }
                         }
                     }
                     
-                    row += `<td>${cellContent}</td>`;
+                    row += `<td role="gridcell">${cellContent}</td>`;
                 });
                 
                 row += '</tr>';
                 return row;
             }).join('');
+            
+            if (isCardView && cardView && dataTable) {
+                const headers = getTableHeaders();
+                const cardsHtml = data.items.map(item => {
+                    const detailType = (currentType === 'raw-materials' && item.isChild) ? 'raw-materials' : currentType;
+                    const title = item.name || item.displayName || ('#' + item.id);
+                    const meta = headers.filter(h => h.key !== 'name').slice(0, 3).map(h => {
+                        let v = item[h.key];
+                        if (h.key === 'weight' || h.key === 'totalPackWeight') v = v ? v + 'g' : '-';
+                        if (v === null || v === undefined) v = '-';
+                        if (typeof v === 'object') return '';
+                        return (String(v).length > 40 ? String(v).substring(0, 37) + '...' : String(v));
+                    }).filter(Boolean).join(' · ');
+                    const sel = selectedId === item.id ? ' selected' : '';
+                    const safeTitle = (title || '').replace(/"/g, '&quot;').substring(0, 50);
+return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + ', \'' + detailType + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();selectRecord(' + item.id + ',\'' + detailType + '\');}" role="button" tabindex="0" data-id="' + item.id + '" aria-label="View ' + safeTitle + '"><div class="table-card-title">' + escapeHtml(title) + '</div><div class="table-card-meta">' + escapeHtml(meta) + '</div></div>';
+                }).join('');
+                cardView.innerHTML = cardsHtml;
+                cardView.classList.remove('d-none');
+                dataTable.classList.add('d-none');
+            } else if (cardView && dataTable) {
+                cardView.classList.add('d-none');
+                dataTable.classList.remove('d-none');
+            }
+        }
+        
+        function getTableHeaders() {
+            if (currentType === 'raw-materials') return [{ key: 'name' }, { key: 'code' }, { key: 'description' }, { key: 'packagingItems' }];
+            if (currentType === 'packaging-items') return [{ key: 'name' }, { key: 'taxonomyCode' }, { key: 'materialTaxonomyName' }, { key: 'weight' }];
+            if (currentType === 'packaging-groups') return [{ key: 'name' }, { key: 'packId' }, { key: 'packagingLayer' }, { key: 'totalPackWeight' }];
+            if (currentType === 'suppliers') return [{ key: 'name' }, { key: 'city' }, { key: 'country' }, { key: 'email' }];
+            return [];
         }
 
         function renderPagination(data) {
@@ -1130,9 +1590,29 @@
             loadData();
         }
 
+        function tableRowKeydown(e, id, typeOverride) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                selectRecord(id, typeOverride);
+                return;
+            }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const rows = Array.from(document.querySelectorAll('#tableBody tr[data-id]'));
+                const idx = rows.findIndex(r => parseInt(r.dataset.id, 10) === id);
+                if (idx < 0) return;
+                const nextIdx = e.key === 'ArrowDown' ? Math.min(idx + 1, rows.length - 1) : Math.max(idx - 1, 0);
+                if (nextIdx !== idx) rows[nextIdx].focus();
+            }
+        }
         function selectRecord(id, typeOverride) {
+            navigationHistory = [];
             selectedId = id;
             const detailType = typeOverride || currentType;
+            if (window.innerWidth < 992) {
+                const splitContainer = document.getElementById('splitContainer');
+                if (splitContainer) splitContainer.classList.add('packaging-mobile-detail-open');
+            }
             if (currentType === 'suppliers') {
                 selectedSupplierId = id;
                 selectedSupplierName = null; // Will be set from detail data
@@ -1193,6 +1673,16 @@
                 detailType = 'suppliers';
             }
             
+            document.getElementById('editRecordBtn')?.classList.remove('d-none');
+            document.getElementById('deleteRecordBtn')?.classList.remove('d-none');
+            document.getElementById('editRecordBtn')?.setAttribute('data-edit-id', String(data.id));
+            document.getElementById('deleteRecordBtn')?.setAttribute('data-delete-id', String(data.id));
+
+            const typeLabels = { 'suppliers': 'Supplier', 'raw-materials': 'Raw Material', 'packaging-items': 'Packaging Item', 'packaging-groups': 'Packaging Group' };
+            const recordName = data.name || data.displayName || ('#' + data.id);
+            const titleEl = document.getElementById('detailPaneTitle');
+            if (titleEl) titleEl.textContent = (typeLabels[detailType] || 'Record') + ' \u00BB ' + recordName;
+
             if (detailType === 'raw-materials') {
                 container.innerHTML = renderRawMaterialDetail(data);
             } else if (detailType === 'packaging-items') {
@@ -1205,6 +1695,7 @@
             } else {
                 container.innerHTML = '<div class="text-warning">Unknown record type</div>';
             }
+            updateDetailBackButton();
         }
 
         function renderRawMaterialDetail(data) {
@@ -1242,15 +1733,7 @@
                 html += '<h6>Supply Chain (Suppliers of this Raw Material)</h6>';
                 html += '<div class="supply-chain-lineal">';
                 data.supplyChain.forEach(sc => {
-                    html += '<div class="supply-chain-item">';
-                    html += '<span class="supply-chain-product">' + escapeHtml(sc.productName) + '</span>';
-                    html += ' <span class="text-muted">from</span> ';
-                    html += sc.supplier?.id ? navBadge(sc.supplier.id, 'suppliers', escapeHtml(sc.supplier.name || '')) : '<span class="supply-chain-supplier">' + escapeHtml(sc.supplier?.name || '') + '</span>';
-                    if (sc.supplier?.suppliedBy) {
-                        html += ' <span class="text-muted">← supplied by</span> ';
-                        html += sc.supplier.suppliedBy.id ? navBadge(sc.supplier.suppliedBy.id, 'suppliers', escapeHtml(sc.supplier.suppliedBy.name)) : '<span class="supply-chain-upstream">' + escapeHtml(sc.supplier.suppliedBy.name) + '</span>';
-                    }
-                    html += '</div>';
+                    html += '<div class="supply-chain-item">' + renderSupplyChainFlow(sc) + '</div>';
                 });
                 html += '</div></div>';
             }
@@ -1283,15 +1766,7 @@
                 html += '<h6>Supply Chain (Suppliers of this Packaging Item)</h6>';
                 html += '<div class="supply-chain-lineal">';
                 data.supplyChain.forEach(sc => {
-                    html += '<div class="supply-chain-item">';
-                    html += '<span class="supply-chain-product">' + escapeHtml(sc.productName) + '</span>';
-                    html += ' <span class="text-muted">from</span> ';
-                    html += sc.supplier?.id ? navBadge(sc.supplier.id, 'suppliers', escapeHtml(sc.supplier.name || '')) : '<span class="supply-chain-supplier">' + escapeHtml(sc.supplier?.name || '') + '</span>';
-                    if (sc.supplier?.suppliedBy) {
-                        html += ' <span class="text-muted">← supplied by</span> ';
-                        html += sc.supplier.suppliedBy.id ? navBadge(sc.supplier.suppliedBy.id, 'suppliers', escapeHtml(sc.supplier.suppliedBy.name)) : '<span class="supply-chain-upstream">' + escapeHtml(sc.supplier.suppliedBy.name) + '</span>';
-                    }
-                    html += '</div>';
+                    html += '<div class="supply-chain-item">' + renderSupplyChainFlow(sc) + '</div>';
                 });
                 html += '</div></div>';
             }
@@ -1417,16 +1892,58 @@
             return div.innerHTML;
         }
 
+        function renderSupplyChainFlow(sc) {
+            const product = escapeHtml(sc.productName || '');
+            const supplierName = sc.supplier?.name || sc.supplierName || '';
+            const supplierId = sc.supplier?.id;
+            const upstream = sc.supplier?.suppliedBy;
+            const upstreamName = upstream?.name || '';
+            const upstreamId = upstream?.id;
+            let html = '<div class="supply-chain-flow" title="' + escapeHtml(product + ' from ' + supplierName + (upstreamName ? ' (supplied by ' + upstreamName + ')' : '')) + '">';
+            html += '<span class="supply-chain-step product">' + product + '</span>';
+            html += '<span class="supply-chain-arrow">→</span>';
+            html += supplierId ? navBadge(supplierId, 'suppliers', supplierName) : '<span class="supply-chain-step supplier">' + escapeHtml(supplierName) + '</span>';
+            if (upstreamName) {
+                html += '<span class="supply-chain-arrow">→</span>';
+                html += upstreamId ? navBadge(upstreamId, 'suppliers', upstreamName) : '<span class="supply-chain-step upstream">' + escapeHtml(upstreamName) + '</span>';
+            }
+            html += '</div>';
+            return html;
+        }
         function navBadge(id, type, label) {
-            return `<span class="relationship-badge" data-nav-id="${id}" data-nav-type="${type}" role="button" tabindex="0">${label}</span>`;
+            const icons = { 'suppliers': 'bi-truck', 'raw-materials': 'bi-circle', 'packaging-items': 'bi-box-seam', 'packaging-groups': 'bi-collection' };
+            const icon = icons[type] ? '<i class="bi ' + icons[type] + ' me-1"></i>' : '';
+            return `<span class="relationship-badge" data-nav-id="${id}" data-nav-type="${type}" role="button" tabindex="0">${icon}${label}</span>`;
         }
 
-        function navigateToRecord(id, type) {
+        function navigateToRecord(id, type, fromBadge) {
+            if (fromBadge && selectedId && currentType) {
+                const typeLabels = { 'suppliers': 'Supplier', 'raw-materials': 'Raw Material', 'packaging-items': 'Packaging Item', 'packaging-groups': 'Packaging Group' };
+                navigationHistory.push({ id: selectedId, type: currentType, name: document.getElementById('detailPaneTitle')?.textContent || typeLabels[currentType] });
+            }
             if (type !== currentType) switchTab(type);
             selectedId = id;
             loadDetail(id, type);
             dataCache = {};
             loadData();
+            updateDetailBackButton();
+        }
+        function updateDetailBackButton() {
+            const backBtn = document.getElementById('detailBackBtn');
+            if (backBtn) {
+                if (navigationHistory.length > 0) {
+                    backBtn.classList.remove('d-none');
+                    const prev = navigationHistory[navigationHistory.length - 1];
+                    backBtn.title = 'Back to ' + (prev.name || 'previous');
+                } else {
+                    backBtn.classList.add('d-none');
+                }
+            }
+        }
+        function goBackInDetail() {
+            if (navigationHistory.length === 0) return;
+            const prev = navigationHistory.pop();
+            navigateToRecord(prev.id, prev.type, false);
         }
 
         function setupDetailNavigation() {
@@ -1438,7 +1955,7 @@
                     e.preventDefault();
                     const id = parseInt(badge.getAttribute('data-nav-id'), 10);
                     const type = badge.getAttribute('data-nav-type');
-                    if (id && type) navigateToRecord(id, type);
+                    if (id && type) navigateToRecord(id, type, true);
                 }
             });
             container.addEventListener('keydown', function(e) {
@@ -1447,9 +1964,181 @@
                     e.preventDefault();
                     const id = parseInt(badge.getAttribute('data-nav-id'), 10);
                     const type = badge.getAttribute('data-nav-type');
-                    if (id && type) navigateToRecord(id, type);
+                    if (id && type) navigateToRecord(id, type, true);
                 }
             });
+            document.getElementById('detailBackBtn')?.addEventListener('click', goBackInDetail);
+        }
+
+        function setupEditDeleteButtons() {
+            const editBtn = document.getElementById('editRecordBtn');
+            const deleteBtn = document.getElementById('deleteRecordBtn');
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const deleteConfirmBtn = document.getElementById('deleteConfirmBtn');
+            const deleteConfirmMessage = document.getElementById('deleteConfirmMessage');
+
+            if (deleteBtn && deleteModal && deleteConfirmBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-delete-id');
+                    if (!id) return;
+                    const typeLabels = { 'suppliers': 'supplier', 'raw-materials': 'raw material', 'packaging-items': 'packaging item', 'packaging-groups': 'packaging group' };
+                    deleteConfirmMessage.textContent = 'Are you sure you want to delete this ' + (typeLabels[currentType] || 'record') + '?';
+                    deleteConfirmBtn.dataset.deleteId = id;
+                    const modal = new bootstrap.Modal(deleteModal);
+                    modal.show();
+                });
+                deleteConfirmBtn.addEventListener('click', async function() {
+                    const id = this.dataset.deleteId;
+                    if (!id) return;
+                    try {
+                        const url = '/api/packaging-management/' + currentType + '/' + id;
+                        const r = await fetch(url, { method: 'DELETE' });
+                        const data = await r.json();
+                        if (data.success) {
+                            bootstrap.Modal.getInstance(deleteModal).hide();
+                            selectedId = null;
+                            selectedSupplierId = null;
+                            dataCache = {};
+                            showEmptyDetailState();
+                            loadData();
+                            showToast('Record deleted successfully');
+                        } else {
+                            showToast('Error: ' + (data.error || 'Failed to delete'), 'danger');
+                        }
+                    } catch (e) {
+                        showToast('Error: ' + e.message, 'danger');
+                    }
+                });
+            }
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-edit-id');
+                    if (!id) return;
+                    openEditModal(parseInt(id, 10));
+                });
+            }
+        }
+        function openEditModal(id) {
+            const url = '/api/packaging-management/' + currentType + '/' + id;
+            fetch(url).then(r => r.json()).then(data => {
+                if (data.error) { showToast('Error loading record', 'danger'); return; }
+                if (currentType === 'suppliers') {
+                    document.getElementById('supplierName').value = data.name || '';
+                    document.getElementById('supplierAddress').value = data.address || '';
+                    document.getElementById('supplierCity').value = data.city || '';
+                    document.getElementById('supplierState').value = data.state || '';
+                    document.getElementById('supplierCountry').value = data.country || '';
+                    document.getElementById('supplierPhone').value = data.phone || '';
+                    document.getElementById('supplierEmail').value = data.email || '';
+                    document.getElementById('supplierWebsite').value = data.website || '';
+                    const container = document.getElementById('contactRowsContainer');
+                    container.innerHTML = '';
+                    (data.contacts || []).forEach(c => {
+                        const row = document.createElement('div');
+                        row.className = 'contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center';
+                        row.innerHTML = '<div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name" value="' + escapeHtml(c.name || '') + '" aria-label="Contact name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title" value="' + escapeHtml(c.title || '') + '" aria-label="Contact title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone" value="' + escapeHtml(c.phone || '') + '" aria-label="Contact phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email" value="' + escapeHtml(c.email || '') + '" aria-label="Contact email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact" aria-label="Remove contact"><i class="bi bi-x-lg"></i></button>';
+                        container.appendChild(row);
+                    });
+                    if (container.children.length === 0) {
+                        const row = document.createElement('div');
+                        row.className = 'contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center';
+                        row.innerHTML = '<div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name" aria-label="Contact name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title" aria-label="Contact title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone" aria-label="Contact phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email" aria-label="Contact email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact" aria-label="Remove contact"><i class="bi bi-x-lg"></i></button>';
+                        container.appendChild(row);
+                    }
+                    document.getElementById('addSupplierModal').querySelector('.modal-title').textContent = 'Edit Packaging Supplier';
+                    document.getElementById('saveSupplierBtn').dataset.editId = id;
+                    showSupplierModalStep(1);
+                    new bootstrap.Modal(document.getElementById('addSupplierModal')).show();
+                } else if (currentType === 'raw-materials') {
+                    document.getElementById('rawMaterialName').value = data.name || '';
+                    document.getElementById('rawMaterialCode').value = data.code || '';
+                    document.getElementById('rawMaterialLevel').value = String(data.level || 1);
+                    document.getElementById('rawMaterialDescription').value = data.description || '';
+                    const parentSelect = document.getElementById('rawMaterialParent');
+                    parentSelect.innerHTML = '<option value="">— None (top level) —</option>';
+                    fetch('/api/packaging-management/options/raw-materials').then(r => r.json()).then(opts => {
+                        opts.filter(t => t.id !== id).forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t.id;
+                            opt.textContent = t.name + ' (' + t.code + ')';
+                            if (data.parent && data.parent.id === t.id) opt.selected = true;
+                            parentSelect.appendChild(opt);
+                        });
+                        parentSelect.value = data.parent ? String(data.parent.id) : '';
+                    });
+                    document.getElementById('addRawMaterialModal').querySelector('.modal-title').textContent = 'Edit Raw Material';
+                    document.getElementById('saveRawMaterialBtn').dataset.editId = id;
+                    new bootstrap.Modal(document.getElementById('addRawMaterialModal')).show();
+                } else if (currentType === 'packaging-items') {
+                    document.getElementById('packagingItemName').value = data.name || '';
+                    document.getElementById('packagingItemTaxonomyCode').value = data.taxonomyCode || '';
+                    document.getElementById('packagingItemWeight').value = data.weight || '';
+                    const rmSelect = document.getElementById('packagingItemRawMaterials');
+                    const supSelect = document.getElementById('packagingItemSuppliers');
+                    rmSelect.innerHTML = '';
+                    supSelect.innerHTML = '';
+                    const rawMatIds = (data.rawMaterials || []).map(rm => rm.id);
+                    const chainProductIds = (data.supplyChain || []).map(sc => sc.productId).filter(Boolean);
+                    Promise.all([
+                        fetch('/api/packaging-management/options/raw-materials').then(r => r.json()),
+                        fetch('/api/packaging-management/options/supplier-products').then(r => r.json())
+                    ]).then(([rms, sups]) => {
+                        rms.forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t.id;
+                            opt.textContent = t.name + ' (' + t.code + ')';
+                            if (rawMatIds.includes(t.id)) opt.selected = true;
+                            rmSelect.appendChild(opt);
+                        });
+                        sups.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.id;
+                            opt.textContent = p.name + ' — ' + p.supplierName;
+                            if (chainProductIds.includes(p.id)) opt.selected = true;
+                            supSelect.appendChild(opt);
+                        });
+                    });
+                    document.getElementById('addPackagingItemModal').querySelector('.modal-title').textContent = 'Edit Packaging Item';
+                    document.getElementById('savePackagingItemBtn').dataset.editId = id;
+                    new bootstrap.Modal(document.getElementById('addPackagingItemModal')).show();
+                } else if (currentType === 'packaging-groups') {
+                    document.getElementById('packagingGroupName').value = data.name || '';
+                    document.getElementById('packagingGroupPackId').value = data.packId || '';
+                    document.getElementById('packagingGroupLayer').value = data.packagingLayer || '';
+                    const itemsSelect = document.getElementById('packagingGroupItems');
+                    itemsSelect.innerHTML = '';
+                    const itemIds = (data.items || []).map(i => i.id).filter(Boolean);
+                    fetch('/api/packaging-management/options/packaging-items').then(r => r.json()).then(opts => {
+                        opts.forEach(l => {
+                            const opt = document.createElement('option');
+                            opt.value = l.id;
+                            opt.textContent = l.name + ' (' + l.taxonomyCode + ')';
+                            if (itemIds.includes(l.id)) opt.selected = true;
+                            itemsSelect.appendChild(opt);
+                        });
+                    });
+                    document.getElementById('addPackagingGroupModal').querySelector('.modal-title').textContent = 'Edit Packaging Group';
+                    document.getElementById('savePackagingGroupBtn').dataset.editId = id;
+                    new bootstrap.Modal(document.getElementById('addPackagingGroupModal')).show();
+                }
+            }).catch(e => showToast('Error: ' + e.message, 'danger'));
+        }
+        function showToast(message, type) {
+            type = type || 'success';
+            const t = document.getElementById('packagingToast') || (function() {
+                const div = document.createElement('div');
+                div.id = 'packagingToast';
+                div.className = 'position-fixed bottom-0 end-0 p-3';
+                div.style.zIndex = '9999';
+                div.innerHTML = '<div class="toast align-items-center text-bg-' + type + ' border-0" role="alert"><div class="d-flex"><div class="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+                document.body.appendChild(div);
+                return div;
+            })();
+            const toastEl = t.querySelector('.toast');
+            toastEl.className = 'toast align-items-center text-bg-' + type + ' border-0';
+            toastEl.querySelector('.toast-body').textContent = message;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
         }
 
         function setupAddModals() {
@@ -1462,6 +2151,8 @@
 
             if (addRawMaterialBtn && addRawMaterialModal) {
                 addRawMaterialBtn.addEventListener('click', async function() {
+                    document.getElementById('addRawMaterialModal').querySelector('.modal-title').textContent = 'Add Raw Material';
+                    delete document.getElementById('saveRawMaterialBtn')?.dataset.editId;
                     document.getElementById('rawMaterialName').value = '';
                     document.getElementById('rawMaterialCode').value = '';
                     document.getElementById('rawMaterialLevel').value = '1';
@@ -1486,13 +2177,15 @@
             document.getElementById('saveRawMaterialBtn')?.addEventListener('click', async function() {
                 const name = document.getElementById('rawMaterialName').value?.trim();
                 const code = document.getElementById('rawMaterialCode').value?.trim();
-                if (!name || !code) { alert('Name and Code are required'); return; }
+                if (!name || !code) { showToast('Name and Code are required', 'danger'); return; }
                 const level = parseInt(document.getElementById('rawMaterialLevel').value, 10) || 1;
                 const parentVal = document.getElementById('rawMaterialParent').value;
                 const parentId = parentVal ? parseInt(parentVal, 10) : null;
+                const editId = this.dataset.editId;
+                const url = editId ? '/api/packaging-management/raw-materials/' + editId : '/api/packaging-management/raw-materials';
                 try {
-                    const r = await fetch('/api/packaging-management/raw-materials', {
-                        method: 'POST',
+                    const r = await fetch(url, {
+                        method: editId ? 'PUT' : 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             name: name,
@@ -1503,16 +2196,21 @@
                         })
                     });
                     const data = await r.json();
-                    if (data.error) { alert('Error: ' + data.error); return; }
+                    if (data.error) { showToast('Error: ' + data.error, 'danger'); return; }
                     bootstrap.Modal.getInstance(addRawMaterialModal).hide();
+                    delete this.dataset.editId;
                     dataCache = {};
                     loadData();
-                    if (data.id) { selectedId = data.id; loadDetail(data.id, 'raw-materials'); }
-                } catch (e) { alert('Error: ' + e.message); }
+                    const id = data.id || (editId ? parseInt(editId, 10) : null);
+                    if (id) { selectedId = id; loadDetail(id, 'raw-materials'); }
+                    showToast('Raw material saved successfully');
+                } catch (e) { showToast('Error: ' + e.message, 'danger'); }
             });
 
             if (addPackagingItemBtn && addPackagingItemModal) {
                 addPackagingItemBtn.addEventListener('click', async function() {
+                    document.getElementById('addPackagingItemModal').querySelector('.modal-title').textContent = 'Add Packaging Item';
+                    delete document.getElementById('savePackagingItemBtn')?.dataset.editId;
                     document.getElementById('packagingItemName').value = '';
                     document.getElementById('packagingItemTaxonomyCode').value = '';
                     document.getElementById('packagingItemWeight').value = '';
@@ -1547,14 +2245,16 @@
             document.getElementById('savePackagingItemBtn')?.addEventListener('click', async function() {
                 const name = document.getElementById('packagingItemName').value?.trim();
                 const taxonomyCode = document.getElementById('packagingItemTaxonomyCode').value?.trim();
-                if (!name || !taxonomyCode) { alert('Name and Taxonomy Code are required'); return; }
+                if (!name || !taxonomyCode) { showToast('Name and Taxonomy Code are required', 'danger'); return; }
                 const weightVal = document.getElementById('packagingItemWeight').value;
                 const weight = weightVal ? parseFloat(weightVal) : null;
                 const rmSelected = Array.from(document.getElementById('packagingItemRawMaterials').selectedOptions).map(o => parseInt(o.value, 10));
                 const supSelected = Array.from(document.getElementById('packagingItemSuppliers').selectedOptions).map(o => parseInt(o.value, 10));
+                const editId = this.dataset.editId;
+                const url = editId ? '/api/packaging-management/packaging-items/' + editId : '/api/packaging-management/packaging-items';
                 try {
-                    const r = await fetch('/api/packaging-management/packaging-items', {
-                        method: 'POST',
+                    const r = await fetch(url, {
+                        method: editId ? 'PUT' : 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             name: name,
@@ -1565,16 +2265,21 @@
                         })
                     });
                     const data = await r.json();
-                    if (data.error) { alert('Error: ' + data.error); return; }
+                    if (data.error) { showToast('Error: ' + data.error, 'danger'); return; }
                     bootstrap.Modal.getInstance(addPackagingItemModal).hide();
+                    delete this.dataset.editId;
                     dataCache = {};
                     loadData();
-                    if (data.id) { selectedId = data.id; loadDetail(data.id, 'packaging-items'); }
-                } catch (e) { alert('Error: ' + e.message); }
+                    const id = data.id || (editId ? parseInt(editId, 10) : null);
+                    if (id) { selectedId = id; loadDetail(id, 'packaging-items'); }
+                    showToast('Packaging item saved successfully');
+                } catch (e) { showToast('Error: ' + e.message, 'danger'); }
             });
 
             if (addPackagingGroupBtn && addPackagingGroupModal) {
                 addPackagingGroupBtn.addEventListener('click', async function() {
+                    document.getElementById('addPackagingGroupModal').querySelector('.modal-title').textContent = 'Add Packaging Group';
+                    delete document.getElementById('savePackagingGroupBtn')?.dataset.editId;
                     document.getElementById('packagingGroupName').value = '';
                     document.getElementById('packagingGroupPackId').value = '';
                     document.getElementById('packagingGroupLayer').value = '';
@@ -1597,12 +2302,14 @@
             document.getElementById('savePackagingGroupBtn')?.addEventListener('click', async function() {
                 const name = document.getElementById('packagingGroupName').value?.trim();
                 const packId = document.getElementById('packagingGroupPackId').value?.trim();
-                if (!name || !packId) { alert('Name and Pack ID are required'); return; }
+                if (!name || !packId) { showToast('Name and Pack ID are required', 'danger'); return; }
                 const layer = document.getElementById('packagingGroupLayer').value?.trim() || null;
                 const itemsSelected = Array.from(document.getElementById('packagingGroupItems').selectedOptions).map(o => parseInt(o.value, 10));
+                const editId = this.dataset.editId;
+                const url = editId ? '/api/packaging-management/packaging-groups/' + editId : '/api/packaging-management/packaging-groups';
                 try {
-                    const r = await fetch('/api/packaging-management/packaging-groups', {
-                        method: 'POST',
+                    const r = await fetch(url, {
+                        method: editId ? 'PUT' : 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             name: name,
@@ -1612,25 +2319,61 @@
                         })
                     });
                     const data = await r.json();
-                    if (data.error) { alert('Error: ' + data.error); return; }
+                    if (data.error) { showToast('Error: ' + data.error, 'danger'); return; }
                     bootstrap.Modal.getInstance(addPackagingGroupModal).hide();
+                    delete this.dataset.editId;
                     dataCache = {};
                     loadData();
-                    if (data.id) { selectedId = data.id; loadDetail(data.id, 'packaging-groups'); }
-                } catch (e) { alert('Error: ' + e.message); }
+                    const id = data.id || (editId ? parseInt(editId, 10) : null);
+                    if (id) { selectedId = id; loadDetail(id, 'packaging-groups'); }
+                    showToast('Packaging group saved successfully');
+                } catch (e) { showToast('Error: ' + e.message, 'danger'); }
             });
         }
 
+        let supplierModalStep = 1;
+        function showSupplierModalStep(step) {
+            supplierModalStep = step;
+            const s1 = document.getElementById('supplierStep1');
+            const s2 = document.getElementById('supplierStep2');
+            const prevBtn = document.getElementById('supplierStepPrevBtn');
+            const nextBtn = document.getElementById('supplierStepNextBtn');
+            const saveBtn = document.getElementById('saveSupplierBtn');
+            document.querySelectorAll('.supplier-step-badge').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.step, 10) === step);
+                b.removeAttribute('aria-current');
+                if (parseInt(b.dataset.step, 10) === step) b.setAttribute('aria-current', 'step');
+            });
+            if (s1) s1.classList.toggle('d-none', step !== 1);
+            if (s2) s2.classList.toggle('d-none', step !== 2);
+            if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'inline-block';
+            if (nextBtn) nextBtn.style.display = step === 2 ? 'none' : 'inline-block';
+            if (saveBtn) saveBtn.style.display = step === 2 ? 'inline-block' : 'none';
+        }
         function setupSupplierModals() {
             const addSupplierBtn = document.getElementById('addSupplierBtn');
             const addProductBtn = document.getElementById('addProductBtn');
             const saveSupplierBtn = document.getElementById('saveSupplierBtn');
-            const saveProductBtn = document.getElementById('saveProductBtn');
             const addSupplierModal = document.getElementById('addSupplierModal');
             const addProductModal = document.getElementById('addProductModal');
 
+            document.getElementById('supplierStepNextBtn')?.addEventListener('click', function() {
+                const name = document.getElementById('supplierName').value?.trim();
+                if (!name) { showToast('Please enter a supplier name.', 'danger'); return; }
+                showSupplierModalStep(2);
+            });
+            document.getElementById('supplierStepPrevBtn')?.addEventListener('click', function() {
+                showSupplierModalStep(1);
+            });
+
+            addSupplierModal?.addEventListener('show.bs.modal', function() {
+                showSupplierModalStep(1);
+            });
+
             if (addSupplierBtn) {
                 addSupplierBtn.addEventListener('click', function() {
+                    document.getElementById('addSupplierModal').querySelector('.modal-title').textContent = 'Add Packaging Supplier';
+                    delete document.getElementById('saveSupplierBtn').dataset.editId;
                     document.getElementById('supplierName').value = '';
                     document.getElementById('supplierAddress').value = '';
                     document.getElementById('supplierCity').value = '';
@@ -1640,7 +2383,7 @@
                     document.getElementById('supplierEmail').value = '';
                     document.getElementById('supplierWebsite').value = '';
                     const container = document.getElementById('contactRowsContainer');
-                    container.innerHTML = '<div class="contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center"><div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact"><i class="bi bi-x-lg"></i></button></div>';
+                    container.innerHTML = '<div class="contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center"><div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name" aria-label="Contact name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title" aria-label="Contact title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone" aria-label="Contact phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email" aria-label="Contact email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact" aria-label="Remove contact"><i class="bi bi-x-lg"></i></button></div>';
                     if (addSupplierModal && typeof bootstrap !== 'undefined') {
                         new bootstrap.Modal(addSupplierModal).show();
                     }
@@ -1653,7 +2396,7 @@
                     const container = document.getElementById('contactRowsContainer');
                     const row = document.createElement('div');
                     row.className = 'contact-row border rounded p-2 mb-2 bg-light d-flex align-items-center';
-                    row.innerHTML = '<div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact"><i class="bi bi-x-lg"></i></button>';
+                    row.innerHTML = '<div class="row g-2 flex-grow-1"><div class="col-md-4"><input type="text" class="form-control form-control-sm contact-name" placeholder="Name" aria-label="Contact name"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-title" placeholder="Title" aria-label="Contact title"></div><div class="col-md-3"><input type="text" class="form-control form-control-sm contact-phone" placeholder="Phone" aria-label="Contact phone"></div><div class="col-md-2"><input type="email" class="form-control form-control-sm contact-email" placeholder="Email" aria-label="Contact email"></div></div><button type="button" class="btn btn-outline-danger btn-sm ms-2 remove-contact-btn" title="Remove contact" aria-label="Remove contact"><i class="bi bi-x-lg"></i></button>';
                     container.appendChild(row);
                 });
             }
@@ -1679,9 +2422,12 @@
                 saveSupplierBtn.addEventListener('click', async function() {
                     const name = document.getElementById('supplierName').value.trim();
                     if (!name) {
-                        alert('Please enter a supplier name.');
+                        showToast('Please enter a supplier name.', 'danger');
                         return;
                     }
+                    const editId = this.dataset.editId;
+                    const url = editId ? '/api/packaging-management/suppliers/' + editId : '/api/packaging-management/suppliers';
+                    const method = editId ? 'PUT' : 'POST';
                     try {
                         const contacts = [];
                         document.querySelectorAll('.contact-row').forEach(row => {
@@ -1695,8 +2441,8 @@
                                 });
                             }
                         });
-                        const res = await fetch('/api/packaging-management/suppliers', {
-                            method: 'POST',
+                        const res = await fetch(url, {
+                            method: method,
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 name: name,
@@ -1716,12 +2462,16 @@
                                 const modal = bootstrap.Modal.getInstance(addSupplierModal);
                                 if (modal) modal.hide();
                             }
+                            delete this.dataset.editId;
+                            dataCache = {};
                             loadData();
+                            if (editId) loadDetail(parseInt(editId, 10), 'suppliers');
+                            showToast('Supplier saved successfully');
                         } else {
-                            alert('Error: ' + (data.error || 'Failed to save'));
+                            showToast('Error: ' + (data.error || 'Failed to save'), 'danger');
                         }
                     } catch (e) {
-                        alert('Error: ' + e.message);
+                        showToast('Error: ' + e.message, 'danger');
                     }
                 });
             }
@@ -1731,7 +2481,7 @@
                     if (!selectedSupplierId) return;
                     const name = document.getElementById('productName').value.trim();
                     if (!name) {
-                        alert('Please enter a product name.');
+                        showToast('Please enter a product name.', 'danger');
                         return;
                     }
                     try {
@@ -1754,10 +2504,10 @@
                             loadDetail(selectedSupplierId, 'suppliers');
                             loadData();
                         } else {
-                            alert('Error: ' + (data.error || 'Failed to save'));
+                            showToast('Error: ' + (data.error || 'Failed to save'), 'danger');
                         }
                     } catch (e) {
-                        alert('Error: ' + e.message);
+                        showToast('Error: ' + e.message, 'danger');
                     }
                 });
             }
