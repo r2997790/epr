@@ -85,9 +85,25 @@ public class ElectronicsDatasetSeeder
         await AddGroupItem(groupProduct.Id, productBox.Id, 0);
         await AddGroupItem(groupProduct.Id, label.Id, 1);
 
-        // Packaging Units
-        var puShipping = await EnsurePackagingUnit("Electronics Shipping Unit", "Secondary");
-        var puProduct = await EnsurePackagingUnit("Electronics Product Unit", "Primary");
+        // PackagingRawMaterial (bridge for PackagingType -> raw materials for GetAsnProductPackaging traceability)
+        var prmPlastic = await EnsurePackagingRawMaterial("Plastics", "Plastic materials");
+        var prmPaper = await EnsurePackagingRawMaterial("Paper & Cardboard", "Paper and cardboard materials");
+        var prmFoam = await EnsurePackagingRawMaterial("Foam", "Foam materials");
+        var materialTaxToPrm = new Dictionary<int, int> { { plasticTax.Id, prmPlastic.Id }, { paperTax.Id, prmPaper.Id }, { foamTax.Id, prmFoam.Id } };
+
+        // PackagingType from each PackagingLibrary (for PackagingUnitItem -> PackagingType -> PackagingRawMaterial chain)
+        var ptBox = await EnsurePackagingTypeFromLibrary(boxCardboard, materialTaxToPrm);
+        var ptFoam = await EnsurePackagingTypeFromLibrary(innerFoam, materialTaxToPrm);
+        var ptWrap = await EnsurePackagingTypeFromLibrary(plasticWrap, materialTaxToPrm);
+        var ptProductBox = await EnsurePackagingTypeFromLibrary(productBox, materialTaxToPrm);
+        var ptLabel = await EnsurePackagingTypeFromLibrary(label, materialTaxToPrm);
+
+        // PackagingUnits from PackagingGroups (with PackagingUnitItems for full traceability)
+        var shippingLibs = new[] { boxCardboard, innerFoam, plasticWrap };
+        var productLibs = new[] { productBox, label };
+        var libToPt = new Dictionary<int, PackagingType> { { boxCardboard.Id, ptBox }, { innerFoam.Id, ptFoam }, { plasticWrap.Id, ptWrap }, { productBox.Id, ptProductBox }, { label.Id, ptLabel } };
+        var puShipping = await EnsurePackagingUnitFromGroup(groupShipping, shippingLibs, libToPt);
+        var puProduct = await EnsurePackagingUnitFromGroup(groupProduct, productLibs, libToPt);
 
         // Geographies and Jurisdiction
         var ukJurisdiction = await EnsureJurisdiction("UK", "United Kingdom", "GB");
@@ -120,9 +136,11 @@ public class ElectronicsDatasetSeeder
             ("ELEC-020", "Multi-Port Adapter USB-C", "CableTech", "50601234567909", "https://picsum.photos/seed/elec-adapter/200/200"),
         };
 
+        var supplierProductIds = new[] { spBox.Id, spFoam.Id, spWrap.Id, spPBox.Id, spLabel.Id };
         var productEntities = new List<Product>();
-        foreach (var (sku, name, brand, gtin, imageUrl) in products)
+        for (var idx = 0; idx < products.Length; idx++)
         {
+            var (sku, name, brand, gtin, imageUrl) = products[idx];
             var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl);
             productEntities.Add(p);
 
@@ -132,6 +150,10 @@ public class ElectronicsDatasetSeeder
             // ProductPackaging - each product has shipping and product pack
             await EnsureProductPackaging(p.Id, puShipping.Id);
             await EnsureProductPackaging(p.Id, puProduct.Id);
+
+            // ProductPackagingSupplierProduct - link product to supplier for traceability
+            var spId = supplierProductIds[idx % supplierProductIds.Length];
+            await EnsureProductPackagingSupplierProduct(p.Id, spId);
         }
 
         // Distribution - distribute products to locations
@@ -367,16 +389,87 @@ public class ElectronicsDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingUnit> EnsurePackagingUnit(string name, string level)
+    private async Task<PackagingRawMaterial> EnsurePackagingRawMaterial(string name, string? description)
     {
-        var pu = await _context.PackagingUnits.FirstOrDefaultAsync(x => x.Name == name);
+        var prm = await _context.PackagingRawMaterials.FirstOrDefaultAsync(m => m.Name == name);
+        if (prm == null)
+        {
+            prm = new PackagingRawMaterial { Name = name, Description = description };
+            _context.PackagingRawMaterials.Add(prm);
+            await _context.SaveChangesAsync();
+        }
+        return prm;
+    }
+
+    private async Task<PackagingType> EnsurePackagingTypeFromLibrary(PackagingLibrary lib, Dictionary<int, int> materialTaxonomyIdToPrmId)
+    {
+        var pt = await _context.PackagingTypes.FirstOrDefaultAsync(t => t.Name == lib.Name);
+        if (pt == null)
+        {
+            pt = new PackagingType
+            {
+                Name = lib.Name,
+                Weight = lib.Weight,
+                IsFromLibrary = true,
+                LibrarySource = lib.TaxonomyCode ?? "PackagingLibrary",
+                Notes = $"Linked from PackagingLibrary (Id={lib.Id})"
+            };
+            _context.PackagingTypes.Add(pt);
+            await _context.SaveChangesAsync();
+        }
+        if (lib.MaterialTaxonomyId.HasValue && materialTaxonomyIdToPrmId.TryGetValue(lib.MaterialTaxonomyId.Value, out var prmId))
+        {
+            if (!await _context.PackagingTypeMaterials.AnyAsync(ptm => ptm.PackagingTypeId == pt.Id && ptm.MaterialId == prmId))
+            {
+                _context.PackagingTypeMaterials.Add(new PackagingTypeMaterial { PackagingTypeId = pt.Id, MaterialId = prmId });
+                await _context.SaveChangesAsync();
+            }
+        }
+        return pt;
+    }
+
+    private async Task<PackagingUnit> EnsurePackagingUnitFromGroup(PackagingGroup group, PackagingLibrary[] libs, Dictionary<int, PackagingType> libIdToPackagingType)
+    {
+        var pu = await _context.PackagingUnits.FirstOrDefaultAsync(u => u.Name == group.Name);
         if (pu == null)
         {
-            pu = new PackagingUnit { Name = name, UnitLevel = level };
+            pu = new PackagingUnit
+            {
+                Name = group.Name,
+                UnitLevel = group.PackagingLayer ?? "Primary",
+                Notes = $"Linked from PackagingGroup {group.PackId}"
+            };
             _context.PackagingUnits.Add(pu);
             await _context.SaveChangesAsync();
         }
+        foreach (var lib in libs)
+        {
+            if (!libIdToPackagingType.TryGetValue(lib.Id, out var pt))
+                continue;
+            if (await _context.PackagingUnitItems.AnyAsync(pui => pui.PackagingUnitId == pu.Id && pui.PackagingTypeId == pt.Id))
+                continue;
+            _context.PackagingUnitItems.Add(new PackagingUnitItem
+            {
+                PackagingUnitId = pu.Id,
+                PackagingTypeId = pt.Id,
+                CollectionName = "Default",
+                Quantity = 1
+            });
+        }
+        await _context.SaveChangesAsync();
         return pu;
+    }
+
+    private async Task EnsureProductPackagingSupplierProduct(int productId, int packagingSupplierProductId)
+    {
+        if (await _context.ProductPackagingSupplierProducts.AnyAsync(pp => pp.ProductId == productId && pp.PackagingSupplierProductId == packagingSupplierProductId))
+            return;
+        _context.ProductPackagingSupplierProducts.Add(new ProductPackagingSupplierProduct
+        {
+            ProductId = productId,
+            PackagingSupplierProductId = packagingSupplierProductId
+        });
+        await _context.SaveChangesAsync();
     }
 
     private async Task<Jurisdiction> EnsureJurisdiction(string code, string name, string countryCode)
