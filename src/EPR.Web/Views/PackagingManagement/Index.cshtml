@@ -942,6 +942,7 @@
                     cardViewBtn.setAttribute('aria-pressed', 'false');
                     const cacheKey = currentType + '-' + currentPage + '-' + currentFilter;
                     if (dataCache[cacheKey]) renderTable(dataCache[cacheKey].data);
+                    else loadData();
                 });
                 cardViewBtn.addEventListener('click', function() {
                     isCardView = true;
@@ -951,6 +952,7 @@
                     tableViewBtn.setAttribute('aria-pressed', 'false');
                     const cacheKey = currentType + '-' + currentPage + '-' + currentFilter;
                     if (dataCache[cacheKey]) renderTable(dataCache[cacheKey].data);
+                    else loadData();
                 });
             }
             
@@ -991,23 +993,25 @@
             
             // Filter input
             const filterInput = document.getElementById('filterInput');
-            if (!filterInput) return;
-            let filterTimeout;
-            filterInput.addEventListener('input', function() {
-                clearTimeout(filterTimeout);
-                filterTimeout = setTimeout(() => {
-                    currentFilter = this.value;
-                    currentPage = 1;
-                    updateFilterBadge();
-                    loadData();
-                }, 300);
-            });
+            if (filterInput) {
+                let filterTimeout;
+                filterInput.addEventListener('input', function() {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(() => {
+                        currentFilter = this.value;
+                        currentPage = 1;
+                        updateFilterBadge();
+                        loadData();
+                    }, 300);
+                });
+            }
 
             // Clear filter
             const clearFilterBtn = document.getElementById('clearFilterBtn');
             const clearFilterBadgeBtn = document.getElementById('clearFilterBadgeBtn');
             function doClearFilter() {
-                filterInput.value = '';
+                const fi = document.getElementById('filterInput');
+                if (fi) fi.value = '';
                 currentFilter = '';
                 currentPage = 1;
                 updateFilterBadge();
@@ -1054,6 +1058,53 @@
                     }
                     detailPaneToggleBtn.title = isCollapsed ? 'Expand detail pane' : 'Collapse detail pane';
                     try { localStorage.setItem('packagingDetailCollapsed', isCollapsed ? '1' : '0'); } catch (e) {}
+                });
+            }
+
+            // Taxonomy expand/collapse (run once; container populated when tree loads)
+            const taxonomyExpandAll = document.getElementById('taxonomyExpandAll');
+            const taxonomyCollapseAll = document.getElementById('taxonomyCollapseAll');
+            const taxonomyTreeContent = document.getElementById('taxonomyTreeContent');
+            if (taxonomyExpandAll && taxonomyTreeContent) {
+                taxonomyExpandAll.addEventListener('click', function() {
+                    taxonomyTreeContent.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.remove('d-none'));
+                    taxonomyTreeContent.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▼');
+                    taxonomyTreeContent.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2-open tree-icon');
+                });
+            }
+            if (taxonomyCollapseAll && taxonomyTreeContent) {
+                taxonomyCollapseAll.addEventListener('click', function() {
+                    taxonomyTreeContent.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.add('d-none'));
+                    taxonomyTreeContent.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▶');
+                    taxonomyTreeContent.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2 tree-icon');
+                });
+            }
+            const taxonomyTreeSearch = document.getElementById('taxonomyTreeSearch');
+            if (taxonomyTreeSearch && taxonomyTreeContent) {
+                taxonomyTreeSearch.addEventListener('input', function() {
+                    const q = (this.value || '').toLowerCase().trim();
+                    taxonomyTreeContent.querySelectorAll('.taxonomy-tree .tree-node').forEach(n => n.style.display = '');
+                    taxonomyTreeContent.querySelectorAll('.taxonomy-tree li').forEach(li => li.style.display = '');
+                    if (!q) return;
+                    const allNodes = taxonomyTreeContent.querySelectorAll('.tree-node[data-nav-id]');
+                    const matchingIds = new Set();
+                    allNodes.forEach(n => {
+                        const label = (n.querySelector('.tree-label')?.textContent || '').toLowerCase();
+                        if (label.includes(q)) {
+                            let el = n.closest('li');
+                            while (el) {
+                                const node = el.querySelector(':scope > .tree-node');
+                                if (node) matchingIds.add(node);
+                                el = el.parentElement?.closest('li');
+                            }
+                        }
+                    });
+                    allNodes.forEach(n => {
+                        if (!matchingIds.has(n)) {
+                            const li = n.closest('li');
+                            if (li && !matchingIds.has(li.querySelector(':scope > .tree-node'))) li.style.display = 'none';
+                        }
+                    });
                 });
             }
 
@@ -1173,41 +1224,6 @@
                         return;
                     }
                     container.innerHTML = renderTaxonomyTree(data.tree || [], data.orphanItems || [], data.standaloneGroups || [], data.allPackagingItems || [], data.allPackagingGroups || []);
-                    document.getElementById('taxonomyExpandAll')?.addEventListener('click', function() {
-                        container.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.remove('d-none'));
-                        container.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▼');
-                        container.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2-open tree-icon');
-                    });
-                    document.getElementById('taxonomyCollapseAll')?.addEventListener('click', function() {
-                        container.querySelectorAll('.taxonomy-tree ul').forEach(ul => ul.classList.add('d-none'));
-                        container.querySelectorAll('.tree-toggle:not(.empty)').forEach(t => t.textContent = '▶');
-                        container.querySelectorAll('.tree-node.folder .tree-icon').forEach(i => i.className = 'bi bi-folder2 tree-icon');
-                    });
-                    document.getElementById('taxonomyTreeSearch')?.addEventListener('input', function() {
-                        const q = (this.value || '').toLowerCase().trim();
-                        container.querySelectorAll('.taxonomy-tree .tree-node').forEach(n => n.style.display = '');
-                        container.querySelectorAll('.taxonomy-tree li').forEach(li => li.style.display = '');
-                        if (!q) return;
-                        const allNodes = container.querySelectorAll('.tree-node[data-nav-id]');
-                        const matchingIds = new Set();
-                        allNodes.forEach(n => {
-                            const label = (n.querySelector('.tree-label')?.textContent || '').toLowerCase();
-                            if (label.includes(q)) {
-                                let el = n.closest('li');
-                                while (el) {
-                                    const node = el.querySelector(':scope > .tree-node');
-                                    if (node) matchingIds.add(node);
-                                    el = el.parentElement?.closest('li');
-                                }
-                            }
-                        });
-                        allNodes.forEach(n => {
-                            if (!matchingIds.has(n)) {
-                                const li = n.closest('li');
-                                if (li && !matchingIds.has(li.querySelector(':scope > .tree-node'))) li.style.display = 'none';
-                            }
-                        });
-                    });
                     container.querySelectorAll('.tree-node').forEach(el => {
                         el.addEventListener('click', function(e) {
                             const li = this.closest('li');
@@ -2070,10 +2086,10 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                             parentSelect.appendChild(opt);
                         });
                         parentSelect.value = data.parent ? String(data.parent.id) : '';
+                        document.getElementById('addRawMaterialModal').querySelector('.modal-title').textContent = 'Edit Raw Material';
+                        document.getElementById('saveRawMaterialBtn').dataset.editId = id;
+                        new bootstrap.Modal(document.getElementById('addRawMaterialModal')).show();
                     });
-                    document.getElementById('addRawMaterialModal').querySelector('.modal-title').textContent = 'Edit Raw Material';
-                    document.getElementById('saveRawMaterialBtn').dataset.editId = id;
-                    new bootstrap.Modal(document.getElementById('addRawMaterialModal')).show();
                 } else if (currentType === 'packaging-items') {
                     document.getElementById('packagingItemName').value = data.name || '';
                     document.getElementById('packagingItemTaxonomyCode').value = data.taxonomyCode || '';
@@ -2102,10 +2118,10 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                             if (chainProductIds.includes(p.id)) opt.selected = true;
                             supSelect.appendChild(opt);
                         });
+                        document.getElementById('addPackagingItemModal').querySelector('.modal-title').textContent = 'Edit Packaging Item';
+                        document.getElementById('savePackagingItemBtn').dataset.editId = id;
+                        new bootstrap.Modal(document.getElementById('addPackagingItemModal')).show();
                     });
-                    document.getElementById('addPackagingItemModal').querySelector('.modal-title').textContent = 'Edit Packaging Item';
-                    document.getElementById('savePackagingItemBtn').dataset.editId = id;
-                    new bootstrap.Modal(document.getElementById('addPackagingItemModal')).show();
                 } else if (currentType === 'packaging-groups') {
                     document.getElementById('packagingGroupName').value = data.name || '';
                     document.getElementById('packagingGroupPackId').value = data.packId || '';
@@ -2121,10 +2137,10 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                             if (itemIds.includes(l.id)) opt.selected = true;
                             itemsSelect.appendChild(opt);
                         });
+                        document.getElementById('addPackagingGroupModal').querySelector('.modal-title').textContent = 'Edit Packaging Group';
+                        document.getElementById('savePackagingGroupBtn').dataset.editId = id;
+                        new bootstrap.Modal(document.getElementById('addPackagingGroupModal')).show();
                     });
-                    document.getElementById('addPackagingGroupModal').querySelector('.modal-title').textContent = 'Edit Packaging Group';
-                    document.getElementById('savePackagingGroupBtn').dataset.editId = id;
-                    new bootstrap.Modal(document.getElementById('addPackagingGroupModal')).show();
                 }
             }).catch(e => showToast('Error: ' + e.message, 'danger'));
         }
