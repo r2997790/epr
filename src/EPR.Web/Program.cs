@@ -822,6 +822,39 @@ using (var scope = app.Services.CreateScope())
                 }
             }
             catch (Exception ex) { Console.WriteLine($"⚠ Confectionary dataset seed: {ex.Message}"); }
+            try
+            {
+                var fpAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Fresh Produce");
+                if (fpAsnCount == 0)
+                {
+                    var fpSeeder = new EPR.Web.Seeders.FreshProduceDatasetSeeder(context);
+                    await fpSeeder.SeedAsync();
+                    Console.WriteLine("✓ Fresh Produce dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Fresh Produce dataset seed: {ex.Message}"); }
+            try
+            {
+                var gdnAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Garden");
+                if (gdnAsnCount == 0)
+                {
+                    var gdnSeeder = new EPR.Web.Seeders.GardenDatasetSeeder(context);
+                    await gdnSeeder.SeedAsync();
+                    Console.WriteLine("✓ Garden dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Garden dataset seed: {ex.Message}"); }
+            try
+            {
+                var hwAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Homewares");
+                if (hwAsnCount == 0)
+                {
+                    var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(context);
+                    await hwSeeder.SeedAsync();
+                    Console.WriteLine("✓ Homewares dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Homewares dataset seed: {ex.Message}"); }
 
             initDone = true;
         }
@@ -878,8 +911,8 @@ _ = Task.Run(async () =>
         var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
         var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
 
-        // Run integrated datasets (Electronics, Alcoholic Beverages, Confectionary) so Distribution has data
-        foreach (var (key, name) in new[] { ("Electronics", "Electronics"), ("Alcoholic Beverages", "Alcoholic Beverages"), ("Confectionary", "Confectionary") })
+        // Run integrated datasets (Electronics, Alcoholic Beverages, Confectionary, Fresh Produce, Garden, Homewares)
+        foreach (var (key, name) in new[] { ("Electronics", "Electronics"), ("Alcoholic Beverages", "Alcoholic Beverages"), ("Confectionary", "Confectionary"), ("Fresh Produce", "Fresh Produce"), ("Garden", "Garden"), ("Homewares", "Homewares") })
         {
             try
             {
@@ -900,6 +933,21 @@ _ = Task.Run(async () =>
                     {
                         var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(seedContext);
                         await confSeeder.SeedAsync();
+                    }
+                    else if (key == "Fresh Produce")
+                    {
+                        var fpSeeder = new EPR.Web.Seeders.FreshProduceDatasetSeeder(seedContext);
+                        await fpSeeder.SeedAsync();
+                    }
+                    else if (key == "Garden")
+                    {
+                        var gdnSeeder = new EPR.Web.Seeders.GardenDatasetSeeder(seedContext);
+                        await gdnSeeder.SeedAsync();
+                    }
+                    else if (key == "Homewares")
+                    {
+                        var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(seedContext);
+                        await hwSeeder.SeedAsync();
                     }
                     Console.WriteLine($"✓ [Background] {name} dataset (20 products, 12 ASNs) seeded.");
                 }

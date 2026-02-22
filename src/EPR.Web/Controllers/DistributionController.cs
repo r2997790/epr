@@ -69,8 +69,9 @@ public class DistributionController : Controller
                 .OrderByDescending(s => s.ShipDate)
                 .ToListAsync(cts.Token);
 
-            // Lazy-seed integrated dataset when none exist (Electronics, Alcoholic Beverages, Confectionary)
-            if (shipments.Count == 0 && (datasetKey == "Electronics" || datasetKey == "Alcoholic Beverages" || datasetKey == "Confectionary"))
+            // Lazy-seed integrated dataset when none exist
+            var integratedDatasets = new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares" };
+            if (shipments.Count == 0 && integratedDatasets.Contains(datasetKey))
             {
                 try
                 {
@@ -88,6 +89,21 @@ public class DistributionController : Controller
                     {
                         var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(_context);
                         await confSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Fresh Produce")
+                    {
+                        var fpSeeder = new EPR.Web.Seeders.FreshProduceDatasetSeeder(_context);
+                        await fpSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Garden")
+                    {
+                        var gdnSeeder = new EPR.Web.Seeders.GardenDatasetSeeder(_context);
+                        await gdnSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Homewares")
+                    {
+                        var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(_context);
+                        await hwSeeder.SeedAsync();
                     }
                     shipmentsQuery = _context.AsnShipments
                         .Include(s => s.Pallets)
@@ -671,8 +687,8 @@ public class DistributionController : Controller
             var script = new Scripts.CreateDummyAsnData(_context, scriptLogger);
             await script.ExecuteAsync();
 
-            // Ensure integrated datasets exist (Electronics, Alcoholic Beverages, Confectionary)
-            foreach (var key in new[] { "Electronics", "Alcoholic Beverages", "Confectionary" })
+            // Ensure integrated datasets exist
+            foreach (var key in new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares" })
             {
                 var asnCount = await _context.AsnShipments.CountAsync(s => s.DatasetKey == key);
                 if (asnCount == 0)
@@ -691,6 +707,21 @@ public class DistributionController : Controller
                     {
                         var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(_context);
                         await confSeeder.SeedAsync();
+                    }
+                    else if (key == "Fresh Produce")
+                    {
+                        var fpSeeder = new EPR.Web.Seeders.FreshProduceDatasetSeeder(_context);
+                        await fpSeeder.SeedAsync();
+                    }
+                    else if (key == "Garden")
+                    {
+                        var gdnSeeder = new EPR.Web.Seeders.GardenDatasetSeeder(_context);
+                        await gdnSeeder.SeedAsync();
+                    }
+                    else if (key == "Homewares")
+                    {
+                        var hwSeeder = new EPR.Web.Seeders.HomewaresDatasetSeeder(_context);
+                        await hwSeeder.SeedAsync();
                     }
                 }
             }
