@@ -683,11 +683,11 @@
         .packaging-management-pane { background-color: #fff; }
         .packaging-pane-header { background-color: #fff; border-color: #dee2e6; }
         .packaging-detail-empty { padding: 2rem 1rem; }
-        /* Scrollbars only when content overflows; thin when they appear */
+        /* Hide scrollbars on table/detail panes; content still scrollable via mouse/touch */
         .packaging-table-content,
-        .detail-pane-body { overflow-x: hidden; scrollbar-width: thin; }
+        .detail-pane-body { overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
         .packaging-table-content::-webkit-scrollbar,
-        .detail-pane-body::-webkit-scrollbar { width: 6px; height: 6px; }
+        .detail-pane-body::-webkit-scrollbar { display: none; }
         .packaging-resize-handle {
             height: 6px;
             cursor: row-resize;
