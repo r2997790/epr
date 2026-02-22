@@ -4,6 +4,7 @@ using EPR.Domain.Entities;
 using EPR.Data;
 using Microsoft.EntityFrameworkCore;
 using EPR.Web.Services;
+using EPR.Web.Seeders;
 
 namespace EPR.Web.Controllers;
 
@@ -38,6 +39,11 @@ public class PackagingManagementController : Controller
         try
         {
             var datasetKey = _datasetService.GetCurrentDataset();
+            // Default to Electronics when no dataset selected (matches Distribution and ensures content loads)
+            if (string.IsNullOrEmpty(datasetKey))
+                datasetKey = "Electronics";
+            // Lazy-seed integrated dataset when packaging data is empty (fixes empty Packaging after refactor)
+            await EnsureDatasetSeededIfNeededAsync(datasetKey);
             object result = type.ToLower() switch
             {
                 "raw-materials" => await GetRawMaterialsList(page, pageSize, sortBy, sortDir, filter, datasetKey),
@@ -62,6 +68,8 @@ public class PackagingManagementController : Controller
         try
         {
             var datasetKey = _datasetService.GetCurrentDataset();
+            if (string.IsNullOrEmpty(datasetKey))
+                datasetKey = "Electronics";
             object? result = type.ToLower() switch
             {
                 "raw-materials" => await GetRawMaterialDetail(id, datasetKey),
@@ -82,6 +90,68 @@ public class PackagingManagementController : Controller
         {
             return Json(new { error = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Lazy-seed integrated dataset when packaging data is empty (fixes empty Packaging when loading Electronics etc).
+    /// </summary>
+    private async Task EnsureDatasetSeededIfNeededAsync(string datasetKey)
+    {
+        var integratedDatasets = new[] { "Electronics", "Alcoholic Beverages", "Confectionary", "Fresh Produce", "Garden", "Homewares", "Personal Care", "Pet Care", "Pharmaceuticals" };
+        if (string.IsNullOrEmpty(datasetKey) || !integratedDatasets.Contains(datasetKey))
+            return;
+        var hasPackagingData = await _context.PackagingLibraries.AnyAsync(l => l.DatasetKey == datasetKey);
+        if (hasPackagingData)
+            return;
+        try
+        {
+            if (datasetKey == "Electronics")
+            {
+                var seeder = new ElectronicsDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Alcoholic Beverages")
+            {
+                var seeder = new AlcoholicBeveragesDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Confectionary")
+            {
+                var seeder = new ConfectionaryDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Fresh Produce")
+            {
+                var seeder = new FreshProduceDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Garden")
+            {
+                var seeder = new GardenDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Homewares")
+            {
+                var seeder = new HomewaresDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Personal Care")
+            {
+                var seeder = new PersonalCareDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Pet Care")
+            {
+                var seeder = new PetCareDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+            else if (datasetKey == "Pharmaceuticals")
+            {
+                var seeder = new PharmaceuticalsDatasetSeeder(_context);
+                await seeder.SeedAsync();
+            }
+        }
+        catch { /* ignore seed errors */ }
     }
 
     private async Task<object> GetRawMaterialsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey)
