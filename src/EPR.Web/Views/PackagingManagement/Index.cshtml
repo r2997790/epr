@@ -742,6 +742,8 @@
 
 @section Scripts {
     <script>
+(function() {
+    'use strict';
         let currentType = @Html.Raw(Json.Serialize(type));
         let currentPage = @(page);
         let currentPageSize = @(pageSize);
@@ -2533,6 +2535,9 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                 });
             }
         }
+    window.switchPackagingTab = switchTab;
+    window.navigateToRecord = navigateToRecord;
+})();
     </script>
 }
 
