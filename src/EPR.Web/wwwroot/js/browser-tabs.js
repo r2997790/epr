@@ -82,19 +82,24 @@
             if (contentContainer) {
                 if (tab.isLoaded && tab.content) {
                     contentContainer.innerHTML = tab.content;
-                    if (tab.scriptContents && tab.scriptContents.length) {
+                    if ((tab.scriptContents && tab.scriptContents.length) || (tab.scriptSrcs && tab.scriptSrcs.length)) {
                         const origGetElementById = document.getElementById.bind(document);
                         document.getElementById = function(id) {
                             const inContainer = contentContainer.querySelector('#' + id);
                             return inContainer || origGetElementById(id);
                         };
                         try {
-                            tab.scriptContents.forEach(text => {
+                            (tab.scriptContents || []).forEach(text => {
                                 try {
                                     const script = document.createElement('script');
                                     script.textContent = text;
                                     contentContainer.appendChild(script);
                                 } catch (err) { debugLog('Script exec error on restore', err); }
+                            });
+                            (tab.scriptSrcs || []).forEach(src => {
+                                const script = document.createElement('script');
+                                script.src = src.startsWith('http') || src.startsWith('//') ? src : (src.startsWith('/') ? (window.location.origin + src) : (window.location.origin + '/' + src));
+                                contentContainer.appendChild(script);
                             });
                         } finally {
                             document.getElementById = origGetElementById;
@@ -267,6 +272,11 @@
                     };
                     const scriptContents = [];
                     doc.querySelectorAll('script:not([src])').forEach(s => { if (s.textContent.trim()) scriptContents.push(s.textContent); });
+                    const scriptSrcs = [];
+                    doc.querySelectorAll('script[src]').forEach(s => {
+                        const src = s.getAttribute('src');
+                        if (src && !scriptSrcs.includes(src)) scriptSrcs.push(src);
+                    });
                     try {
                         scriptContents.forEach(text => {
                             try {
@@ -275,6 +285,11 @@
                                 contentContainer.appendChild(script);
                             } catch (err) { debugLog('Script exec error', err); }
                         });
+                        scriptSrcs.forEach(src => {
+                            const script = document.createElement('script');
+                            script.src = src.startsWith('http') || src.startsWith('//') ? src : (src.startsWith('/') ? (window.location.origin + src) : (window.location.origin + '/' + src));
+                            contentContainer.appendChild(script);
+                        });
                     } finally {
                         document.getElementById = origGetElementById;
                     }
@@ -282,6 +297,7 @@
                     if (tab) {
                         tab.content = content;
                         tab.scriptContents = scriptContents;
+                        tab.scriptSrcs = scriptSrcs;
                         tab.isLoaded = true;
                     }
                     window.history.pushState({ tabId: tabId }, '', url);

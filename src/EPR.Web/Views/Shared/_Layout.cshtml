@@ -147,9 +147,15 @@
     <script src="~/js/product-form.js" asp-append-version="true"></script>
     <script src="~/js/visual-editor/visual-editor-complete.js" asp-append-version="true"></script>
     <script src="~/js/product-form-visual-view.js" asp-append-version="true"></script>
+    @{
+        var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    }
+    @if (controller == "Distribution")
+    {
     <script src="~/js/distribution/asn-management.js" asp-append-version="true"></script>
     <script src="~/js/distribution/asn-map-view.js" asp-append-version="true"></script>
     <script src="~/js/distribution/asn-visual-view.js" asp-append-version="true"></script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
