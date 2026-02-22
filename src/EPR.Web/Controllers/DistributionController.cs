@@ -52,10 +52,10 @@ public class DistributionController : Controller
             _logger.LogInformation("GetAsnShipments called");
 
             var datasetKey = _datasetService.GetCurrentDataset();
-            // Default to Electronics for Distribution so users always see data (Electronics is the only seeded dataset)
+            // Default to Electronics for Distribution when no dataset selected (one of three integrated datasets)
             if (string.IsNullOrEmpty(datasetKey))
                 datasetKey = "Electronics";
-            var requiresDataset = false; // We default to Electronics, so never block with "select dataset"
+            var requiresDataset = false;
 
             var shipmentsQuery = _context.AsnShipments
                 .Include(s => s.Pallets)
@@ -69,25 +69,38 @@ public class DistributionController : Controller
                 .OrderByDescending(s => s.ShipDate)
                 .ToListAsync(cts.Token);
 
-            // Lazy-seed Electronics ASNs when none exist (fixes empty Distribution tab)
-            if (datasetKey == "Electronics" && shipments.Count == 0)
+            // Lazy-seed integrated dataset when none exist (Electronics, Alcoholic Beverages, Confectionary)
+            if (shipments.Count == 0 && (datasetKey == "Electronics" || datasetKey == "Alcoholic Beverages" || datasetKey == "Confectionary"))
             {
                 try
                 {
-                    var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
-                    await electronicsSeeder.SeedAsync();
+                    if (datasetKey == "Electronics")
+                    {
+                        var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
+                        await electronicsSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Alcoholic Beverages")
+                    {
+                        var alcSeeder = new EPR.Web.Seeders.AlcoholicBeveragesDatasetSeeder(_context);
+                        await alcSeeder.SeedAsync();
+                    }
+                    else if (datasetKey == "Confectionary")
+                    {
+                        var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(_context);
+                        await confSeeder.SeedAsync();
+                    }
                     shipmentsQuery = _context.AsnShipments
                         .Include(s => s.Pallets)
                         .ThenInclude(p => p.LineItems)
-                        .Where(s => s.DatasetKey == "Electronics");
+                        .Where(s => s.DatasetKey == datasetKey);
                     shipments = await shipmentsQuery
                         .OrderByDescending(s => s.ShipDate)
                         .ToListAsync(cts.Token);
-                    _logger.LogInformation("Lazy-seeded Electronics ASNs, retrieved {Count} shipments", shipments.Count);
+                    _logger.LogInformation("Lazy-seeded {Dataset} ASNs, retrieved {Count} shipments", datasetKey, shipments.Count);
                 }
                 catch (Exception seedEx)
                 {
-                    _logger.LogWarning(seedEx, "Lazy Electronics ASN seed failed");
+                    _logger.LogWarning(seedEx, "Lazy {Dataset} ASN seed failed", datasetKey);
                 }
             }
 
@@ -658,12 +671,28 @@ public class DistributionController : Controller
             var script = new Scripts.CreateDummyAsnData(_context, scriptLogger);
             await script.ExecuteAsync();
 
-            // Ensure Electronics ASNs exist (for when user has Electronics dataset selected)
-            var electronicsAsnCount = await _context.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
-            if (electronicsAsnCount == 0)
+            // Ensure integrated datasets exist (Electronics, Alcoholic Beverages, Confectionary)
+            foreach (var key in new[] { "Electronics", "Alcoholic Beverages", "Confectionary" })
             {
-                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
-                await electronicsSeeder.SeedAsync();
+                var asnCount = await _context.AsnShipments.CountAsync(s => s.DatasetKey == key);
+                if (asnCount == 0)
+                {
+                    if (key == "Electronics")
+                    {
+                        var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(_context);
+                        await electronicsSeeder.SeedAsync();
+                    }
+                    else if (key == "Alcoholic Beverages")
+                    {
+                        var alcSeeder = new EPR.Web.Seeders.AlcoholicBeveragesDatasetSeeder(_context);
+                        await alcSeeder.SeedAsync();
+                    }
+                    else if (key == "Confectionary")
+                    {
+                        var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(_context);
+                        await confSeeder.SeedAsync();
+                    }
+                }
             }
             
             return Json(new { 

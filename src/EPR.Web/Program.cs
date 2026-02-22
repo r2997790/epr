@@ -788,7 +788,7 @@ using (var scope = app.Services.CreateScope())
             var userSeeder = new UserSeeder(context);
             await userSeeder.SeedAsync();
 
-            // Seed Electronics dataset synchronously so Distribution has ASN data before first request
+            // Seed integrated datasets (Electronics, Alcoholic Beverages, Confectionary) so Distribution has data
             try
             {
                 var electronicsAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
@@ -800,6 +800,28 @@ using (var scope = app.Services.CreateScope())
                 }
             }
             catch (Exception ex) { Console.WriteLine($"⚠ Electronics dataset seed: {ex.Message}"); }
+            try
+            {
+                var alcAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Alcoholic Beverages");
+                if (alcAsnCount == 0)
+                {
+                    var alcSeeder = new EPR.Web.Seeders.AlcoholicBeveragesDatasetSeeder(context);
+                    await alcSeeder.SeedAsync();
+                    Console.WriteLine("✓ Alcoholic Beverages dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Alcoholic Beverages dataset seed: {ex.Message}"); }
+            try
+            {
+                var confAsnCount = await context.AsnShipments.CountAsync(s => s.DatasetKey == "Confectionary");
+                if (confAsnCount == 0)
+                {
+                    var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(context);
+                    await confSeeder.SeedAsync();
+                    Console.WriteLine("✓ Confectionary dataset (20 products, 12 ASNs) seeded at startup.");
+                }
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ Confectionary dataset seed: {ex.Message}"); }
 
             initDone = true;
         }
@@ -856,20 +878,36 @@ _ = Task.Run(async () =>
         var seedContext = seedScope.ServiceProvider.GetRequiredService<EPRDbContext>();
         var loggerFactory = seedScope.ServiceProvider.GetRequiredService<ILoggerFactory>();
 
-        // Run Electronics first so Distribution tab has data when Electronics is selected
-        try
+        // Run integrated datasets (Electronics, Alcoholic Beverages, Confectionary) so Distribution has data
+        foreach (var (key, name) in new[] { ("Electronics", "Electronics"), ("Alcoholic Beverages", "Alcoholic Beverages"), ("Confectionary", "Confectionary") })
         {
-            var electronicsAsnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == "Electronics");
-            if (electronicsAsnCount == 0)
+            try
             {
-                var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
-                await electronicsSeeder.SeedAsync();
-                Console.WriteLine("✓ [Background] Electronics dataset (20 products, 12 ASNs) seeded.");
+                var asnCount = await seedContext.AsnShipments.CountAsync(s => s.DatasetKey == key);
+                if (asnCount == 0)
+                {
+                    if (key == "Electronics")
+                    {
+                        var electronicsSeeder = new EPR.Web.Seeders.ElectronicsDatasetSeeder(seedContext);
+                        await electronicsSeeder.SeedAsync();
+                    }
+                    else if (key == "Alcoholic Beverages")
+                    {
+                        var alcSeeder = new EPR.Web.Seeders.AlcoholicBeveragesDatasetSeeder(seedContext);
+                        await alcSeeder.SeedAsync();
+                    }
+                    else if (key == "Confectionary")
+                    {
+                        var confSeeder = new EPR.Web.Seeders.ConfectionaryDatasetSeeder(seedContext);
+                        await confSeeder.SeedAsync();
+                    }
+                    Console.WriteLine($"✓ [Background] {name} dataset (20 products, 12 ASNs) seeded.");
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠ [Background] Electronics dataset: {ex.Message}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠ [Background] {name} dataset: {ex.Message}");
+            }
         }
 
         var hasAsns = false;

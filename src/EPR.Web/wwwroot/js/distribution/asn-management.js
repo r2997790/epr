@@ -621,7 +621,7 @@
                 const msgEl = noShipmentsEl.querySelector('p');
                 if (msgEl) {
                     msgEl.innerHTML = requiresDataset
-                        ? 'Please select a dataset (e.g. <a href="/">Electronics</a>) from the home page to view ASN shipments.'
+                        ? 'Please select a dataset (e.g. <a href="/">Electronics</a>, <a href="/">Alcoholic Beverages</a>, or <a href="/">Confectionary</a>) from the home page to view ASN shipments.'
                         : 'No ASN shipments found. Upload an ASN file or click Create Sample Data to get started.';
                 }
                 noShipmentsEl.style.display = 'block';
