@@ -608,6 +608,11 @@
     line-height: 1.4;
 }
 
+.canvas-node[data-type="asn-shipment"],
+.epr-canvas-node[data-type="asn-shipment"] {
+    border-color: #fd7e14;
+}
+
 .epr-connection-line[data-persisted="false"] {
     stroke-dasharray: 6 4;
     opacity: 0.7;

@@ -1138,8 +1138,14 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
             <div class="epr-toolbar-section" data-section="packaging-groups">
                 <h6 class="epr-section-title">Packaging Groups</h6>
                 <div class="epr-toolbar-controls">
-                    <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
-                        <i class="bi bi-collection"></i> Add Group
+                    <select id="eprPackagingGroupDropdown" class="form-select form-select-sm">
+                        <option value="">Select packaging group...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddPackagingGroupFromDropdownBtn">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                    <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtn" style="width: 100%; margin-top: 0.25rem;">
+                        <i class="bi bi-collection"></i> New Group
                     </button>
                     <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtn" style="width: 100%;">
                         <i class="bi bi-folder-open"></i> Load Group
@@ -1205,6 +1211,19 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                     </button>
                     <button class="btn btn-sm btn-success" id="eprNewLocationBtn">
                         <i class="bi bi-plus-circle"></i> New
+                    </button>
+                </div>
+            </div>
+
+            <!-- ASN Shipments Section -->
+            <div class="epr-toolbar-section" data-section="asn-shipments">
+                <h6 class="epr-section-title">ASN Shipments</h6>
+                <div class="epr-toolbar-controls">
+                    <select id="eprAsnShipmentDropdown" class="form-select form-select-sm">
+                        <option value="">Select ASN shipment...</option>
+                    </select>
+                    <button class="btn btn-sm btn-primary" id="eprAddAsnShipmentBtn">
+                        <i class="bi bi-plus"></i> Add
                     </button>
                 </div>
             </div>
@@ -1312,11 +1331,36 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
         </div>
         <div class="epr-toolbar-content">
             <div class="epr-toolbar-controls">
-                <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtnSplit" style="width: 100%; margin-bottom: 0.25rem;">
-                    <i class="bi bi-collection"></i> Add Group
+                <select id="eprPackagingGroupDropdownSplit" class="form-select form-select-sm">
+                    <option value="">Select packaging group...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="eprAddPackagingGroupFromDropdownBtnSplit">
+                    <i class="bi bi-plus"></i> Add
+                </button>
+                <button class="btn btn-sm btn-info" id="eprAddPackagingGroupBtnSplit" style="width: 100%; margin-top: 0.25rem;">
+                    <i class="bi bi-collection"></i> New Group
                 </button>
                 <button class="btn btn-sm btn-success" id="eprLoadPackagingGroupBtnSplit" style="width: 100%;">
                     <i class="bi bi-folder-open"></i> Load Group
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="eprTypesPanelAsnShipments" class="epr-types-panel epr-types-panel-asn-shipments" style="display: none;">
+        <div class="epr-toolbar-header">
+            <span>ASN Shipments</span>
+            <button class="epr-btn-close-toolbar" title="Minimize">
+                <i class="bi bi-dash"></i>
+            </button>
+        </div>
+        <div class="epr-toolbar-content">
+            <div class="epr-toolbar-controls">
+                <select id="eprAsnShipmentDropdownSplit" class="form-select form-select-sm">
+                    <option value="">Select ASN shipment...</option>
+                </select>
+                <button class="btn btn-sm btn-primary" id="eprAddAsnShipmentBtnSplit">
+                    <i class="bi bi-plus"></i> Add
                 </button>
             </div>
         </div>

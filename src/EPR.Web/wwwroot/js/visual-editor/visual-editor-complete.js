@@ -1167,26 +1167,25 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             
             // Left port rules (what can connect TO this node from the left)
             const leftPortRules = {
-                'raw-material': false, // Raw materials can't receive left connections
-                'packaging': true,     // Packaging can receive from Raw Materials
-                'product': true,       // Product can receive from Packaging or Supplier Packaging
-                'supplier-packaging': false, // Supplier packaging connects TO product (right port)
-                'distribution': true,   // Distribution can receive from Product or Distribution
-                'transport': true,      // Transport can receive from any node
-                'packaging-group': true, // Packaging Groups can receive from other groups or items
-                'distribution-group': true // Distribution Groups can receive from other groups or items
+                'raw-material': false,
+                'packaging': true,
+                'product': true,
+                'distribution': true,
+                'transport': true,
+                'packaging-group': true,
+                'distribution-group': true,
+                'asn-shipment': true
             };
             
-            // Right port rules (what this node can connect TO on the right)
             const rightPortRules = {
-                'raw-material': true,  // Raw Materials can connect to Packaging
-                'packaging': true,      // Packaging can connect to Product
-                'product': true,        // Product can connect to Distribution
-                'supplier-packaging': true,  // Supplier Packaging can connect to Product
-                'distribution': true,   // Distribution can connect to Distribution
-                'transport': true,       // Transport can connect to any node
-                'packaging-group': true,  // Packaging Groups can connect to other groups
-                'distribution-group': true  // Distribution Groups can connect to other groups
+                'raw-material': true,
+                'packaging': true,
+                'product': true,
+                'distribution': true,
+                'transport': true,
+                'packaging-group': true,
+                'distribution-group': true,
+                'asn-shipment': false
             };
             
             if (leftPortRules[node.type]) {
@@ -1769,6 +1768,25 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     }
                 }
                 
+                // Supplier metadata line for packaging and product nodes
+                let supplierInfo = '';
+                if (node.parameters?.suppliers && Array.isArray(node.parameters.suppliers) && node.parameters.suppliers.length > 0) {
+                    const names = node.parameters.suppliers.map(s =>
+                        s.supplierName ? `${s.supplierName} (${s.city || s.country || ''})` : s.name
+                    ).join(', ');
+                    supplierInfo = `<div class="epr-node-suppliers" style="padding:0.15rem 0.5rem;font-size:0.7rem;color:#0d6efd;border-top:1px solid #eee;"><i class="bi bi-truck me-1"></i>Supplied by: ${this.escapeHtml(names)}</div>`;
+                }
+
+                // ASN-specific status badge
+                let asnBadge = '';
+                if (node.type === 'asn-shipment') {
+                    const st = node.parameters?.status || 'Unknown';
+                    const color = st === 'Delivered' ? '#198754' : st === 'In Transit' ? '#0d6efd' : '#6c757d';
+                    asnBadge = `<div style="padding:0.15rem 0.5rem;"><span style="font-size:0.65rem;padding:0.1rem 0.4rem;border-radius:3px;background:${color};color:white;">${this.escapeHtml(st)}</span></div>`;
+                    if (node.parameters.shipDate) asnBadge += `<div style="padding:0 0.5rem;font-size:0.7rem;color:#6c757d;"><i class="bi bi-calendar me-1"></i>${this.escapeHtml(node.parameters.shipDate)}</div>`;
+                    if (node.parameters.transportMode) asnBadge += `<div style="padding:0 0.5rem;font-size:0.7rem;color:#6c757d;"><i class="bi bi-signpost me-1"></i>${this.escapeHtml(node.parameters.transportMode)}</div>`;
+                }
+
                 nodeEl.innerHTML = `
                     <div class="epr-node-header" style="position: relative;">
                         ${packagingHierarchyPill}
@@ -1789,6 +1807,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                         </div>
                     </div>
                     <div class="epr-node-type">${this.getTypeLabel(node.type)}</div>
+                    ${supplierInfo}
+                    ${asnBadge}
                     ${node.parameters?.description ? `<div class="epr-node-description" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #666; border-top: 1px solid #eee; margin-top: 0.25rem;"><span class="epr-description-text" style="display: block; max-width: 30ch; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${this.escapeHtml(node.parameters.description).replace(/\n/g, '<br>')}</span></div>` : ''}
                     ${node.parameters?.notes ? `<div class="epr-node-notes" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #666; border-top: 1px solid #eee; margin-top: 0.25rem;"><i class="bi bi-sticky"></i> <span class="epr-notes-text" style="display: block; max-width: 30ch; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${this.escapeHtml(node.parameters.notes).replace(/\n/g, '<br>')}</span></div>` : ''}
                     ${transportInfo}
@@ -5518,7 +5538,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 'transport': 'Transport',
                 'packaging-group': 'Packaging Group',
                 'distribution-group': 'Distribution Group',
-                'note': 'Note'
+                'note': 'Note',
+                'asn-shipment': 'ASN Shipment'
             };
             return labels[type] || type;
         }
@@ -5553,6 +5574,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             this.renderProductDropdown();
             this.renderSupplierPackagingDropdown();
             this.renderDistributionDropdowns();
+            this.renderPackagingGroupDropdown();
+            this.renderAsnShipmentDropdown();
             console.log('[EPR Types Toolbar] Initial render complete');
             
             // Setup event listeners immediately
@@ -5567,6 +5590,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 this.renderProductDropdown();
                 this.renderSupplierPackagingDropdown();
                 this.renderDistributionDropdowns();
+                this.renderPackagingGroupDropdown();
+                this.renderAsnShipmentDropdown();
                 console.log('[EPR Types Toolbar] API data loaded and rendered');
             } catch (error) {
                 console.warn('[EPR Types Toolbar] API load failed, using seed data:', error);
@@ -5822,6 +5847,22 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     console.log('[EPR Types Toolbar] Load packaging group (split) clicked');
                     this.showLoadPackagingGroupModal();
                 });
+            }
+
+            // Add Packaging Group from Dropdown buttons
+            for (const btnId of ['eprAddPackagingGroupFromDropdownBtn', 'eprAddPackagingGroupFromDropdownBtnSplit']) {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.addSelectedPackagingGroup(); });
+                }
+            }
+
+            // ASN Shipment buttons
+            for (const btnId of ['eprAddAsnShipmentBtn', 'eprAddAsnShipmentBtnSplit']) {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.addSelectedAsnShipment(); });
+                }
             }
             
             // Distribution Groups
@@ -8023,6 +8064,97 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             });
             this.canvasManager.selectNode(node.id);
         }
+
+        async renderPackagingGroupDropdown() {
+            const dropdown = document.getElementById('eprPackagingGroupDropdown');
+            const splitDropdown = document.getElementById('eprPackagingGroupDropdownSplit');
+            const targets = [dropdown, splitDropdown].filter(Boolean);
+            targets.forEach(d => d.innerHTML = '<option value="">Select packaging group...</option>');
+
+            try {
+                const response = await fetch('/api/visual-editor/packaging-groups');
+                if (!response.ok) return;
+                const groups = await response.json();
+                if (!Array.isArray(groups)) return;
+                groups.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                groups.forEach(g => {
+                    targets.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = g.id;
+                        opt.textContent = g.name || `Group ${g.id}`;
+                        d.appendChild(opt);
+                    });
+                });
+            } catch (e) {
+                console.warn('[EPR Types Toolbar] Failed to load packaging groups:', e);
+            }
+        }
+
+        async renderAsnShipmentDropdown() {
+            const dropdown = document.getElementById('eprAsnShipmentDropdown');
+            const splitDropdown = document.getElementById('eprAsnShipmentDropdownSplit');
+            const targets = [dropdown, splitDropdown].filter(Boolean);
+            targets.forEach(d => d.innerHTML = '<option value="">Select ASN shipment...</option>');
+
+            try {
+                const datasetKey = document.getElementById('eprRelationshipDatasetSelect')?.value || '';
+                const url = datasetKey ? `/api/visual-editor/asn-shipments?datasetKey=${encodeURIComponent(datasetKey)}` : '/api/visual-editor/asn-shipments';
+                const response = await fetch(url);
+                if (!response.ok) return;
+                const shipments = await response.json();
+                if (!Array.isArray(shipments)) return;
+                shipments.forEach(s => {
+                    targets.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = `${s.asnNumber} - ${s.shipperName} → ${s.receiverName}`;
+                        opt.dataset.shipment = JSON.stringify(s);
+                        d.appendChild(opt);
+                    });
+                });
+            } catch (e) {
+                console.warn('[EPR Types Toolbar] Failed to load ASN shipments:', e);
+            }
+        }
+
+        addSelectedPackagingGroup() {
+            let dropdown = document.getElementById('eprPackagingGroupDropdown');
+            if (!dropdown || !dropdown.value) dropdown = document.getElementById('eprPackagingGroupDropdownSplit');
+            if (!dropdown || !dropdown.value) return;
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            const groupId = parseInt(dropdown.value, 10);
+            const groupName = selectedOption.textContent;
+            this.canvasManager.addNode({
+                type: 'packaging-group',
+                entityId: groupId,
+                name: groupName,
+                icon: 'bi-collection',
+                containedItems: [],
+                parameters: {}
+            });
+        }
+
+        addSelectedAsnShipment() {
+            let dropdown = document.getElementById('eprAsnShipmentDropdown');
+            if (!dropdown || !dropdown.value) dropdown = document.getElementById('eprAsnShipmentDropdownSplit');
+            if (!dropdown || !dropdown.value) return;
+            const selectedOption = dropdown.options[dropdown.selectedIndex];
+            const data = JSON.parse(selectedOption.dataset.shipment || '{}');
+            this.canvasManager.addNode({
+                type: 'asn-shipment',
+                entityId: data.id,
+                name: `${data.shipperName} → ${data.receiverName}`,
+                icon: 'bi-truck',
+                parameters: {
+                    asnNumber: data.asnNumber,
+                    shipperName: data.shipperName,
+                    receiverName: data.receiverName,
+                    status: data.status,
+                    shipDate: data.shipDate,
+                    transportMode: data.transportMode
+                }
+            });
+        }
         
         async addSelectedProduct() {
             let dropdown = document.getElementById('eprProductLibraryDropdown');
@@ -8086,26 +8218,23 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
         
         _loadSupplyChainIntoCanvas(result, focusProductId) {
             const columnOffsets = {
-                'supplier':           -1270,
-                'supplier-packaging': -990,
-                'raw-material':       -990,
-                'packaging':          -660,
-                'packaging-group':    -330,
-                'product':            0,
-                'distribution':       330
+                'raw-material':    -940,
+                'packaging':       -660,
+                'packaging-group': -330,
+                'product':         0,
+                'distribution':    330,
+                'asn-shipment':    660
             };
             const columnLabels = {
-                'supplier':           'Suppliers',
-                'supplier-packaging': 'Supplier Products',
-                'raw-material':       'Raw Materials',
-                'packaging':          'Packaging Items',
-                'packaging-group':    'Packaging Groups',
-                'product':            'Products',
-                'distribution':       'Distribution'
+                'raw-material':    'Raw Materials',
+                'packaging':       'Packaging Items',
+                'packaging-group': 'Packaging Groups',
+                'product':         'Products',
+                'distribution':    'Distribution',
+                'asn-shipment':    'ASN Shipments'
             };
             const ySpacing = 140;
 
-            // Find rightmost node to position the new subgraph
             let baseX = 100;
             let baseY = 80;
             if (this.canvasManager.nodes.size > 0) {
@@ -8116,14 +8245,16 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 baseX = maxX + 100;
             }
 
-            const productCol = baseX + Math.abs(columnOffsets['supplier']);
+            const productCol = baseX + Math.abs(columnOffsets['raw-material']);
             const columnY = {};
             for (const t of Object.keys(columnOffsets)) columnY[t] = 0;
 
             const nodeIdMap = new Map();
             const addedIds = new Set();
+            const addedNodeData = [];
 
             for (const n of result.nodes) {
+                if (n.type === 'supplier' || n.type === 'supplier-packaging') continue;
                 if (this.canvasManager.nodes.has(n.id)) {
                     nodeIdMap.set(n.id, true);
                     addedIds.add(n.id);
@@ -8133,11 +8264,17 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 const offset = columnOffsets[n.type] ?? 0;
                 const yOff = columnY[n.type] ?? 0;
 
+                const typeIcons = {
+                    'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
+                    'packaging-group': 'bi-collection', 'product': 'bi-bag',
+                    'distribution': 'bi-geo-alt', 'asn-shipment': 'bi-truck'
+                };
                 const nodeData = {
                     id: n.id,
                     type: n.type,
                     entityId: n.entityId,
                     name: n.label || n.sku || 'Unknown',
+                    icon: typeIcons[n.type] || 'bi-circle',
                     x: productCol + offset,
                     y: baseY + yOff,
                     parameters: {}
@@ -8148,17 +8285,49 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.code) nodeData.parameters.code = n.code;
                 if (n.city) nodeData.parameters.city = n.city;
                 if (n.country) nodeData.parameters.country = n.country;
-                if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
                 if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
                 if (n.packId) nodeData.parameters.packId = n.packId;
                 if (n.layer) nodeData.parameters.layer = n.layer;
-                if (n.productCode) nodeData.parameters.productCode = n.productCode;
+                if (n.suppliers) nodeData.parameters.suppliers = n.suppliers;
+                if (n.asnNumber) nodeData.parameters.asnNumber = n.asnNumber;
+                if (n.shipperName) nodeData.parameters.shipperName = n.shipperName;
+                if (n.receiverName) nodeData.parameters.receiverName = n.receiverName;
+                if (n.status) nodeData.parameters.status = n.status;
+                if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
+                if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
 
                 this.canvasManager.nodes.set(n.id, nodeData);
-                this.canvasManager.renderNode(nodeData);
                 nodeIdMap.set(n.id, true);
                 addedIds.add(n.id);
+                addedNodeData.push(nodeData);
                 columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+            }
+
+            // Auto-nest packaging items into groups, raw materials into packaging items
+            for (const nd of addedNodeData) {
+                if (nd.type !== 'packaging-group') continue;
+                const itemIds = nd._packagingItemIds || [];
+                if (!nd.containedItems) nd.containedItems = [];
+                for (const pkgLibId of itemIds) {
+                    const pkgNodeId = `packaging-${pkgLibId}`;
+                    const pkgNode = this.canvasManager.nodes.get(pkgNodeId);
+                    if (!pkgNode) continue;
+                    pkgNode.groupId = nd.id;
+                    if (!nd.containedItems.includes(pkgNodeId)) nd.containedItems.push(pkgNodeId);
+                    const rawMatIds = pkgNode._rawMaterialIds || [];
+                    for (const rmId of rawMatIds) {
+                        const rmNodeId = `raw-material-${rmId}`;
+                        const rmNode = this.canvasManager.nodes.get(rmNodeId);
+                        if (!rmNode) continue;
+                        rmNode.groupId = nd.id;
+                        rmNode.parentItemId = pkgNodeId;
+                        if (!nd.containedItems.includes(rmNodeId)) nd.containedItems.push(rmNodeId);
+                    }
+                }
+            }
+
+            for (const nd of addedNodeData) {
+                this.canvasManager.renderNode(nd);
             }
 
             // Column headers
@@ -10920,13 +11089,12 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             this.canvasManager.connectionsLayer.innerHTML = '';
 
             const columnConfig = {
-                'supplier':           { x: 50,   label: 'Suppliers' },
-                'supplier-packaging': { x: 330,  label: 'Supplier Products' },
-                'raw-material':       { x: 330,  label: 'Raw Materials' },
-                'packaging':          { x: 660,  label: 'Packaging Items' },
-                'packaging-group':    { x: 990,  label: 'Packaging Groups' },
-                'product':            { x: 1320, label: 'Products' },
-                'distribution':       { x: 1650, label: 'Distribution' }
+                'raw-material':    { x: 50,   label: 'Raw Materials' },
+                'packaging':       { x: 330,  label: 'Packaging Items' },
+                'packaging-group': { x: 660,  label: 'Packaging Groups' },
+                'product':         { x: 990,  label: 'Products' },
+                'distribution':    { x: 1320, label: 'Distribution' },
+                'asn-shipment':    { x: 1650, label: 'ASN Shipments' }
             };
             const columnY = {};
             for (const t of Object.keys(columnConfig)) columnY[t] = 0;
@@ -10935,17 +11103,26 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             const nodeStartY = 70;
 
             const nodeIdMap = new Map();
+            const rawNodeData = [];
 
             for (const n of result.nodes) {
+                if (n.type === 'supplier' || n.type === 'supplier-packaging') continue;
+
                 const cfg = columnConfig[n.type];
                 const col = cfg ? cfg.x : 600;
                 const yOff = columnY[n.type] ?? 0;
 
+                const typeIcons = {
+                    'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
+                    'packaging-group': 'bi-collection', 'product': 'bi-bag',
+                    'distribution': 'bi-geo-alt', 'asn-shipment': 'bi-truck'
+                };
                 const nodeData = {
                     id: n.id,
                     type: n.type,
                     entityId: n.entityId,
                     name: n.label || n.sku || 'Unknown',
+                    icon: typeIcons[n.type] || 'bi-circle',
                     x: col,
                     y: nodeStartY + yOff,
                     parameters: {}
@@ -10956,15 +11133,51 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.code) nodeData.parameters.code = n.code;
                 if (n.city) nodeData.parameters.city = n.city;
                 if (n.country) nodeData.parameters.country = n.country;
-                if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
                 if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
                 if (n.packId) nodeData.parameters.packId = n.packId;
                 if (n.layer) nodeData.parameters.layer = n.layer;
-                if (n.productCode) nodeData.parameters.productCode = n.productCode;
+                if (n.asnNumber) nodeData.parameters.asnNumber = n.asnNumber;
+                if (n.shipperName) nodeData.parameters.shipperName = n.shipperName;
+                if (n.receiverName) nodeData.parameters.receiverName = n.receiverName;
+                if (n.status) nodeData.parameters.status = n.status;
+                if (n.shipDate) nodeData.parameters.shipDate = n.shipDate;
+                if (n.transportMode) nodeData.parameters.transportMode = n.transportMode;
+                if (n.totalWeight) nodeData.parameters.totalWeight = n.totalWeight;
+                if (n.suppliers) nodeData.parameters.suppliers = n.suppliers;
+                if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
+                if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
 
                 this.canvasManager.nodes.set(n.id, nodeData);
                 nodeIdMap.set(n.id, true);
+                rawNodeData.push({ apiNode: n, nodeData });
                 columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+            }
+
+            // Auto-nest: packaging items into packaging groups, raw materials into packaging items
+            for (const { apiNode, nodeData } of rawNodeData) {
+                if (nodeData.type !== 'packaging-group') continue;
+                const itemIds = nodeData._packagingItemIds || [];
+                if (!nodeData.containedItems) nodeData.containedItems = [];
+                for (const pkgLibId of itemIds) {
+                    const pkgNodeId = `packaging-${pkgLibId}`;
+                    const pkgNode = this.canvasManager.nodes.get(pkgNodeId);
+                    if (!pkgNode) continue;
+                    pkgNode.groupId = nodeData.id;
+                    if (!nodeData.containedItems.includes(pkgNodeId))
+                        nodeData.containedItems.push(pkgNodeId);
+
+                    // Nest raw materials under this packaging item
+                    const rawMatIds = pkgNode._rawMaterialIds || [];
+                    for (const rmId of rawMatIds) {
+                        const rmNodeId = `raw-material-${rmId}`;
+                        const rmNode = this.canvasManager.nodes.get(rmNodeId);
+                        if (!rmNode) continue;
+                        rmNode.groupId = nodeData.id;
+                        rmNode.parentItemId = pkgNodeId;
+                        if (!nodeData.containedItems.includes(rmNodeId))
+                            nodeData.containedItems.push(rmNodeId);
+                    }
+                }
             }
 
             // Render column header labels

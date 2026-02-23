@@ -853,29 +853,59 @@ public class VisualEditorController : Controller
         }
     }
 
+    [HttpGet]
+    [Route("api/visual-editor/asn-shipments")]
+    public async Task<IActionResult> GetAsnShipments([FromQuery] string? datasetKey = null)
+    {
+        var query = _context.AsnShipments.AsQueryable();
+        if (!string.IsNullOrEmpty(datasetKey))
+            query = query.Where(s => s.DatasetKey == datasetKey);
+        var shipments = await query.OrderByDescending(s => s.ShipDate).Select(s => new {
+            id = s.Id, asnNumber = s.AsnNumber, shipperName = s.ShipperName,
+            receiverName = s.ReceiverName, status = s.Status,
+            shipDate = s.ShipDate.ToString("yyyy-MM-dd"),
+            transportMode = s.TransportMode
+        }).ToListAsync();
+        return Json(shipments);
+    }
+
     private async Task<(List<object> nodes, List<object> edges)> BuildSupplyChainGraph(string? datasetKey, int? singleProductId)
     {
         var nodes = new List<object>();
         var edges = new List<object>();
         var addedNodeIds = new HashSet<string>();
 
-        // 1. Products
+        // 1. Products (with supplier packaging embedded as parameters)
         var productsQuery = _context.Products.AsQueryable();
         if (singleProductId.HasValue)
             productsQuery = productsQuery.Where(p => p.Id == singleProductId.Value);
         else if (!string.IsNullOrEmpty(datasetKey))
             productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
         var products = await productsQuery.OrderBy(p => p.Sku).ToListAsync();
+        var productIds = products.Select(p => p.Id).ToHashSet();
+
+        var supplierProductLinks = await _context.ProductPackagingSupplierProducts
+            .Where(ppsp => productIds.Contains(ppsp.ProductId))
+            .Include(ppsp => ppsp.PackagingSupplierProduct).ThenInclude(psp => psp.PackagingSupplier)
+            .ToListAsync();
+        var suppliersByProduct = supplierProductLinks
+            .GroupBy(l => l.ProductId)
+            .ToDictionary(g => g.Key, g => g.Select(l => new {
+                name = l.PackagingSupplierProduct.Name,
+                supplierName = l.PackagingSupplierProduct.PackagingSupplier.Name,
+                city = l.PackagingSupplierProduct.PackagingSupplier.City,
+                country = l.PackagingSupplierProduct.PackagingSupplier.Country
+            }).ToList() as object);
 
         foreach (var p in products)
         {
             var nodeId = $"product-{p.Id}";
-            nodes.Add(new { id = nodeId, type = "product", entityId = p.Id, label = p.Name, sku = p.Sku, imageUrl = p.ImageUrl });
+            suppliersByProduct.TryGetValue(p.Id, out var spList);
+            nodes.Add(new { id = nodeId, type = "product", entityId = p.Id, label = p.Name, sku = p.Sku, imageUrl = p.ImageUrl, suppliers = spList });
             addedNodeIds.Add(nodeId);
         }
-        var productIds = products.Select(p => p.Id).ToHashSet();
 
-        // 2. PackagingLibrary items (packaging items) linked to products via PackagingUnit chain
+        // 2. PackagingLibrary items linked to products via PackagingUnit chain
         var productPackagings = await _context.ProductPackagings
             .Where(pp => productIds.Contains(pp.ProductId))
             .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
@@ -889,25 +919,20 @@ public class VisualEditorController : Controller
             if (!packagingUnitNameToProductIds.ContainsKey(unitName))
                 packagingUnitNameToProductIds[unitName] = new HashSet<int>();
             packagingUnitNameToProductIds[unitName].Add(pp.ProductId);
-
             foreach (var item in pp.PackagingUnit.Items)
                 usedPackagingTypeIds.Add(item.PackagingTypeId);
         }
 
-        // Load PackagingLibrary items filtered by dataset (or by matching names from used PackagingTypes)
         var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
         if (singleProductId.HasValue)
         {
             var usedPtNames = await _context.PackagingTypes
                 .Where(pt => usedPackagingTypeIds.Contains(pt.Id))
-                .Select(pt => pt.Name)
-                .ToListAsync();
+                .Select(pt => pt.Name).ToListAsync();
             packagingLibQuery = packagingLibQuery.Where(pl => usedPtNames.Contains(pl.Name));
         }
         else if (!string.IsNullOrEmpty(datasetKey))
-        {
             packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == datasetKey);
-        }
 
         var packagingLibraries = await packagingLibQuery
             .Include(pl => pl.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
@@ -918,47 +943,42 @@ public class VisualEditorController : Controller
         foreach (var pl in packagingLibraries)
         {
             var plNodeId = $"packaging-{pl.Id}";
+
+            // Embed suppliers as parameters instead of separate nodes
+            var plSuppliers = pl.PackagingLibrarySupplierProducts.Select(plsp => new {
+                name = plsp.PackagingSupplierProduct.Name,
+                supplierName = plsp.PackagingSupplierProduct.PackagingSupplier.Name,
+                city = plsp.PackagingSupplierProduct.PackagingSupplier.City,
+                country = plsp.PackagingSupplierProduct.PackagingSupplier.Country
+            }).ToList();
+
+            // Collect raw material IDs for nesting
+            var rawMatIds = pl.PackagingLibraryMaterials
+                .Where(plm => plm.MaterialTaxonomy != null)
+                .Select(plm => plm.MaterialTaxonomyId).ToList();
+
             if (addedNodeIds.Add(plNodeId))
             {
-                nodes.Add(new { id = plNodeId, type = "packaging", entityId = pl.Id, label = pl.Name, taxonomyCode = pl.TaxonomyCode });
+                nodes.Add(new {
+                    id = plNodeId, type = "packaging", entityId = pl.Id,
+                    label = pl.Name, taxonomyCode = pl.TaxonomyCode,
+                    suppliers = plSuppliers as object,
+                    rawMaterialIds = rawMatIds
+                });
             }
             pkgLibIds.Add(pl.Id);
 
-            // Raw material edges
             foreach (var plm in pl.PackagingLibraryMaterials)
             {
                 if (plm.MaterialTaxonomy == null) continue;
                 var matNodeId = $"raw-material-{plm.MaterialTaxonomyId}";
                 if (addedNodeIds.Add(matNodeId))
-                {
                     nodes.Add(new { id = matNodeId, type = "raw-material", entityId = plm.MaterialTaxonomyId, label = plm.MaterialTaxonomy.DisplayName, code = plm.MaterialTaxonomy.Code });
-                }
                 edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial" });
-            }
-
-            // Supplier product -> packaging item edges
-            foreach (var plsp in pl.PackagingLibrarySupplierProducts)
-            {
-                var sp = plsp.PackagingSupplierProduct;
-                var spNodeId = $"supplier-pkg-{sp.Id}";
-                if (addedNodeIds.Add(spNodeId))
-                {
-                    nodes.Add(new { id = spNodeId, type = "supplier-packaging", entityId = sp.Id, label = sp.Name, productCode = sp.ProductCode });
-                }
-                edges.Add(new { from = spNodeId, to = plNodeId, relationship = "PackagingLibrarySupplierProduct" });
-
-                // Parent supplier node
-                var supplier = sp.PackagingSupplier;
-                var supplierNodeId = $"supplier-{supplier.Id}";
-                if (addedNodeIds.Add(supplierNodeId))
-                {
-                    nodes.Add(new { id = supplierNodeId, type = "supplier", entityId = supplier.Id, label = supplier.Name, city = supplier.City, country = supplier.Country });
-                }
-                edges.Add(new { from = supplierNodeId, to = spNodeId, relationship = "SupplierProduct" });
             }
         }
 
-        // 3. Packaging Groups containing the packaging library items
+        // 3. Packaging Groups with nesting metadata
         var packagingGroups = await _context.PackagingGroups
             .Where(g => g.IsActive)
             .Include(g => g.Items).ThenInclude(gi => gi.PackagingLibrary)
@@ -971,9 +991,16 @@ public class VisualEditorController : Controller
         foreach (var g in groupsFiltered)
         {
             var gNodeId = $"packaging-group-{g.Id}";
+            var itemIds = g.Items.Where(gi => pkgLibIds.Contains(gi.PackagingLibraryId))
+                .Select(gi => gi.PackagingLibraryId).ToList();
+
             if (addedNodeIds.Add(gNodeId))
             {
-                nodes.Add(new { id = gNodeId, type = "packaging-group", entityId = g.Id, label = g.Name, packId = g.PackId, layer = g.PackagingLayer });
+                nodes.Add(new {
+                    id = gNodeId, type = "packaging-group", entityId = g.Id,
+                    label = g.Name, packId = g.PackId, layer = g.PackagingLayer,
+                    packagingItemIds = itemIds
+                });
             }
             foreach (var gi in g.Items)
             {
@@ -982,7 +1009,7 @@ public class VisualEditorController : Controller
             }
         }
 
-        // 4. Packaging Group -> Product edges (via matching PackagingUnit name to PackagingGroup name)
+        // 4. Packaging Group -> Product edges
         foreach (var g in groupsFiltered)
         {
             if (packagingUnitNameToProductIds.TryGetValue(g.Name, out var pIds))
@@ -1002,14 +1029,51 @@ public class VisualEditorController : Controller
             distributionsQuery = distributionsQuery.Where(d => productIds.Contains(d.ProductId));
         var distributions = await distributionsQuery.ToListAsync();
 
+        var distCities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in distributions)
         {
             var distNodeId = $"distribution-{d.Id}";
             if (addedNodeIds.Add(distNodeId))
-            {
                 nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
-            }
             edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
+            if (!string.IsNullOrEmpty(d.City)) distCities.Add(d.City);
+        }
+
+        // 6. ASN Shipments linked via matching pallet destination city to distribution city
+        var asnQuery = _context.AsnShipments.Include(s => s.Pallets).ThenInclude(p => p.LineItems).AsQueryable();
+        if (singleProductId.HasValue)
+        {
+            var productGtins = products.Where(p => !string.IsNullOrEmpty(p.Gtin)).Select(p => p.Gtin!).ToHashSet();
+            asnQuery = asnQuery.Where(s => s.Pallets.Any(p => p.LineItems.Any(li => productGtins.Contains(li.Gtin))));
+        }
+        else if (!string.IsNullOrEmpty(datasetKey))
+            asnQuery = asnQuery.Where(s => s.DatasetKey == datasetKey);
+        var asnShipments = await asnQuery.ToListAsync();
+
+        foreach (var s in asnShipments)
+        {
+            var asnNodeId = $"asn-shipment-{s.Id}";
+            if (addedNodeIds.Add(asnNodeId))
+            {
+                nodes.Add(new {
+                    id = asnNodeId, type = "asn-shipment", entityId = s.Id,
+                    label = $"{s.ShipperName} → {s.ReceiverName}",
+                    asnNumber = s.AsnNumber, shipperName = s.ShipperName,
+                    receiverName = s.ReceiverName, status = s.Status,
+                    shipDate = s.ShipDate.ToString("yyyy-MM-dd"),
+                    transportMode = s.TransportMode, totalWeight = s.TotalWeight
+                });
+            }
+
+            // Link distribution -> ASN by matching pallet destination city
+            foreach (var pallet in s.Pallets)
+            {
+                if (string.IsNullOrEmpty(pallet.DestinationCity)) continue;
+                var matchingDists = distributions.Where(d =>
+                    string.Equals(d.City, pallet.DestinationCity, StringComparison.OrdinalIgnoreCase));
+                foreach (var md in matchingDists)
+                    edges.Add(new { from = $"distribution-{md.Id}", to = asnNodeId, relationship = "AsnDistribution" });
+            }
         }
 
         return (nodes, edges);
