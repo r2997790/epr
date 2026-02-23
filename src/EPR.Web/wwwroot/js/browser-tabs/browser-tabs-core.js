@@ -239,7 +239,10 @@
         closeAllTabs() {
             this.tabs = [];
             this.activeTabId = null;
-            this.saveState();
+            try {
+                localStorage.removeItem(this.TAB_STORAGE_KEY);
+                localStorage.removeItem(this.ACTIVE_TAB_KEY);
+            } catch (e) {}
             debugLog('All tabs closed');
         }
         

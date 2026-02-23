@@ -26,7 +26,8 @@ public class AlcoholicBeveragesDatasetSeeder
         if (existingProductCount > 0 && existingAsnCount > 0)
         {
             await UpdateProductImagesIfMissing();
-            Console.WriteLine("Alcoholic Beverages dataset verified (images updated if needed)");
+            await UpdateGeographyIfNeeded();
+            Console.WriteLine("Alcoholic Beverages dataset verified (images + geography updated if needed)");
             return;
         }
 
@@ -257,6 +258,94 @@ public class AlcoholicBeveragesDatasetSeeder
                 p.ImageUrl = url;
         }
         if (products.Count > 0) await _context.SaveChangesAsync();
+    }
+
+    private async Task UpdateGeographyIfNeeded()
+    {
+        var auCities = new[] { "Sydney", "Melbourne", "Brisbane" };
+        var ukCities = new[] { "London", "Manchester", "Birmingham" };
+
+        var products = await _context.Products.Where(p => p.DatasetKey == DatasetKey).OrderBy(p => p.Sku).ToListAsync();
+        if (products.Count == 0) return;
+        var auCount = (int)Math.Ceiling(products.Count * 0.8);
+        var changed = false;
+        for (int i = 0; i < products.Count; i++)
+        {
+            var expected = i < auCount ? "AU" : "FR";
+            if (products[i].CountryOfOrigin != expected) { products[i].CountryOfOrigin = expected; changed = true; }
+        }
+
+        var productIds = products.Select(p => p.Id).ToList();
+        var forms = await _context.ProductForms.Where(pf => productIds.Contains(pf.ProductId)).ToListAsync();
+        var auProductIds = new HashSet<int>(products.Take(auCount).Select(p => p.Id));
+        foreach (var f in forms)
+        {
+            var expected = auProductIds.Contains(f.ProductId) ? "AU" : "FR";
+            if (f.CountryOfOrigin != expected) { f.CountryOfOrigin = expected; changed = true; }
+        }
+
+        var distributions = await _context.Distributions.Where(d => d.DatasetKey == DatasetKey).ToListAsync();
+        var distByProduct = distributions.GroupBy(d => d.ProductId).ToDictionary(g => g.Key, g => g.ToList());
+        var rnd = new Random(43);
+        foreach (var p in products)
+        {
+            if (!distByProduct.TryGetValue(p.Id, out var dists)) continue;
+            var isAu = auProductIds.Contains(p.Id);
+            foreach (var d in dists)
+            {
+                var cities = isAu ? auCities : ukCities;
+                var expectedCountry = isAu ? "Australia" : "UK";
+                if (d.Country != expectedCountry)
+                {
+                    d.City = cities[rnd.Next(cities.Length)];
+                    d.StateProvince = d.City;
+                    d.Country = expectedCountry;
+                    changed = true;
+                }
+            }
+        }
+
+        var shipments = await _context.AsnShipments.Where(s => s.DatasetKey == DatasetKey).OrderBy(s => s.AsnNumber).ToListAsync();
+        var auShipCount = (int)Math.Ceiling(shipments.Count * 0.8);
+        var auReceivers = new[] { ("9390987654321", "WineDirect Sydney", "Sydney"), ("9390987654322", "SpiritHub Melbourne", "Melbourne"), ("9390987654323", "BrewDepot Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "WineDirect London", "London"), ("5060987654322", "SpiritHub Manchester", "Manchester"), ("5060987654323", "BrewDepot Birmingham", "Birmingham") };
+        for (int i = 0; i < shipments.Count; i++)
+        {
+            var s = shipments[i];
+            var isAu = i < auShipCount;
+            var expectedCC = isAu ? "AU" : "GB";
+            if (s.ShipperCountryCode != expectedCC)
+            {
+                var rec = isAu ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+                s.ShipperCity = isAu ? "Sydney" : "Manchester";
+                s.ShipperCountryCode = expectedCC;
+                s.ReceiverGln = rec.Item1;
+                s.ReceiverName = rec.Item2;
+                changed = true;
+            }
+        }
+
+        var shipmentIds = shipments.Select(s => s.Id).ToList();
+        var pallets = await _context.AsnPallets.Where(p => shipmentIds.Contains(p.AsnShipmentId)).ToListAsync();
+        var auShipmentIds = new HashSet<int>(shipments.Take(auShipCount).Select(s => s.Id));
+        foreach (var pal in pallets)
+        {
+            var isAu = auShipmentIds.Contains(pal.AsnShipmentId);
+            var expectedCC = isAu ? "AU" : "GB";
+            if (pal.DestinationCountryCode != expectedCC)
+            {
+                var cities2 = isAu ? auCities : ukCities;
+                pal.DestinationCity = cities2[rnd.Next(cities2.Length)];
+                pal.DestinationCountryCode = expectedCC;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            await _context.SaveChangesAsync();
+            Console.WriteLine("  ✓ Alcoholic Beverages geography updated to 80% AU / 20% international");
+        }
     }
 
     private async Task<MaterialTaxonomy> EnsureMaterialTaxonomy(string code, string displayName, int level)
