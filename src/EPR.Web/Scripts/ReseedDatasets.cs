@@ -79,10 +79,13 @@ public static class ReseedDatasets
             .ToListAsync();
         context.Products.RemoveRange(products);
 
-        // 3. Delete PackagingGroups (cascades to PackagingGroupItems)
+        // 3. Delete PackagingGroups (null out self-FK first to avoid Restrict violation)
         var groups = await context.PackagingGroups
             .Where(g => g.DatasetKey == datasetKey)
             .ToListAsync();
+        foreach (var g in groups)
+            g.ParentPackagingGroupId = null;
+        await context.SaveChangesAsync();
         context.PackagingGroups.RemoveRange(groups);
 
         // 4. Delete PackagingLibraries (cascades to PackagingLibraryMaterials, PackagingLibrarySupplierProducts)

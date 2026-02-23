@@ -32,7 +32,10 @@ public class PackagingDummyDataSeeder
                 new() { Level = 1, Code = "ALU", DisplayName = "Aluminium", Name = "Aluminium", SortOrder = 4, IsActive = true, CreatedAt = now },
                 new() { Level = 1, Code = "PP", DisplayName = "Polypropylene", Name = "PP", SortOrder = 5, IsActive = true, CreatedAt = now },
                 new() { Level = 1, Code = "HDPE", DisplayName = "High-Density Polyethylene", Name = "HDPE", SortOrder = 6, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "PLA", DisplayName = "Polylactic Acid (Compostable)", Name = "PLA", SortOrder = 7, IsActive = true, CreatedAt = now }
+                new() { Level = 1, Code = "PLA", DisplayName = "Polylactic Acid (Compostable)", Name = "PLA", SortOrder = 7, IsActive = true, CreatedAt = now },
+                new() { Level = 1, Code = "WOOD", DisplayName = "Softwood Timber", Name = "Wood", SortOrder = 8, IsActive = true, CreatedAt = now },
+                new() { Level = 1, Code = "LDPE", DisplayName = "Low-Density Polyethylene Film", Name = "LDPE", SortOrder = 9, IsActive = true, CreatedAt = now },
+                new() { Level = 1, Code = "STEEL", DisplayName = "Steel (Nails/Fasteners)", Name = "Steel", SortOrder = 10, IsActive = true, CreatedAt = now }
             };
             _context.MaterialTaxonomies.AddRange(materials);
             await _context.SaveChangesAsync();
@@ -48,6 +51,9 @@ public class PackagingDummyDataSeeder
             var pla = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PLA");
             var gls = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "GLS");
             var alu = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "ALU");
+            var wood = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "WOOD");
+            var ldpe = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "LDPE");
+            var steel = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "STEEL");
 
             var items = new List<PackagingLibrary>
             {
@@ -58,7 +64,10 @@ public class PackagingDummyDataSeeder
                 new() { TaxonomyCode = "GLS.JAR.250", Name = "Glass Jar 250g", Weight = 180, MaterialTaxonomyId = gls?.Id, IsActive = true, CreatedAt = now },
                 new() { TaxonomyCode = "PP.CON.500", Name = "PP Container 500ml", Weight = 30, MaterialTaxonomyId = pp?.Id, IsActive = true, CreatedAt = now },
                 new() { TaxonomyCode = "PLA.FILM", Name = "Compostable Film", Weight = 5, MaterialTaxonomyId = pla?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "ALU.TRAY", Name = "Aluminium Tray", Weight = 15, MaterialTaxonomyId = alu?.Id, IsActive = true, CreatedAt = now }
+                new() { TaxonomyCode = "ALU.TRAY", Name = "Aluminium Tray", Weight = 15, MaterialTaxonomyId = alu?.Id, IsActive = true, CreatedAt = now },
+                new() { TaxonomyCode = "WOOD.PLT", Name = "Wood Pallet", Weight = 22000, MaterialTaxonomyId = wood?.Id, IsActive = true, CreatedAt = now },
+                new() { TaxonomyCode = "LDPE.WRAP", Name = "Stretch Wrap", Weight = 300, MaterialTaxonomyId = ldpe?.Id, IsActive = true, CreatedAt = now },
+                new() { TaxonomyCode = "STEEL.NAIL", Name = "Pallet Nails", Weight = 200, MaterialTaxonomyId = steel?.Id, IsActive = true, CreatedAt = now }
             };
             _context.PackagingLibraries.AddRange(items);
             await _context.SaveChangesAsync();
@@ -86,42 +95,61 @@ public class PackagingDummyDataSeeder
             var cbBox2 = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "CB.BOX.SML");
             var glassJar = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "GLS.JAR.250");
             var ppContainer = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "PP.CON.500");
+            var woodPallet = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "WOOD.PLT");
+            var stretchWrap = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "LDPE.WRAP");
+            var palletNails = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "STEEL.NAIL");
 
-            var groups = new List<PackagingGroup>
+            // Create tertiary first (no parent)
+            var gTertiary = new PackagingGroup
             {
-                new()
-                {
-                    PackId = "PG-001", Name = "Bottle + Cap + Label", PackagingLayer = "Primary", Style = "Beverage",
-                    TotalPackWeight = 28, IsActive = true, CreatedAt = now
-                },
-                new()
-                {
-                    PackId = "PG-002", Name = "Gift Box Set", PackagingLayer = "Secondary", Style = "Retail",
-                    TotalPackWeight = 80, IsActive = true, CreatedAt = now
-                },
-                new()
-                {
-                    PackId = "PG-003", Name = "Jar with Lid", PackagingLayer = "Primary", Style = "Food",
-                    TotalPackWeight = 200, IsActive = true, CreatedAt = now
-                }
+                PackId = "PG-PLT", Name = "Shipping Pallet", PackagingLayer = "Tertiary", Style = "Logistics",
+                TotalPackWeight = 22500, IsActive = true, CreatedAt = now
             };
-            _context.PackagingGroups.AddRange(groups);
+            _context.PackagingGroups.Add(gTertiary);
             await _context.SaveChangesAsync();
 
-            // Add group items
-            var g1 = groups[0];
-            var g2 = groups[1];
-            var g3 = groups[2];
+            // Create secondary (parent = tertiary)
+            var gSecondary = new PackagingGroup
+            {
+                PackId = "PG-002", Name = "Shipping Carton", PackagingLayer = "Secondary", Style = "Retail",
+                TotalPackWeight = 80, IsActive = true, CreatedAt = now,
+                ParentPackagingGroupId = gTertiary.Id, QuantityInParent = 40
+            };
+            _context.PackagingGroups.Add(gSecondary);
+            await _context.SaveChangesAsync();
 
-            if (petBottle != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g1.Id, PackagingLibraryId = petBottle.Id, SortOrder = 0, CreatedAt = now });
-            if (hdpeCap != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g1.Id, PackagingLibraryId = hdpeCap.Id, SortOrder = 1, CreatedAt = now });
-            if (paperLabel != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g1.Id, PackagingLibraryId = paperLabel.Id, SortOrder = 2, CreatedAt = now });
+            // Create primaries (parent = secondary)
+            var gPrimary = new PackagingGroup
+            {
+                PackId = "PG-001", Name = "Bottle + Cap + Label", PackagingLayer = "Primary", Style = "Beverage",
+                TotalPackWeight = 28, IsActive = true, CreatedAt = now,
+                ParentPackagingGroupId = gSecondary.Id, QuantityInParent = 20
+            };
+            var gPrimary2 = new PackagingGroup
+            {
+                PackId = "PG-003", Name = "Jar with Lid", PackagingLayer = "Primary", Style = "Food",
+                TotalPackWeight = 200, IsActive = true, CreatedAt = now
+            };
+            _context.PackagingGroups.AddRange(gPrimary, gPrimary2);
+            await _context.SaveChangesAsync();
 
-            if (cbBox2 != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g2.Id, PackagingLibraryId = cbBox2.Id, SortOrder = 0, CreatedAt = now });
-            if (petBottle != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g2.Id, PackagingLibraryId = petBottle.Id, SortOrder = 1, CreatedAt = now });
+            // Primary items
+            if (petBottle != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gPrimary.Id, PackagingLibraryId = petBottle.Id, SortOrder = 0, CreatedAt = now });
+            if (hdpeCap != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gPrimary.Id, PackagingLibraryId = hdpeCap.Id, SortOrder = 1, CreatedAt = now });
+            if (paperLabel != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gPrimary.Id, PackagingLibraryId = paperLabel.Id, SortOrder = 2, CreatedAt = now });
 
-            if (glassJar != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g3.Id, PackagingLibraryId = glassJar.Id, SortOrder = 0, CreatedAt = now });
-            if (ppContainer != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = g3.Id, PackagingLibraryId = ppContainer.Id, SortOrder = 1, CreatedAt = now });
+            // Secondary items
+            if (cbBox2 != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gSecondary.Id, PackagingLibraryId = cbBox2.Id, SortOrder = 0, CreatedAt = now });
+            if (paperLabel != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gSecondary.Id, PackagingLibraryId = paperLabel.Id, SortOrder = 1, CreatedAt = now });
+
+            // Tertiary items
+            if (woodPallet != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gTertiary.Id, PackagingLibraryId = woodPallet.Id, SortOrder = 0, CreatedAt = now });
+            if (stretchWrap != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gTertiary.Id, PackagingLibraryId = stretchWrap.Id, SortOrder = 1, CreatedAt = now });
+            if (palletNails != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gTertiary.Id, PackagingLibraryId = palletNails.Id, SortOrder = 2, CreatedAt = now });
+
+            // Jar with Lid items
+            if (glassJar != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gPrimary2.Id, PackagingLibraryId = glassJar.Id, SortOrder = 0, CreatedAt = now });
+            if (ppContainer != null) _context.PackagingGroupItems.Add(new PackagingGroupItem { PackagingGroupId = gPrimary2.Id, PackagingLibraryId = ppContainer.Id, SortOrder = 1, CreatedAt = now });
 
             await _context.SaveChangesAsync();
         }

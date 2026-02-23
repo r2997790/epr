@@ -464,6 +464,10 @@ public class EPRDbContext : DbContext
             entity.Property(e => e.DatasetKey).HasMaxLength(50);
             entity.HasIndex(e => e.PackId).IsUnique();
             entity.HasIndex(e => e.DatasetKey);
+            entity.HasOne(e => e.ParentPackagingGroup)
+                .WithMany(e => e.ChildGroups)
+                .HasForeignKey(e => e.ParentPackagingGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // PackagingGroupItem configuration

@@ -911,7 +911,6 @@ public class VisualEditorController : Controller
             .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
             .ToListAsync();
 
-        // Build map: PackagingType name -> set of product IDs (for linking groups to products)
         var ptNameToProductIds = new Dictionary<string, HashSet<int>>();
         var usedPackagingTypeIds = new HashSet<int>();
         foreach (var pp in productPackagings)
@@ -926,15 +925,12 @@ public class VisualEditorController : Controller
             }
         }
 
-        var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
+        // Determine dataset scope for packaging libraries
         string? productDatasetKey = null;
+        var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
         if (singleProductId.HasValue)
         {
             productDatasetKey = products.FirstOrDefault()?.DatasetKey;
-            var usedPtNames = await _context.PackagingTypes
-                .Where(pt => usedPackagingTypeIds.Contains(pt.Id))
-                .Select(pt => pt.Name).ToListAsync();
-            packagingLibQuery = packagingLibQuery.Where(pl => usedPtNames.Contains(pl.Name));
             if (!string.IsNullOrEmpty(productDatasetKey))
                 packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == productDatasetKey);
         }
@@ -946,12 +942,13 @@ public class VisualEditorController : Controller
             .Include(pl => pl.PackagingLibrarySupplierProducts).ThenInclude(plsp => plsp.PackagingSupplierProduct).ThenInclude(sp => sp.PackagingSupplier)
             .ToListAsync();
 
-        // Map: PackagingLibrary ID -> set of product IDs (via PL.Name == PT.Name)
         var pkgLibIdToProductIds = new Dictionary<int, HashSet<int>>();
         var pkgLibIds = new HashSet<int>();
-        foreach (var pl in packagingLibraries)
+
+        void AddPackagingLibraryNode(PackagingLibrary pl)
         {
             var plNodeId = $"packaging-{pl.Id}";
+            if (!addedNodeIds.Add(plNodeId)) return;
 
             var plSuppliers = pl.PackagingLibrarySupplierProducts.Select(plsp => new {
                 name = plsp.PackagingSupplierProduct.Name,
@@ -964,20 +961,13 @@ public class VisualEditorController : Controller
                 .Where(plm => plm.MaterialTaxonomy != null)
                 .Select(plm => plm.MaterialTaxonomyId).ToList();
 
-            if (addedNodeIds.Add(plNodeId))
-            {
-                nodes.Add(new {
-                    id = plNodeId, type = "packaging", entityId = pl.Id,
-                    label = pl.Name, taxonomyCode = pl.TaxonomyCode,
-                    suppliers = plSuppliers as object,
-                    rawMaterialIds = rawMatIds,
-                    weight = pl.Weight
-                });
-            }
-            pkgLibIds.Add(pl.Id);
-
-            if (ptNameToProductIds.TryGetValue(pl.Name, out var linkedPIds))
-                pkgLibIdToProductIds[pl.Id] = linkedPIds;
+            nodes.Add(new {
+                id = plNodeId, type = "packaging", entityId = pl.Id,
+                label = pl.Name, taxonomyCode = pl.TaxonomyCode,
+                suppliers = plSuppliers as object,
+                rawMaterialIds = rawMatIds,
+                weight = pl.Weight
+            });
 
             foreach (var plm in pl.PackagingLibraryMaterials)
             {
@@ -985,25 +975,76 @@ public class VisualEditorController : Controller
                 var matNodeId = $"raw-material-{plm.MaterialTaxonomyId}";
                 if (addedNodeIds.Add(matNodeId))
                     nodes.Add(new { id = matNodeId, type = "raw-material", entityId = plm.MaterialTaxonomyId, label = plm.MaterialTaxonomy.DisplayName, code = plm.MaterialTaxonomy.Code });
-                edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial" });
+                edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial", quantity = (int?)null, quantityLabel = (string?)null });
             }
         }
 
-        // 3. Packaging Groups with nesting metadata
-        var packagingGroups = await _context.PackagingGroups
-            .Where(g => g.IsActive)
-            .Include(g => g.Items).ThenInclude(gi => gi.PackagingLibrary)
-            .ToListAsync();
+        foreach (var pl in packagingLibraries)
+        {
+            AddPackagingLibraryNode(pl);
+            pkgLibIds.Add(pl.Id);
+            if (ptNameToProductIds.TryGetValue(pl.Name, out var linkedPIds))
+                pkgLibIdToProductIds[pl.Id] = linkedPIds;
+        }
 
-        var groupsFiltered = packagingGroups
-            .Where(g => g.Items.Any(gi => pkgLibIds.Contains(gi.PackagingLibraryId)))
+        // 3. Load ALL packaging groups for this dataset (including parents not yet matched)
+        var allGroupsQuery = _context.PackagingGroups.Where(g => g.IsActive)
+            .Include(g => g.Items).ThenInclude(gi => gi.PackagingLibrary)
+                .ThenInclude(pl => pl.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
+            .Include(g => g.Items).ThenInclude(gi => gi.PackagingLibrary)
+                .ThenInclude(pl => pl.PackagingLibrarySupplierProducts).ThenInclude(plsp => plsp.PackagingSupplierProduct).ThenInclude(sp => sp.PackagingSupplier)
+            .AsQueryable();
+        if (!string.IsNullOrEmpty(productDatasetKey))
+            allGroupsQuery = allGroupsQuery.Where(g => g.DatasetKey == productDatasetKey);
+        else if (!string.IsNullOrEmpty(datasetKey))
+            allGroupsQuery = allGroupsQuery.Where(g => g.DatasetKey == datasetKey);
+        var allGroups = await allGroupsQuery.ToListAsync();
+        var allGroupsById = allGroups.ToDictionary(g => g.Id);
+
+        // Find primary groups that link to our products
+        var primaryGroups = allGroups
+            .Where(g => (g.PackagingLayer ?? "").Equals("Primary", StringComparison.OrdinalIgnoreCase))
+            .Where(g => g.Items.Any(gi => pkgLibIdToProductIds.ContainsKey(gi.PackagingLibraryId)))
             .ToList();
 
-        foreach (var g in groupsFiltered)
+        // Collect the full chain: primary -> secondary -> tertiary (via ParentPackagingGroupId)
+        var chainGroups = new List<PackagingGroup>();
+        var chainGroupIds = new HashSet<int>();
+        foreach (var pg in primaryGroups)
+        {
+            var current = pg;
+            while (current != null && chainGroupIds.Add(current.Id))
+            {
+                chainGroups.Add(current);
+                current = current.ParentPackagingGroupId.HasValue && allGroupsById.TryGetValue(current.ParentPackagingGroupId.Value, out var parent) ? parent : null;
+            }
+        }
+
+        // Also include any non-primary groups that have items matching our product packaging
+        foreach (var g in allGroups)
+        {
+            if (chainGroupIds.Contains(g.Id)) continue;
+            if (g.Items.Any(gi => pkgLibIds.Contains(gi.PackagingLibraryId)))
+            {
+                chainGroups.Add(g);
+                chainGroupIds.Add(g.Id);
+            }
+        }
+
+        // Emit group nodes + nested item edges, also add any missing packaging library nodes for parent groups
+        foreach (var g in chainGroups)
         {
             var gNodeId = $"packaging-group-{g.Id}";
-            var itemIds = g.Items.Where(gi => pkgLibIds.Contains(gi.PackagingLibraryId))
-                .Select(gi => gi.PackagingLibraryId).ToList();
+            var itemIds = new List<int>();
+            foreach (var gi in g.Items)
+            {
+                if (!pkgLibIds.Contains(gi.PackagingLibraryId))
+                {
+                    AddPackagingLibraryNode(gi.PackagingLibrary);
+                    pkgLibIds.Add(gi.PackagingLibraryId);
+                }
+                itemIds.Add(gi.PackagingLibraryId);
+            }
 
             if (addedNodeIds.Add(gNodeId))
             {
@@ -1011,33 +1052,46 @@ public class VisualEditorController : Controller
                     id = gNodeId, type = "packaging-group", entityId = g.Id,
                     label = g.Name, packId = g.PackId, layer = g.PackagingLayer,
                     packagingItemIds = itemIds,
-                    totalWeight = g.TotalPackWeight
+                    totalWeight = g.TotalPackWeight,
+                    parentPackagingGroupId = g.ParentPackagingGroupId,
+                    quantityInParent = g.QuantityInParent
                 });
             }
             foreach (var gi in g.Items)
-            {
-                if (!pkgLibIds.Contains(gi.PackagingLibraryId)) continue;
-                edges.Add(new { from = $"packaging-{gi.PackagingLibraryId}", to = gNodeId, relationship = "PackagingGroupItem" });
-            }
+                edges.Add(new { from = $"packaging-{gi.PackagingLibraryId}", to = gNodeId, relationship = "PackagingGroupItem", quantity = (int?)null, quantityLabel = (string?)null });
         }
 
-        // 4. Packaging Group -> Product edges via PackagingLibrary -> PackagingType name -> Product
-        foreach (var g in groupsFiltered)
+        // 4. Edges: primary -> product, product -> secondary, secondary -> tertiary
+        foreach (var g in chainGroups)
         {
-            var linkedProducts = new HashSet<int>();
-            foreach (var gi in g.Items)
+            var layer = (g.PackagingLayer ?? "").ToLowerInvariant();
+            if (layer == "primary")
             {
-                if (pkgLibIdToProductIds.TryGetValue(gi.PackagingLibraryId, out var pIds))
+                var linkedProducts = new HashSet<int>();
+                foreach (var gi in g.Items)
+                    if (pkgLibIdToProductIds.TryGetValue(gi.PackagingLibraryId, out var pIds))
+                        foreach (var pid in pIds) linkedProducts.Add(pid);
+
+                foreach (var pid in linkedProducts)
                 {
-                    foreach (var pid in pIds)
-                        linkedProducts.Add(pid);
+                    edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct", quantity = (int?)1, quantityLabel = (string?)null });
+
+                    // product -> secondary (parent of primary), with quantity = primary.QuantityInParent
+                    if (g.ParentPackagingGroupId.HasValue && chainGroupIds.Contains(g.ParentPackagingGroupId.Value))
+                    {
+                        edges.Add(new { from = $"product-{pid}", to = $"packaging-group-{g.ParentPackagingGroupId.Value}", relationship = "ProductSecondary", quantity = g.QuantityInParent, quantityLabel = g.QuantityInParent.HasValue ? $"×{g.QuantityInParent}" : null });
+                    }
                 }
             }
-            foreach (var pid in linkedProducts)
-                edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct" });
+
+            // secondary -> tertiary (or any group -> its parent)
+            if (layer != "primary" && g.ParentPackagingGroupId.HasValue && chainGroupIds.Contains(g.ParentPackagingGroupId.Value))
+            {
+                edges.Add(new { from = $"packaging-group-{g.Id}", to = $"packaging-group-{g.ParentPackagingGroupId.Value}", relationship = "GroupHierarchy", quantity = g.QuantityInParent, quantityLabel = g.QuantityInParent.HasValue ? $"×{g.QuantityInParent}" : null });
+            }
         }
 
-        // 5. Distribution records
+        // 5. Distribution records (no direct product -> distribution edges)
         var distributionsQuery = _context.Distributions.AsQueryable();
         if (singleProductId.HasValue)
             distributionsQuery = distributionsQuery.Where(d => d.ProductId == singleProductId.Value);
@@ -1052,19 +1106,10 @@ public class VisualEditorController : Controller
             var distNodeId = $"distribution-{d.Id}";
             if (addedNodeIds.Add(distNodeId))
                 nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country, quantity = d.Quantity });
-            edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
         }
 
-        // 6. ASN Shipments: product -> ASN -> distribution
-        var gtinToProductNodeIds = new Dictionary<string, HashSet<string>>();
+        // 6. ASN Shipments: tertiary -> ASN -> distribution
         var gtinToDistNodeIds = new Dictionary<string, List<string>>();
-        foreach (var p in products)
-        {
-            if (string.IsNullOrEmpty(p.Gtin)) continue;
-            if (!gtinToProductNodeIds.ContainsKey(p.Gtin))
-                gtinToProductNodeIds[p.Gtin] = new HashSet<string>();
-            gtinToProductNodeIds[p.Gtin].Add($"product-{p.Id}");
-        }
         foreach (var d in distributions)
         {
             var prod = products.FirstOrDefault(p => p.Id == d.ProductId);
@@ -1075,6 +1120,12 @@ public class VisualEditorController : Controller
                 gtinToDistNodeIds[prod.Gtin].Add($"distribution-{d.Id}");
             }
         }
+
+        // Find tertiary group IDs (top-level groups with no parent, or explicitly "Tertiary")
+        var tertiaryGroupNodeIds = chainGroups
+            .Where(g => (g.PackagingLayer ?? "").Equals("Tertiary", StringComparison.OrdinalIgnoreCase) || (!g.ParentPackagingGroupId.HasValue && !(g.PackagingLayer ?? "").Equals("Primary", StringComparison.OrdinalIgnoreCase)))
+            .Select(g => $"packaging-group-{g.Id}")
+            .ToHashSet();
 
         var asnQuery = _context.AsnShipments.Include(s => s.Pallets).ThenInclude(p => p.LineItems).AsQueryable();
         if (singleProductId.HasValue)
@@ -1101,22 +1152,17 @@ public class VisualEditorController : Controller
                 });
             }
 
-            var linkedProductIds = new HashSet<string>();
+            // tertiary -> ASN, ASN -> distribution (via GTIN matching)
             var linkedDistIds = new HashSet<string>();
             foreach (var pallet in s.Pallets)
-            {
                 foreach (var li in pallet.LineItems)
-                {
-                    if (gtinToProductNodeIds.TryGetValue(li.Gtin, out var prodNodeIds))
-                        foreach (var pnid in prodNodeIds) linkedProductIds.Add(pnid);
                     if (gtinToDistNodeIds.TryGetValue(li.Gtin, out var distIds))
                         foreach (var did in distIds) linkedDistIds.Add(did);
-                }
-            }
-            foreach (var pnid in linkedProductIds)
-                edges.Add(new { from = pnid, to = asnNodeId, relationship = "ProductAsn" });
+
+            foreach (var tgId in tertiaryGroupNodeIds)
+                edges.Add(new { from = tgId, to = asnNodeId, relationship = "TertiaryAsn", quantity = (int?)null, quantityLabel = (string?)null });
             foreach (var did in linkedDistIds)
-                edges.Add(new { from = asnNodeId, to = did, relationship = "AsnDistribution" });
+                edges.Add(new { from = asnNodeId, to = did, relationship = "AsnDistribution", quantity = (int?)null, quantityLabel = (string?)null });
         }
 
         return (nodes, edges);

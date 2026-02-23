@@ -77,11 +77,24 @@ public class ConfectionaryDatasetSeeder
         await LinkPackagingSupplier(shippingBox.Id, spShip.Id, true);
         await LinkPackagingSupplier(innerBags.Id, spBag.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("CONF-SHIP-001", "Confectionary Shipping Pack", "Secondary", 415m, DatasetKey);
+        // Pallet packaging items
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "CONF-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "CONF-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
+        // Packaging Groups (Tertiary first, then Secondary, then Primary)
+        var groupPallet = await EnsurePackagingGroup("CONF-PLT-001", "Confectionary Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("CONF-SHIP-001", "Confectionary Shipping Pack", "Secondary", 415m, DatasetKey, groupPallet.Id, 60);
         await AddGroupItem(groupShipping.Id, shippingBox.Id, 0);
         await AddGroupItem(groupShipping.Id, innerBags.Id, 1);
 
-        var groupProduct = await EnsurePackagingGroup("CONF-PROD-001", "Confectionary Product Pack", "Primary", 115m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("CONF-PROD-001", "Confectionary Product Pack", "Primary", 115m, DatasetKey, groupShipping.Id, 24);
         await AddGroupItem(groupProduct.Id, chocolateBox.Id, 0);
         await AddGroupItem(groupProduct.Id, plasticTray.Id, 1);
         await AddGroupItem(groupProduct.Id, foilWrapper.Id, 2);
@@ -399,9 +412,9 @@ public class ConfectionaryDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

@@ -77,13 +77,25 @@ public class ElectronicsDatasetSeeder
         await LinkPackagingSupplier(productBox.Id, spPBox.Id, true);
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
 
-        // Packaging Groups
-        var groupShipping = await EnsurePackagingGroup("ELEC-SHIP-001", "Electronics Shipping Pack", "Secondary", 655m, DatasetKey);
+        // Pallet packaging items
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "ELEC-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "ELEC-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
+        // Packaging Groups (Tertiary first, then Secondary, then Primary)
+        var groupPallet = await EnsurePackagingGroup("ELEC-PLT-001", "Electronics Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("ELEC-SHIP-001", "Electronics Shipping Pack", "Secondary", 655m, DatasetKey, groupPallet.Id, 48);
         await AddGroupItem(groupShipping.Id, boxCardboard.Id, 0);
         await AddGroupItem(groupShipping.Id, innerFoam.Id, 1);
         await AddGroupItem(groupShipping.Id, plasticWrap.Id, 2);
 
-        var groupProduct = await EnsurePackagingGroup("ELEC-PROD-001", "Electronics Product Pack", "Primary", 125m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("ELEC-PROD-001", "Electronics Product Pack", "Primary", 125m, DatasetKey, groupShipping.Id, 12);
         await AddGroupItem(groupProduct.Id, productBox.Id, 0);
         await AddGroupItem(groupProduct.Id, label.Id, 1);
 
@@ -473,7 +485,7 @@ public class ElectronicsDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
         var g = new PackagingGroup
         {
@@ -482,7 +494,9 @@ public class ElectronicsDatasetSeeder
             PackagingLayer = layer,
             TotalPackWeight = totalWeight,
             DatasetKey = datasetKey,
-            IsActive = true
+            IsActive = true,
+            ParentPackagingGroupId = parentGroupId,
+            QuantityInParent = quantityInParent
         };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();

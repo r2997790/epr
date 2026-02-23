@@ -78,11 +78,24 @@ public class AlcoholicBeveragesDatasetSeeder
         await LinkPackagingSupplier(wineBox.Id, spBox.Id, true);
         await LinkPackagingSupplier(shippingCase.Id, spCase.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("ALC-SHIP-001", "Alcoholic Beverages Shipping Pack", "Secondary", 1336m, DatasetKey);
+        // Pallet packaging items
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "ALC-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "ALC-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
+        // Packaging Groups (Tertiary first, then Secondary, then Primary)
+        var groupPallet = await EnsurePackagingGroup("ALC-PLT-001", "Wine Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("ALC-SHIP-001", "Alcoholic Beverages Shipping Pack", "Secondary", 1336m, DatasetKey, groupPallet.Id, 56);
         await AddGroupItem(groupShipping.Id, shippingCase.Id, 0);
         await AddGroupItem(groupShipping.Id, wineBox.Id, 1);
 
-        var groupProduct = await EnsurePackagingGroup("ALC-PROD-001", "Alcoholic Beverages Product Pack", "Primary", 716m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("ALC-PROD-001", "Alcoholic Beverages Product Pack", "Primary", 716m, DatasetKey, groupShipping.Id, 12);
         await AddGroupItem(groupProduct.Id, wineBottle.Id, 0);
         await AddGroupItem(groupProduct.Id, screwCap.Id, 1);
         await AddGroupItem(groupProduct.Id, wineLabel.Id, 2);
@@ -406,9 +419,9 @@ public class AlcoholicBeveragesDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

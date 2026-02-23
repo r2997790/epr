@@ -95,8 +95,20 @@ public class PackagingGroup
     /// Dataset key - filters data by selected dataset
     /// </summary>
     public string? DatasetKey { get; set; }
+
+    /// <summary>
+    /// FK to the next outer packaging level (Primary -> Secondary -> Tertiary)
+    /// </summary>
+    public int? ParentPackagingGroupId { get; set; }
+
+    /// <summary>
+    /// How many of this level fit in one parent (e.g., 20 bottles per box)
+    /// </summary>
+    public int? QuantityInParent { get; set; }
     
     // Navigation properties
+    public virtual PackagingGroup? ParentPackagingGroup { get; set; }
+    public virtual ICollection<PackagingGroup> ChildGroups { get; set; } = new List<PackagingGroup>();
     public virtual ICollection<PackagingGroupItem> Items { get; set; } = new List<PackagingGroupItem>();
 }
 

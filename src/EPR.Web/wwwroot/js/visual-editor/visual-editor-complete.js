@@ -8156,22 +8156,20 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
         
         _loadSupplyChainIntoCanvas(result, focusProductId) {
             const columnOffsets = {
-                'raw-material':             -990,
-                'packaging':                -660,
-                'packaging-group-primary':  -330,
-                'product':                  0,
-                'packaging-group-tertiary': 330,
-                'asn-shipment':             660,
-                'distribution':             990
+                'packaging-group-primary':   -330,
+                'product':                   0,
+                'packaging-group-secondary': 330,
+                'packaging-group-tertiary':  660,
+                'asn-shipment':              990,
+                'distribution':              1320
             };
             const columnLabels = {
-                'raw-material':             'Raw Materials',
-                'packaging':                'Packaging Items',
-                'packaging-group-primary':  'Primary Packaging',
-                'product':                  'Products',
-                'packaging-group-tertiary': 'Secondary/Tertiary Packaging',
-                'asn-shipment':             'ASN Shipments',
-                'distribution':             'Distribution'
+                'packaging-group-primary':   'Primary Packaging',
+                'product':                   'Products',
+                'packaging-group-secondary': 'Secondary Packaging',
+                'packaging-group-tertiary':  'Tertiary Packaging',
+                'asn-shipment':              'ASN Shipments',
+                'distribution':              'Distribution'
             };
             const ySpacing = 140;
 
@@ -8201,15 +8199,18 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     continue;
                 }
 
+                const isNested = (n.type === 'raw-material' || n.type === 'packaging');
+
                 let colKey = n.type;
                 if (n.type === 'packaging-group') {
                     const layer = (n.layer || '').toLowerCase();
-                    colKey = (layer === 'secondary' || layer === 'tertiary' || layer === 'quaternary')
-                        ? 'packaging-group-tertiary' : 'packaging-group-primary';
+                    if (layer === 'tertiary' || layer === 'quaternary') colKey = 'packaging-group-tertiary';
+                    else if (layer === 'secondary') colKey = 'packaging-group-secondary';
+                    else colKey = 'packaging-group-primary';
                 }
 
-                const offset = columnOffsets[colKey] ?? 0;
-                const yOff = columnY[colKey] ?? 0;
+                const offset = isNested ? -9999 : (columnOffsets[colKey] ?? 0);
+                const yOff = isNested ? 0 : (columnY[colKey] ?? 0);
 
                 const typeIcons = {
                     'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
@@ -8250,7 +8251,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 nodeIdMap.set(n.id, true);
                 addedIds.add(n.id);
                 addedNodeData.push(nodeData);
-                columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
+                if (!isNested) columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
             }
 
             // Auto-nest packaging items into groups, raw materials into packaging items
@@ -8300,6 +8301,16 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             for (const e of result.edges) {
                 if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
                     this.canvasManager.addConnection(e.from, e.to);
+                    if (e.quantity != null) {
+                        const fromNode = this.canvasManager.nodes.get(e.from);
+                        if (fromNode) {
+                            if (!fromNode.parameters.connectionQuantities)
+                                fromNode.parameters.connectionQuantities = {};
+                            fromNode.parameters.connectionQuantities[`${e.from}-${e.to}`] = {
+                                value: e.quantity, type: 'quantity', unit: e.quantityLabel || ''
+                            };
+                        }
+                    }
                 }
             }
 
@@ -11039,13 +11050,12 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             this.canvasManager.connectionsLayer.innerHTML = '';
 
             const columnConfig = {
-                'raw-material':             { x: 50,   label: 'Raw Materials' },
-                'packaging':                { x: 330,  label: 'Packaging Items' },
-                'packaging-group-primary':  { x: 660,  label: 'Primary Packaging' },
-                'product':                  { x: 990,  label: 'Products' },
-                'packaging-group-tertiary': { x: 1320, label: 'Secondary/Tertiary Packaging' },
-                'asn-shipment':             { x: 1650, label: 'ASN Shipments' },
-                'distribution':             { x: 1980, label: 'Distribution' }
+                'packaging-group-primary':    { x: 50,   label: 'Primary Packaging' },
+                'product':                    { x: 380,  label: 'Products' },
+                'packaging-group-secondary':  { x: 710,  label: 'Secondary Packaging' },
+                'packaging-group-tertiary':   { x: 1040, label: 'Tertiary Packaging' },
+                'asn-shipment':               { x: 1370, label: 'ASN Shipments' },
+                'distribution':               { x: 1700, label: 'Distribution' }
             };
             const columnY = {};
             for (const t of Object.keys(columnConfig)) columnY[t] = 0;
@@ -11059,16 +11069,19 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             for (const n of result.nodes) {
                 if (n.type === 'supplier' || n.type === 'supplier-packaging') continue;
 
+                const isNested = (n.type === 'raw-material' || n.type === 'packaging');
+
                 let colKey = n.type;
                 if (n.type === 'packaging-group') {
                     const layer = (n.layer || '').toLowerCase();
-                    colKey = (layer === 'secondary' || layer === 'tertiary' || layer === 'quaternary')
-                        ? 'packaging-group-tertiary' : 'packaging-group-primary';
+                    if (layer === 'tertiary' || layer === 'quaternary') colKey = 'packaging-group-tertiary';
+                    else if (layer === 'secondary') colKey = 'packaging-group-secondary';
+                    else colKey = 'packaging-group-primary';
                 }
 
                 const cfg = columnConfig[colKey];
-                const col = cfg ? cfg.x : 600;
-                const yOff = columnY[colKey] ?? 0;
+                const col = isNested ? -9999 : (cfg ? cfg.x : 600);
+                const yOff = isNested ? 0 : (columnY[colKey] ?? 0);
 
                 const typeIcons = {
                     'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
@@ -11110,7 +11123,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 this.canvasManager.nodes.set(n.id, nodeData);
                 nodeIdMap.set(n.id, true);
                 rawNodeData.push({ apiNode: n, nodeData });
-                columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
+                if (!isNested) columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
             }
 
             // Auto-nest: packaging items into packaging groups, raw materials into packaging items
@@ -11165,6 +11178,16 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             for (const e of result.edges) {
                 if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
                     this.canvasManager.addConnection(e.from, e.to);
+                    if (e.quantity != null) {
+                        const fromNode = this.canvasManager.nodes.get(e.from);
+                        if (fromNode) {
+                            if (!fromNode.parameters.connectionQuantities)
+                                fromNode.parameters.connectionQuantities = {};
+                            fromNode.parameters.connectionQuantities[`${e.from}-${e.to}`] = {
+                                value: e.quantity, type: 'quantity', unit: e.quantityLabel || ''
+                            };
+                        }
+                    }
                 }
             }
 
