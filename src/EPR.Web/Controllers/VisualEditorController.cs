@@ -924,12 +924,16 @@ public class VisualEditorController : Controller
         }
 
         var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
+        string? productDatasetKey = null;
         if (singleProductId.HasValue)
         {
+            productDatasetKey = products.FirstOrDefault()?.DatasetKey;
             var usedPtNames = await _context.PackagingTypes
                 .Where(pt => usedPackagingTypeIds.Contains(pt.Id))
                 .Select(pt => pt.Name).ToListAsync();
             packagingLibQuery = packagingLibQuery.Where(pl => usedPtNames.Contains(pl.Name));
+            if (!string.IsNullOrEmpty(productDatasetKey))
+                packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == productDatasetKey);
         }
         else if (!string.IsNullOrEmpty(datasetKey))
             packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == datasetKey);
@@ -1029,17 +1033,27 @@ public class VisualEditorController : Controller
             distributionsQuery = distributionsQuery.Where(d => productIds.Contains(d.ProductId));
         var distributions = await distributionsQuery.ToListAsync();
 
-        var distCities = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in distributions)
         {
             var distNodeId = $"distribution-{d.Id}";
             if (addedNodeIds.Add(distNodeId))
                 nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
             edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
-            if (!string.IsNullOrEmpty(d.City)) distCities.Add(d.City);
         }
 
-        // 6. ASN Shipments linked via matching pallet destination city to distribution city
+        // 6. ASN Shipments linked via GTIN: line item GTIN -> product GTIN -> distributions
+        var gtinToDistNodeIds = new Dictionary<string, List<string>>();
+        foreach (var d in distributions)
+        {
+            var prod = products.FirstOrDefault(p => p.Id == d.ProductId);
+            if (prod != null && !string.IsNullOrEmpty(prod.Gtin))
+            {
+                if (!gtinToDistNodeIds.ContainsKey(prod.Gtin))
+                    gtinToDistNodeIds[prod.Gtin] = new List<string>();
+                gtinToDistNodeIds[prod.Gtin].Add($"distribution-{d.Id}");
+            }
+        }
+
         var asnQuery = _context.AsnShipments.Include(s => s.Pallets).ThenInclude(p => p.LineItems).AsQueryable();
         if (singleProductId.HasValue)
         {
@@ -1065,15 +1079,20 @@ public class VisualEditorController : Controller
                 });
             }
 
-            // Link distribution -> ASN by matching pallet destination city
+            var linkedDistIds = new HashSet<string>();
             foreach (var pallet in s.Pallets)
             {
-                if (string.IsNullOrEmpty(pallet.DestinationCity)) continue;
-                var matchingDists = distributions.Where(d =>
-                    string.Equals(d.City, pallet.DestinationCity, StringComparison.OrdinalIgnoreCase));
-                foreach (var md in matchingDists)
-                    edges.Add(new { from = $"distribution-{md.Id}", to = asnNodeId, relationship = "AsnDistribution" });
+                foreach (var li in pallet.LineItems)
+                {
+                    if (gtinToDistNodeIds.TryGetValue(li.Gtin, out var distIds))
+                    {
+                        foreach (var did in distIds)
+                            linkedDistIds.Add(did);
+                    }
+                }
             }
+            foreach (var did in linkedDistIds)
+                edges.Add(new { from = did, to = asnNodeId, relationship = "AsnDistribution" });
         }
 
         return (nodes, edges);
