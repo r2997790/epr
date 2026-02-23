@@ -1021,6 +1021,9 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
             <button class="btn btn-sm btn-info" id="eprLoadElementBtn" title="Load previously saved element(s)" data-no-tab="true">
                 <i class="bi bi-bookmark-fill"></i> Load Element(s)
             </button>
+            <button class="btn btn-sm btn-info" id="eprLoadRelationshipsBtn" title="Load relationships from dataset" data-no-tab="true">
+                <i class="bi bi-diagram-3-fill"></i> Load from Data
+            </button>
             <button class="btn btn-sm btn-secondary" id="eprSaveLayoutBtn" title="Save current toolbar/palette layout" data-no-tab="true">
                 <i class="bi bi-layout-sidebar"></i> Save Layout
             </button>
@@ -1573,6 +1576,42 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     }, 500);
     </script>
 }
+
+<!-- Modal for Loading Relationships from Data -->
+<div class="modal fade" id="eprLoadRelationshipsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Load Relationships from Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Select a dataset to visualise its product-packaging-supplier relationships on the canvas.</p>
+                <div class="mb-3">
+                    <label class="form-label">Dataset</label>
+                    <select id="eprRelationshipDatasetSelect" class="form-select">
+                        <option value="">All Datasets</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Alcoholic Beverages">Alcoholic Beverages</option>
+                        <option value="Confectionary">Confectionary</option>
+                        <option value="Fresh Produce">Fresh Produce</option>
+                        <option value="Garden">Garden</option>
+                        <option value="Homewares">Homewares</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Pet Care">Pet Care</option>
+                        <option value="Pharmaceuticals">Pharmaceuticals</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="eprLoadRelationshipsConfirmBtn">
+                    <i class="bi bi-diagram-3-fill"></i> Load
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal for Loading Saved Elements -->
 <div class="modal fade" id="eprLoadElementModal" tabindex="-1">

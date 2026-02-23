@@ -820,6 +820,211 @@ public class VisualEditorController : Controller
             return Json(new { success = false, message = ex.Message, stackTrace = ex.StackTrace });
         }
     }
+
+    [HttpGet]
+    [Route("api/visual-editor/relationship-graph")]
+    public async Task<IActionResult> GetRelationshipGraph([FromQuery] string? datasetKey = null)
+    {
+        try
+        {
+            var nodes = new List<object>();
+            var edges = new List<object>();
+            var addedNodeIds = new HashSet<string>();
+
+            // 1. Products
+            var productsQuery = _context.Products.AsQueryable();
+            if (!string.IsNullOrEmpty(datasetKey))
+                productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+            var products = await productsQuery.OrderBy(p => p.Sku).ToListAsync();
+
+            foreach (var p in products)
+            {
+                var nodeId = $"product-{p.Id}";
+                nodes.Add(new { id = nodeId, type = "product", entityId = p.Id, label = p.Name, sku = p.Sku, imageUrl = p.ImageUrl });
+                addedNodeIds.Add(nodeId);
+            }
+            var productIds = products.Select(p => p.Id).ToHashSet();
+
+            // 2. ProductPackaging -> PackagingUnit -> PackagingUnitItem -> PackagingLibrary (packaging items)
+            var productPackagings = await _context.ProductPackagings
+                .Where(pp => productIds.Contains(pp.ProductId))
+                .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
+                .ToListAsync();
+
+            var packagingLibIds = new HashSet<int>();
+            foreach (var pp in productPackagings)
+            {
+                foreach (var item in pp.PackagingUnit.Items)
+                {
+                    var pt = item.PackagingType;
+                    var pkgNodeId = $"packaging-{pt.Id}";
+                    if (addedNodeIds.Add(pkgNodeId))
+                    {
+                        nodes.Add(new { id = pkgNodeId, type = "packaging", entityId = pt.Id, label = pt.Name, description = pt.Description });
+                    }
+                    edges.Add(new { from = pkgNodeId, to = $"product-{pp.ProductId}", relationship = "ProductPackaging" });
+                    packagingLibIds.Add(pt.Id);
+                }
+            }
+
+            // 3. PackagingLibraryMaterial -> MaterialTaxonomy (raw materials)
+            var packagingLibraries = await _context.PackagingLibraries
+                .Where(pl => pl.IsActive)
+                .Include(pl => pl.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
+                .ToListAsync();
+
+            foreach (var pl in packagingLibraries)
+            {
+                var plNodeId = $"packaging-lib-{pl.Id}";
+                if (addedNodeIds.Add(plNodeId))
+                {
+                    nodes.Add(new { id = plNodeId, type = "packaging", entityId = pl.Id, label = pl.Name, taxonomyCode = pl.TaxonomyCode });
+                }
+                foreach (var plm in pl.PackagingLibraryMaterials)
+                {
+                    if (plm.MaterialTaxonomy == null) continue;
+                    var matNodeId = $"raw-material-{plm.MaterialTaxonomyId}";
+                    if (addedNodeIds.Add(matNodeId))
+                    {
+                        nodes.Add(new { id = matNodeId, type = "raw-material", entityId = plm.MaterialTaxonomyId, label = plm.MaterialTaxonomy.DisplayName, code = plm.MaterialTaxonomy.Code });
+                    }
+                    edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial" });
+                }
+            }
+
+            // 4. ProductPackagingSupplierProduct -> supplier packaging to product
+            var supplierProductLinks = await _context.ProductPackagingSupplierProducts
+                .Where(ppsp => productIds.Contains(ppsp.ProductId))
+                .Include(ppsp => ppsp.PackagingSupplierProduct).ThenInclude(psp => psp.PackagingSupplier)
+                .ToListAsync();
+
+            foreach (var link in supplierProductLinks)
+            {
+                var sp = link.PackagingSupplierProduct;
+                var spNodeId = $"supplier-pkg-{sp.Id}";
+                if (addedNodeIds.Add(spNodeId))
+                {
+                    nodes.Add(new { id = spNodeId, type = "supplier-packaging", entityId = sp.Id, label = $"{sp.Name} ({sp.PackagingSupplier.Name})", supplierName = sp.PackagingSupplier.Name });
+                }
+                edges.Add(new { from = spNodeId, to = $"product-{link.ProductId}", relationship = "ProductPackagingSupplierProduct" });
+            }
+
+            // 5. Distribution records
+            var distributionsQuery = _context.Distributions.AsQueryable();
+            if (!string.IsNullOrEmpty(datasetKey))
+                distributionsQuery = distributionsQuery.Where(d => d.DatasetKey == datasetKey);
+            var distributions = await distributionsQuery
+                .Where(d => productIds.Contains(d.ProductId))
+                .ToListAsync();
+
+            foreach (var d in distributions)
+            {
+                var distNodeId = $"distribution-{d.Id}";
+                if (addedNodeIds.Add(distNodeId))
+                {
+                    nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
+                }
+                edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
+            }
+
+            return Json(new { success = true, nodes, edges });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    [Route("api/visual-editor/product/{productId}/packaging/{packagingTypeId}")]
+    public async Task<IActionResult> AttachPackagingToProduct(int productId, int packagingTypeId)
+    {
+        var product = await _context.Products.FindAsync(productId);
+        if (product == null) return NotFound(new { success = false, message = "Product not found" });
+
+        var packagingType = await _context.PackagingTypes.FindAsync(packagingTypeId);
+        if (packagingType == null) return NotFound(new { success = false, message = "Packaging type not found" });
+
+        var existingLink = await _context.ProductPackagings
+            .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items)
+            .Where(pp => pp.ProductId == productId)
+            .FirstOrDefaultAsync(pp => pp.PackagingUnit.Items.Any(i => i.PackagingTypeId == packagingTypeId));
+
+        if (existingLink != null)
+            return Json(new { success = true, message = "Already attached" });
+
+        var unit = new PackagingUnit { Name = $"{product.Name} - {packagingType.Name}", CreatedAt = DateTime.UtcNow };
+        _context.PackagingUnits.Add(unit);
+        await _context.SaveChangesAsync();
+
+        _context.PackagingUnitItems.Add(new PackagingUnitItem { PackagingUnitId = unit.Id, PackagingTypeId = packagingTypeId, CollectionName = "Primary", Quantity = 1 });
+        _context.ProductPackagings.Add(new ProductPackaging { ProductId = productId, PackagingUnitId = unit.Id });
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true });
+    }
+
+    [HttpDelete]
+    [Route("api/visual-editor/product/{productId}/packaging/{packagingTypeId}")]
+    public async Task<IActionResult> DetachPackagingFromProduct(int productId, int packagingTypeId)
+    {
+        var link = await _context.ProductPackagings
+            .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items)
+            .Where(pp => pp.ProductId == productId)
+            .FirstOrDefaultAsync(pp => pp.PackagingUnit.Items.Any(i => i.PackagingTypeId == packagingTypeId));
+
+        if (link == null) return NotFound(new { success = false, message = "Link not found" });
+
+        _context.ProductPackagings.Remove(link);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpPost]
+    [Route("api/visual-editor/product/{productId}/distribution")]
+    public async Task<IActionResult> CreateProductDistribution(int productId, [FromBody] DistributionCreateData data)
+    {
+        var product = await _context.Products.FindAsync(productId);
+        if (product == null) return NotFound(new { success = false, message = "Product not found" });
+
+        var dist = new Distribution
+        {
+            ProductId = productId,
+            RetailerName = data.RetailerName ?? "Retailer",
+            City = data.City ?? "",
+            Country = data.Country ?? "",
+            StateProvince = data.City ?? "",
+            County = "",
+            PostcodeZipcode = "",
+            Quantity = data.Quantity > 0 ? data.Quantity : 1,
+            DispatchDate = DateTime.UtcNow,
+            DatasetKey = product.DatasetKey
+        };
+        _context.Distributions.Add(dist);
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, distributionId = dist.Id });
+    }
+
+    [HttpDelete]
+    [Route("api/visual-editor/distribution/{distributionId}")]
+    public async Task<IActionResult> DeleteDistribution(int distributionId)
+    {
+        var dist = await _context.Distributions.FindAsync(distributionId);
+        if (dist == null) return NotFound(new { success = false, message = "Distribution not found" });
+
+        _context.Distributions.Remove(dist);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+}
+
+public class DistributionCreateData
+{
+    public string? City { get; set; }
+    public string? Country { get; set; }
+    public string? RetailerName { get; set; }
+    public int Quantity { get; set; }
 }
 
 public class ProjectData

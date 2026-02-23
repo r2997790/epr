@@ -3568,7 +3568,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     if (data.success) console.log('[EPR] Supplier packaging attached to product');
                 }).catch(err => console.warn('[EPR] Failed to persist supplier packaging attachment:', err));
             }
-            // Persist raw-material to packaging item (supply chain: raw materials → packaging items)
+            // Persist raw-material to packaging item (supply chain: raw materials -> packaging items)
             if (fromNode.type === 'raw-material' && toNode.type === 'packaging' && fromNode.entityId && toNode.entityId) {
                 fetch(`/api/packaging-management/packaging-items/${toNode.entityId}/raw-materials`, {
                     method: 'POST',
@@ -3577,6 +3577,29 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 }).then(r => r.json()).then(data => {
                     if (data.success) console.log('[EPR] Raw material linked to packaging item');
                 }).catch(err => console.warn('[EPR] Failed to persist raw material link:', err));
+            }
+            // Persist packaging to product attachment
+            if (fromNode.type === 'packaging' && toNode.type === 'product' && fromNode.entityId && toNode.entityId) {
+                fetch(`/api/visual-editor/product/${toNode.entityId}/packaging/${fromNode.entityId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(r => r.json()).then(data => {
+                    if (data.success) console.log('[EPR] Packaging attached to product');
+                }).catch(err => console.warn('[EPR] Failed to persist packaging-product link:', err));
+            }
+            // Persist product to distribution
+            if (fromNode.type === 'product' && toNode.type === 'distribution' && fromNode.entityId) {
+                const distParams = toNode.parameters || {};
+                fetch(`/api/visual-editor/product/${fromNode.entityId}/distribution`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ city: distParams.city || toNode.name, country: distParams.country || '', retailerName: distParams.retailerName || toNode.name, quantity: 1 })
+                }).then(r => r.json()).then(data => {
+                    if (data.success && data.distributionId) {
+                        toNode.entityId = data.distributionId;
+                        console.log('[EPR] Distribution created and linked to product');
+                    }
+                }).catch(err => console.warn('[EPR] Failed to persist product-distribution link:', err));
             }
             
             this.updateConnections();
@@ -3597,6 +3620,14 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             }
             if (fromNode && toNode && fromNode.type === 'raw-material' && toNode.type === 'packaging' && fromNode.entityId && toNode.entityId) {
                 fetch(`/api/packaging-management/packaging-items/${toNode.entityId}/raw-materials/${fromNode.entityId}`, { method: 'DELETE' })
+                    .then(r => r.json()).then(() => {}).catch(() => {});
+            }
+            if (fromNode && toNode && fromNode.type === 'packaging' && toNode.type === 'product' && fromNode.entityId && toNode.entityId) {
+                fetch(`/api/visual-editor/product/${toNode.entityId}/packaging/${fromNode.entityId}`, { method: 'DELETE' })
+                    .then(r => r.json()).then(() => {}).catch(() => {});
+            }
+            if (fromNode && toNode && fromNode.type === 'product' && toNode.type === 'distribution' && toNode.entityId) {
+                fetch(`/api/visual-editor/distribution/${toNode.entityId}`, { method: 'DELETE' })
                     .then(r => r.json()).then(() => {}).catch(() => {});
             }
             this.connections = this.connections.filter(
@@ -4354,6 +4385,14 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 path.style.pointerEvents = 'stroke';
                 path.setAttribute('data-from', conn.from);
                 path.setAttribute('data-to', conn.to);
+                
+                const persistable = (
+                    (fromNode.type === 'supplier-packaging' && toNode.type === 'product') ||
+                    (fromNode.type === 'raw-material' && toNode.type === 'packaging') ||
+                    (fromNode.type === 'packaging' && toNode.type === 'product') ||
+                    (fromNode.type === 'product' && toNode.type === 'distribution')
+                );
+                path.setAttribute('data-persisted', persistable && fromNode.entityId && toNode.entityId ? 'true' : 'false');
                 
                 // Store connection info for deletion
                 const connectionInfo = { from: conn.from, to: conn.to, fromPort: conn.fromPort, toPort: conn.toPort };
@@ -10465,6 +10504,30 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 });
             }
             
+            const loadRelBtn = document.getElementById('eprLoadRelationshipsBtn');
+            if (loadRelBtn) {
+                loadRelBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const modal = document.getElementById('eprLoadRelationshipsModal');
+                    if (modal) {
+                        const bsModal = new bootstrap.Modal(modal);
+                        bsModal.show();
+                    }
+                });
+            }
+            const loadRelConfirmBtn = document.getElementById('eprLoadRelationshipsConfirmBtn');
+            if (loadRelConfirmBtn) {
+                loadRelConfirmBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const datasetKey = document.getElementById('eprRelationshipDatasetSelect')?.value || '';
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('eprLoadRelationshipsModal'));
+                    if (modal) modal.hide();
+                    this.loadRelationshipGraph(datasetKey);
+                });
+            }
+            
             const saveLayoutBtn = document.getElementById('eprSaveLayoutBtn');
             if (saveLayoutBtn) {
                 saveLayoutBtn.addEventListener('click', (e) => {
@@ -10755,6 +10818,95 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             bsModal.show();
         }
         
+        async loadRelationshipGraph(datasetKey) {
+            if (this.canvasManager.nodes.size > 0 || this.canvasManager.connections.length > 0) {
+                if (!confirm('Loading relationships will replace all current work on the canvas. Continue?')) return;
+            }
+
+            const url = datasetKey
+                ? `/api/visual-editor/relationship-graph?datasetKey=${encodeURIComponent(datasetKey)}`
+                : '/api/visual-editor/relationship-graph';
+
+            try {
+                const resp = await fetch(url);
+                const result = await resp.json();
+                if (!result.success || !result.nodes) {
+                    alert('No relationship data found' + (result.message ? ': ' + result.message : ''));
+                    return;
+                }
+
+                this.canvasManager.nodes.clear();
+                this.canvasManager.connections = [];
+                this.canvasManager.selectedNode = null;
+                this.canvasManager.nodesLayer.innerHTML = '';
+                this.canvasManager.connectionsLayer.innerHTML = '';
+
+                const columnX = { 'raw-material': 100, 'packaging': 450, 'product': 800, 'supplier-packaging': 800, 'distribution': 1200 };
+                const columnY = { 'raw-material': 0, 'packaging': 0, 'product': 0, 'supplier-packaging': 0, 'distribution': 0 };
+                const ySpacing = 140;
+                const supplierYOffset = 2000;
+
+                const nodeIdMap = new Map();
+
+                for (const n of result.nodes) {
+                    const col = columnX[n.type] ?? 600;
+                    let yOff = columnY[n.type] ?? 0;
+                    if (n.type === 'supplier-packaging') yOff += supplierYOffset;
+
+                    const nodeData = {
+                        id: n.id,
+                        type: n.type,
+                        entityId: n.entityId,
+                        name: n.label || n.sku || 'Unknown',
+                        x: col,
+                        y: 80 + yOff,
+                        parameters: {}
+                    };
+
+                    if (n.sku) nodeData.parameters.sku = n.sku;
+                    if (n.imageUrl) nodeData.parameters.imageUrl = n.imageUrl;
+                    if (n.code) nodeData.parameters.code = n.code;
+                    if (n.city) nodeData.parameters.city = n.city;
+                    if (n.country) nodeData.parameters.country = n.country;
+                    if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
+                    if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
+
+                    this.canvasManager.nodes.set(n.id, nodeData);
+                    nodeIdMap.set(n.id, true);
+
+                    if (n.type === 'supplier-packaging') {
+                        columnY['supplier-packaging'] += ySpacing;
+                    } else {
+                        columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+                    }
+                }
+
+                for (const [, nodeData] of this.canvasManager.nodes) {
+                    this.canvasManager.renderNode(nodeData);
+                }
+                this.canvasManager.updatePlaceholder();
+
+                for (const e of result.edges) {
+                    if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
+                        this.canvasManager.addConnection(e.from, e.to);
+                    }
+                }
+
+                this.canvasManager.updateConnections();
+
+                const projectNameInput = document.getElementById('eprProjectName');
+                if (projectNameInput) {
+                    projectNameInput.value = datasetKey ? `${datasetKey} Relationships` : 'All Relationships';
+                    this.updateBrowserTabTitle();
+                }
+
+                console.log(`[EPR] Loaded relationship graph: ${result.nodes.length} nodes, ${result.edges.length} edges`);
+            } catch (err) {
+                console.error('[EPR] Failed to load relationship graph:', err);
+                alert('Failed to load relationships: ' + err.message);
+            }
+        }
+
         async loadProject(projectData) {
             // Warn user about losing current work
             if (this.canvasManager.nodes.size > 0 || this.canvasManager.connections.length > 0) {

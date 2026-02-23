@@ -607,3 +607,8 @@
     max-width: 50ch; /* Maximum 50 characters wide */
     line-height: 1.4;
 }
+
+.epr-connection-line[data-persisted="false"] {
+    stroke-dasharray: 6 4;
+    opacity: 0.7;
+}
