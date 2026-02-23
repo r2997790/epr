@@ -940,95 +940,21 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 return null;
             }
             
-            // Check if directly connected to a product (Primary)
+            const layer = groupNode.parameters?.layer;
+            if (layer) {
+                const normalized = layer.charAt(0).toUpperCase() + layer.slice(1).toLowerCase();
+                if (['Primary', 'Secondary', 'Tertiary', 'Quaternary'].includes(normalized))
+                    return normalized;
+            }
+
+            // Fallback: infer from connections if no API layer data
             const connectedToProduct = this.connections.some(conn => {
-                if (conn.from === packagingGroupId) {
-                    const toNode = this.nodes.get(conn.to);
-                    return toNode && toNode.type === 'product';
-                }
-                if (conn.to === packagingGroupId) {
-                    const fromNode = this.nodes.get(conn.from);
-                    return fromNode && fromNode.type === 'product';
-                }
-                return false;
+                const otherId = conn.from === packagingGroupId ? conn.to : (conn.to === packagingGroupId ? conn.from : null);
+                if (!otherId) return false;
+                const other = this.nodes.get(otherId);
+                return other && other.type === 'product';
             });
-            
-            if (connectedToProduct) {
-                return 'Primary';
-            }
-            
-            // Check if directly connected to a Primary Packaging Group (Secondary)
-            const connectedToPrimary = this.connections.some(conn => {
-                let otherGroupId = null;
-                if (conn.from === packagingGroupId) {
-                    otherGroupId = conn.to;
-                } else if (conn.to === packagingGroupId) {
-                    otherGroupId = conn.from;
-                }
-                
-                if (otherGroupId) {
-                    const otherGroup = this.nodes.get(otherGroupId);
-                    if (otherGroup && otherGroup.type === 'packaging-group') {
-                        const otherLevel = this.getPackagingGroupHierarchyLevel(otherGroupId);
-                        return otherLevel === 'Primary';
-                    }
-                }
-                return false;
-            });
-            
-            if (connectedToPrimary) {
-                return 'Secondary';
-            }
-            
-            // Check if directly connected to a Secondary Packaging Group (Tertiary)
-            const connectedToSecondary = this.connections.some(conn => {
-                let otherGroupId = null;
-                if (conn.from === packagingGroupId) {
-                    otherGroupId = conn.to;
-                } else if (conn.to === packagingGroupId) {
-                    otherGroupId = conn.from;
-                }
-                
-                if (otherGroupId) {
-                    const otherGroup = this.nodes.get(otherGroupId);
-                    if (otherGroup && otherGroup.type === 'packaging-group') {
-                        const otherLevel = this.getPackagingGroupHierarchyLevel(otherGroupId);
-                        return otherLevel === 'Secondary';
-                    }
-                }
-                return false;
-            });
-            
-            if (connectedToSecondary) {
-                return 'Tertiary';
-            }
-            
-            // Check if connected to any other Packaging Group (Quaternary)
-            const connectedToAnyGroup = this.connections.some(conn => {
-                let otherGroupId = null;
-                if (conn.from === packagingGroupId) {
-                    otherGroupId = conn.to;
-                } else if (conn.to === packagingGroupId) {
-                    otherGroupId = conn.from;
-                }
-                
-                if (otherGroupId) {
-                    const otherGroup = this.nodes.get(otherGroupId);
-                    if (otherGroup && otherGroup.type === 'packaging-group') {
-                        const otherLevel = this.getPackagingGroupHierarchyLevel(otherGroupId);
-                        // If connected to Tertiary or any other Packaging Group that's not Primary/Secondary
-                        return otherLevel === 'Tertiary' || (otherLevel !== 'Primary' && otherLevel !== 'Secondary');
-                    }
-                }
-                return false;
-            });
-            
-            if (connectedToAnyGroup) {
-                return 'Quaternary';
-            }
-            
-            // No connections to products or other groups - return null (no pill)
-            return null;
+            return connectedToProduct ? 'Primary' : null;
         }
         
         renderNode(node) {
@@ -1181,11 +1107,11 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 'raw-material': true,
                 'packaging': true,
                 'product': true,
-                'distribution': true,
+                'distribution': false,
                 'transport': true,
                 'packaging-group': true,
                 'distribution-group': true,
-                'asn-shipment': false
+                'asn-shipment': true
             };
             
             if (leftPortRules[node.type]) {
@@ -1787,6 +1713,17 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     if (node.parameters.transportMode) asnBadge += `<div style="padding:0 0.5rem;font-size:0.7rem;color:#6c757d;"><i class="bi bi-signpost me-1"></i>${this.escapeHtml(node.parameters.transportMode)}</div>`;
                 }
 
+                let quantityInfo = '';
+                if (node.type === 'distribution' && node.parameters?.quantity != null) {
+                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-box me-1"></i>Qty: ${node.parameters.quantity}</div>`;
+                } else if (node.type === 'packaging' && node.parameters?.weight != null) {
+                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-speedometer me-1"></i>Weight: ${node.parameters.weight}g</div>`;
+                } else if (node.type === 'packaging-group' && node.parameters?.totalWeight != null) {
+                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-speedometer me-1"></i>Total: ${node.parameters.totalWeight}g</div>`;
+                } else if (node.type === 'asn-shipment' && node.parameters?.totalWeight != null) {
+                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-speedometer me-1"></i>Weight: ${node.parameters.totalWeight}kg</div>`;
+                }
+
                 nodeEl.innerHTML = `
                     <div class="epr-node-header" style="position: relative;">
                         ${packagingHierarchyPill}
@@ -1809,6 +1746,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     <div class="epr-node-type">${this.getTypeLabel(node.type)}</div>
                     ${supplierInfo}
                     ${asnBadge}
+                    ${quantityInfo}
                     ${node.parameters?.description ? `<div class="epr-node-description" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #666; border-top: 1px solid #eee; margin-top: 0.25rem;"><span class="epr-description-text" style="display: block; max-width: 30ch; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${this.escapeHtml(node.parameters.description).replace(/\n/g, '<br>')}</span></div>` : ''}
                     ${node.parameters?.notes ? `<div class="epr-node-notes" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #666; border-top: 1px solid #eee; margin-top: 0.25rem;"><i class="bi bi-sticky"></i> <span class="epr-notes-text" style="display: block; max-width: 30ch; word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${this.escapeHtml(node.parameters.notes).replace(/\n/g, '<br>')}</span></div>` : ''}
                     ${transportInfo}
@@ -8218,20 +8156,22 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
         
         _loadSupplyChainIntoCanvas(result, focusProductId) {
             const columnOffsets = {
-                'raw-material':    -940,
-                'packaging':       -660,
-                'packaging-group': -330,
-                'product':         0,
-                'distribution':    330,
-                'asn-shipment':    660
+                'raw-material':             -990,
+                'packaging':                -660,
+                'packaging-group-primary':  -330,
+                'product':                  0,
+                'packaging-group-tertiary': 330,
+                'asn-shipment':             660,
+                'distribution':             990
             };
             const columnLabels = {
-                'raw-material':    'Raw Materials',
-                'packaging':       'Packaging Items',
-                'packaging-group': 'Packaging Groups',
-                'product':         'Products',
-                'distribution':    'Distribution',
-                'asn-shipment':    'ASN Shipments'
+                'raw-material':             'Raw Materials',
+                'packaging':                'Packaging Items',
+                'packaging-group-primary':  'Primary Packaging',
+                'product':                  'Products',
+                'packaging-group-tertiary': 'Secondary/Tertiary Packaging',
+                'asn-shipment':             'ASN Shipments',
+                'distribution':             'Distribution'
             };
             const ySpacing = 140;
 
@@ -8261,8 +8201,15 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     continue;
                 }
 
-                const offset = columnOffsets[n.type] ?? 0;
-                const yOff = columnY[n.type] ?? 0;
+                let colKey = n.type;
+                if (n.type === 'packaging-group') {
+                    const layer = (n.layer || '').toLowerCase();
+                    colKey = (layer === 'secondary' || layer === 'tertiary' || layer === 'quaternary')
+                        ? 'packaging-group-tertiary' : 'packaging-group-primary';
+                }
+
+                const offset = columnOffsets[colKey] ?? 0;
+                const yOff = columnY[colKey] ?? 0;
 
                 const typeIcons = {
                     'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
@@ -8293,6 +8240,9 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.shipperName) nodeData.parameters.shipperName = n.shipperName;
                 if (n.receiverName) nodeData.parameters.receiverName = n.receiverName;
                 if (n.status) nodeData.parameters.status = n.status;
+                if (n.totalWeight) nodeData.parameters.totalWeight = n.totalWeight;
+                if (n.weight != null) nodeData.parameters.weight = n.weight;
+                if (n.quantity != null) nodeData.parameters.quantity = n.quantity;
                 if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
                 if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
 
@@ -8300,7 +8250,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 nodeIdMap.set(n.id, true);
                 addedIds.add(n.id);
                 addedNodeData.push(nodeData);
-                columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+                columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
             }
 
             // Auto-nest packaging items into groups, raw materials into packaging items
@@ -11089,12 +11039,13 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             this.canvasManager.connectionsLayer.innerHTML = '';
 
             const columnConfig = {
-                'raw-material':    { x: 50,   label: 'Raw Materials' },
-                'packaging':       { x: 330,  label: 'Packaging Items' },
-                'packaging-group': { x: 660,  label: 'Packaging Groups' },
-                'product':         { x: 990,  label: 'Products' },
-                'distribution':    { x: 1320, label: 'Distribution' },
-                'asn-shipment':    { x: 1650, label: 'ASN Shipments' }
+                'raw-material':             { x: 50,   label: 'Raw Materials' },
+                'packaging':                { x: 330,  label: 'Packaging Items' },
+                'packaging-group-primary':  { x: 660,  label: 'Primary Packaging' },
+                'product':                  { x: 990,  label: 'Products' },
+                'packaging-group-tertiary': { x: 1320, label: 'Secondary/Tertiary Packaging' },
+                'asn-shipment':             { x: 1650, label: 'ASN Shipments' },
+                'distribution':             { x: 1980, label: 'Distribution' }
             };
             const columnY = {};
             for (const t of Object.keys(columnConfig)) columnY[t] = 0;
@@ -11108,9 +11059,16 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             for (const n of result.nodes) {
                 if (n.type === 'supplier' || n.type === 'supplier-packaging') continue;
 
-                const cfg = columnConfig[n.type];
+                let colKey = n.type;
+                if (n.type === 'packaging-group') {
+                    const layer = (n.layer || '').toLowerCase();
+                    colKey = (layer === 'secondary' || layer === 'tertiary' || layer === 'quaternary')
+                        ? 'packaging-group-tertiary' : 'packaging-group-primary';
+                }
+
+                const cfg = columnConfig[colKey];
                 const col = cfg ? cfg.x : 600;
-                const yOff = columnY[n.type] ?? 0;
+                const yOff = columnY[colKey] ?? 0;
 
                 const typeIcons = {
                     'raw-material': 'bi-circle', 'packaging': 'bi-box-seam',
@@ -11143,6 +11101,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.shipDate) nodeData.parameters.shipDate = n.shipDate;
                 if (n.transportMode) nodeData.parameters.transportMode = n.transportMode;
                 if (n.totalWeight) nodeData.parameters.totalWeight = n.totalWeight;
+                if (n.weight != null) nodeData.parameters.weight = n.weight;
+                if (n.quantity != null) nodeData.parameters.quantity = n.quantity;
                 if (n.suppliers) nodeData.parameters.suppliers = n.suppliers;
                 if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
                 if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
@@ -11150,7 +11110,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 this.canvasManager.nodes.set(n.id, nodeData);
                 nodeIdMap.set(n.id, true);
                 rawNodeData.push({ apiNode: n, nodeData });
-                columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+                columnY[colKey] = (columnY[colKey] || 0) + ySpacing;
             }
 
             // Auto-nest: packaging items into packaging groups, raw materials into packaging items

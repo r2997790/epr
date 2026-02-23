@@ -875,7 +875,7 @@ public class VisualEditorController : Controller
         var edges = new List<object>();
         var addedNodeIds = new HashSet<string>();
 
-        // 1. Products (with supplier packaging embedded as parameters)
+        // 1. Products
         var productsQuery = _context.Products.AsQueryable();
         if (singleProductId.HasValue)
             productsQuery = productsQuery.Where(p => p.Id == singleProductId.Value);
@@ -911,16 +911,19 @@ public class VisualEditorController : Controller
             .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
             .ToListAsync();
 
-        var packagingUnitNameToProductIds = new Dictionary<string, HashSet<int>>();
+        // Build map: PackagingType name -> set of product IDs (for linking groups to products)
+        var ptNameToProductIds = new Dictionary<string, HashSet<int>>();
         var usedPackagingTypeIds = new HashSet<int>();
         foreach (var pp in productPackagings)
         {
-            var unitName = pp.PackagingUnit.Name;
-            if (!packagingUnitNameToProductIds.ContainsKey(unitName))
-                packagingUnitNameToProductIds[unitName] = new HashSet<int>();
-            packagingUnitNameToProductIds[unitName].Add(pp.ProductId);
             foreach (var item in pp.PackagingUnit.Items)
+            {
                 usedPackagingTypeIds.Add(item.PackagingTypeId);
+                var ptName = item.PackagingType.Name;
+                if (!ptNameToProductIds.ContainsKey(ptName))
+                    ptNameToProductIds[ptName] = new HashSet<int>();
+                ptNameToProductIds[ptName].Add(pp.ProductId);
+            }
         }
 
         var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
@@ -943,12 +946,13 @@ public class VisualEditorController : Controller
             .Include(pl => pl.PackagingLibrarySupplierProducts).ThenInclude(plsp => plsp.PackagingSupplierProduct).ThenInclude(sp => sp.PackagingSupplier)
             .ToListAsync();
 
+        // Map: PackagingLibrary ID -> set of product IDs (via PL.Name == PT.Name)
+        var pkgLibIdToProductIds = new Dictionary<int, HashSet<int>>();
         var pkgLibIds = new HashSet<int>();
         foreach (var pl in packagingLibraries)
         {
             var plNodeId = $"packaging-{pl.Id}";
 
-            // Embed suppliers as parameters instead of separate nodes
             var plSuppliers = pl.PackagingLibrarySupplierProducts.Select(plsp => new {
                 name = plsp.PackagingSupplierProduct.Name,
                 supplierName = plsp.PackagingSupplierProduct.PackagingSupplier.Name,
@@ -956,7 +960,6 @@ public class VisualEditorController : Controller
                 country = plsp.PackagingSupplierProduct.PackagingSupplier.Country
             }).ToList();
 
-            // Collect raw material IDs for nesting
             var rawMatIds = pl.PackagingLibraryMaterials
                 .Where(plm => plm.MaterialTaxonomy != null)
                 .Select(plm => plm.MaterialTaxonomyId).ToList();
@@ -967,10 +970,14 @@ public class VisualEditorController : Controller
                     id = plNodeId, type = "packaging", entityId = pl.Id,
                     label = pl.Name, taxonomyCode = pl.TaxonomyCode,
                     suppliers = plSuppliers as object,
-                    rawMaterialIds = rawMatIds
+                    rawMaterialIds = rawMatIds,
+                    weight = pl.Weight
                 });
             }
             pkgLibIds.Add(pl.Id);
+
+            if (ptNameToProductIds.TryGetValue(pl.Name, out var linkedPIds))
+                pkgLibIdToProductIds[pl.Id] = linkedPIds;
 
             foreach (var plm in pl.PackagingLibraryMaterials)
             {
@@ -1003,7 +1010,8 @@ public class VisualEditorController : Controller
                 nodes.Add(new {
                     id = gNodeId, type = "packaging-group", entityId = g.Id,
                     label = g.Name, packId = g.PackId, layer = g.PackagingLayer,
-                    packagingItemIds = itemIds
+                    packagingItemIds = itemIds,
+                    totalWeight = g.TotalPackWeight
                 });
             }
             foreach (var gi in g.Items)
@@ -1013,14 +1021,20 @@ public class VisualEditorController : Controller
             }
         }
 
-        // 4. Packaging Group -> Product edges
+        // 4. Packaging Group -> Product edges via PackagingLibrary -> PackagingType name -> Product
         foreach (var g in groupsFiltered)
         {
-            if (packagingUnitNameToProductIds.TryGetValue(g.Name, out var pIds))
+            var linkedProducts = new HashSet<int>();
+            foreach (var gi in g.Items)
             {
-                foreach (var pid in pIds)
-                    edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct" });
+                if (pkgLibIdToProductIds.TryGetValue(gi.PackagingLibraryId, out var pIds))
+                {
+                    foreach (var pid in pIds)
+                        linkedProducts.Add(pid);
+                }
             }
+            foreach (var pid in linkedProducts)
+                edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct" });
         }
 
         // 5. Distribution records
@@ -1037,12 +1051,20 @@ public class VisualEditorController : Controller
         {
             var distNodeId = $"distribution-{d.Id}";
             if (addedNodeIds.Add(distNodeId))
-                nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
+                nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country, quantity = d.Quantity });
             edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
         }
 
-        // 6. ASN Shipments linked via GTIN: line item GTIN -> product GTIN -> distributions
+        // 6. ASN Shipments: product -> ASN -> distribution
+        var gtinToProductNodeIds = new Dictionary<string, HashSet<string>>();
         var gtinToDistNodeIds = new Dictionary<string, List<string>>();
+        foreach (var p in products)
+        {
+            if (string.IsNullOrEmpty(p.Gtin)) continue;
+            if (!gtinToProductNodeIds.ContainsKey(p.Gtin))
+                gtinToProductNodeIds[p.Gtin] = new HashSet<string>();
+            gtinToProductNodeIds[p.Gtin].Add($"product-{p.Id}");
+        }
         foreach (var d in distributions)
         {
             var prod = products.FirstOrDefault(p => p.Id == d.ProductId);
@@ -1079,20 +1101,22 @@ public class VisualEditorController : Controller
                 });
             }
 
+            var linkedProductIds = new HashSet<string>();
             var linkedDistIds = new HashSet<string>();
             foreach (var pallet in s.Pallets)
             {
                 foreach (var li in pallet.LineItems)
                 {
+                    if (gtinToProductNodeIds.TryGetValue(li.Gtin, out var prodNodeIds))
+                        foreach (var pnid in prodNodeIds) linkedProductIds.Add(pnid);
                     if (gtinToDistNodeIds.TryGetValue(li.Gtin, out var distIds))
-                    {
-                        foreach (var did in distIds)
-                            linkedDistIds.Add(did);
-                    }
+                        foreach (var did in distIds) linkedDistIds.Add(did);
                 }
             }
+            foreach (var pnid in linkedProductIds)
+                edges.Add(new { from = pnid, to = asnNodeId, relationship = "ProductAsn" });
             foreach (var did in linkedDistIds)
-                edges.Add(new { from = did, to = asnNodeId, relationship = "AsnDistribution" });
+                edges.Add(new { from = asnNodeId, to = did, relationship = "AsnDistribution" });
         }
 
         return (nodes, edges);
