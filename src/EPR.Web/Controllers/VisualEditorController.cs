@@ -827,112 +827,192 @@ public class VisualEditorController : Controller
     {
         try
         {
-            var nodes = new List<object>();
-            var edges = new List<object>();
-            var addedNodeIds = new HashSet<string>();
-
-            // 1. Products
-            var productsQuery = _context.Products.AsQueryable();
-            if (!string.IsNullOrEmpty(datasetKey))
-                productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
-            var products = await productsQuery.OrderBy(p => p.Sku).ToListAsync();
-
-            foreach (var p in products)
-            {
-                var nodeId = $"product-{p.Id}";
-                nodes.Add(new { id = nodeId, type = "product", entityId = p.Id, label = p.Name, sku = p.Sku, imageUrl = p.ImageUrl });
-                addedNodeIds.Add(nodeId);
-            }
-            var productIds = products.Select(p => p.Id).ToHashSet();
-
-            // 2. ProductPackaging -> PackagingUnit -> PackagingUnitItem -> PackagingLibrary (packaging items)
-            var productPackagings = await _context.ProductPackagings
-                .Where(pp => productIds.Contains(pp.ProductId))
-                .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
-                .ToListAsync();
-
-            var packagingLibIds = new HashSet<int>();
-            foreach (var pp in productPackagings)
-            {
-                foreach (var item in pp.PackagingUnit.Items)
-                {
-                    var pt = item.PackagingType;
-                    var pkgNodeId = $"packaging-{pt.Id}";
-                    if (addedNodeIds.Add(pkgNodeId))
-                    {
-                        nodes.Add(new { id = pkgNodeId, type = "packaging", entityId = pt.Id, label = pt.Name, description = pt.Description });
-                    }
-                    edges.Add(new { from = pkgNodeId, to = $"product-{pp.ProductId}", relationship = "ProductPackaging" });
-                    packagingLibIds.Add(pt.Id);
-                }
-            }
-
-            // 3. PackagingLibraryMaterial -> MaterialTaxonomy (raw materials)
-            var packagingLibraries = await _context.PackagingLibraries
-                .Where(pl => pl.IsActive)
-                .Include(pl => pl.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
-                .ToListAsync();
-
-            foreach (var pl in packagingLibraries)
-            {
-                var plNodeId = $"packaging-lib-{pl.Id}";
-                if (addedNodeIds.Add(plNodeId))
-                {
-                    nodes.Add(new { id = plNodeId, type = "packaging", entityId = pl.Id, label = pl.Name, taxonomyCode = pl.TaxonomyCode });
-                }
-                foreach (var plm in pl.PackagingLibraryMaterials)
-                {
-                    if (plm.MaterialTaxonomy == null) continue;
-                    var matNodeId = $"raw-material-{plm.MaterialTaxonomyId}";
-                    if (addedNodeIds.Add(matNodeId))
-                    {
-                        nodes.Add(new { id = matNodeId, type = "raw-material", entityId = plm.MaterialTaxonomyId, label = plm.MaterialTaxonomy.DisplayName, code = plm.MaterialTaxonomy.Code });
-                    }
-                    edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial" });
-                }
-            }
-
-            // 4. ProductPackagingSupplierProduct -> supplier packaging to product
-            var supplierProductLinks = await _context.ProductPackagingSupplierProducts
-                .Where(ppsp => productIds.Contains(ppsp.ProductId))
-                .Include(ppsp => ppsp.PackagingSupplierProduct).ThenInclude(psp => psp.PackagingSupplier)
-                .ToListAsync();
-
-            foreach (var link in supplierProductLinks)
-            {
-                var sp = link.PackagingSupplierProduct;
-                var spNodeId = $"supplier-pkg-{sp.Id}";
-                if (addedNodeIds.Add(spNodeId))
-                {
-                    nodes.Add(new { id = spNodeId, type = "supplier-packaging", entityId = sp.Id, label = $"{sp.Name} ({sp.PackagingSupplier.Name})", supplierName = sp.PackagingSupplier.Name });
-                }
-                edges.Add(new { from = spNodeId, to = $"product-{link.ProductId}", relationship = "ProductPackagingSupplierProduct" });
-            }
-
-            // 5. Distribution records
-            var distributionsQuery = _context.Distributions.AsQueryable();
-            if (!string.IsNullOrEmpty(datasetKey))
-                distributionsQuery = distributionsQuery.Where(d => d.DatasetKey == datasetKey);
-            var distributions = await distributionsQuery
-                .Where(d => productIds.Contains(d.ProductId))
-                .ToListAsync();
-
-            foreach (var d in distributions)
-            {
-                var distNodeId = $"distribution-{d.Id}";
-                if (addedNodeIds.Add(distNodeId))
-                {
-                    nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
-                }
-                edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
-            }
-
-            return Json(new { success = true, nodes, edges });
+            var result = await BuildSupplyChainGraph(datasetKey, null);
+            return Json(new { success = true, result.nodes, result.edges });
         }
         catch (Exception ex)
         {
             return Json(new { success = false, message = ex.Message });
         }
+    }
+
+    [HttpGet]
+    [Route("api/visual-editor/product/{productId}/supply-chain")]
+    public async Task<IActionResult> GetProductSupplyChain(int productId)
+    {
+        try
+        {
+            var result = await BuildSupplyChainGraph(null, productId);
+            if (result.nodes.Count == 0)
+                return Json(new { success = false, message = "Product not found" });
+            return Json(new { success = true, result.nodes, result.edges });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
+    private async Task<(List<object> nodes, List<object> edges)> BuildSupplyChainGraph(string? datasetKey, int? singleProductId)
+    {
+        var nodes = new List<object>();
+        var edges = new List<object>();
+        var addedNodeIds = new HashSet<string>();
+
+        // 1. Products
+        var productsQuery = _context.Products.AsQueryable();
+        if (singleProductId.HasValue)
+            productsQuery = productsQuery.Where(p => p.Id == singleProductId.Value);
+        else if (!string.IsNullOrEmpty(datasetKey))
+            productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+        var products = await productsQuery.OrderBy(p => p.Sku).ToListAsync();
+
+        foreach (var p in products)
+        {
+            var nodeId = $"product-{p.Id}";
+            nodes.Add(new { id = nodeId, type = "product", entityId = p.Id, label = p.Name, sku = p.Sku, imageUrl = p.ImageUrl });
+            addedNodeIds.Add(nodeId);
+        }
+        var productIds = products.Select(p => p.Id).ToHashSet();
+
+        // 2. PackagingLibrary items (packaging items) linked to products via PackagingUnit chain
+        var productPackagings = await _context.ProductPackagings
+            .Where(pp => productIds.Contains(pp.ProductId))
+            .Include(pp => pp.PackagingUnit).ThenInclude(pu => pu.Items).ThenInclude(i => i.PackagingType)
+            .ToListAsync();
+
+        var packagingUnitNameToProductIds = new Dictionary<string, HashSet<int>>();
+        var usedPackagingTypeIds = new HashSet<int>();
+        foreach (var pp in productPackagings)
+        {
+            var unitName = pp.PackagingUnit.Name;
+            if (!packagingUnitNameToProductIds.ContainsKey(unitName))
+                packagingUnitNameToProductIds[unitName] = new HashSet<int>();
+            packagingUnitNameToProductIds[unitName].Add(pp.ProductId);
+
+            foreach (var item in pp.PackagingUnit.Items)
+                usedPackagingTypeIds.Add(item.PackagingTypeId);
+        }
+
+        // Load PackagingLibrary items filtered by dataset (or by matching names from used PackagingTypes)
+        var packagingLibQuery = _context.PackagingLibraries.Where(pl => pl.IsActive);
+        if (singleProductId.HasValue)
+        {
+            var usedPtNames = await _context.PackagingTypes
+                .Where(pt => usedPackagingTypeIds.Contains(pt.Id))
+                .Select(pt => pt.Name)
+                .ToListAsync();
+            packagingLibQuery = packagingLibQuery.Where(pl => usedPtNames.Contains(pl.Name));
+        }
+        else if (!string.IsNullOrEmpty(datasetKey))
+        {
+            packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == datasetKey);
+        }
+
+        var packagingLibraries = await packagingLibQuery
+            .Include(pl => pl.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
+            .Include(pl => pl.PackagingLibrarySupplierProducts).ThenInclude(plsp => plsp.PackagingSupplierProduct).ThenInclude(sp => sp.PackagingSupplier)
+            .ToListAsync();
+
+        var pkgLibIds = new HashSet<int>();
+        foreach (var pl in packagingLibraries)
+        {
+            var plNodeId = $"packaging-{pl.Id}";
+            if (addedNodeIds.Add(plNodeId))
+            {
+                nodes.Add(new { id = plNodeId, type = "packaging", entityId = pl.Id, label = pl.Name, taxonomyCode = pl.TaxonomyCode });
+            }
+            pkgLibIds.Add(pl.Id);
+
+            // Raw material edges
+            foreach (var plm in pl.PackagingLibraryMaterials)
+            {
+                if (plm.MaterialTaxonomy == null) continue;
+                var matNodeId = $"raw-material-{plm.MaterialTaxonomyId}";
+                if (addedNodeIds.Add(matNodeId))
+                {
+                    nodes.Add(new { id = matNodeId, type = "raw-material", entityId = plm.MaterialTaxonomyId, label = plm.MaterialTaxonomy.DisplayName, code = plm.MaterialTaxonomy.Code });
+                }
+                edges.Add(new { from = matNodeId, to = plNodeId, relationship = "PackagingLibraryMaterial" });
+            }
+
+            // Supplier product -> packaging item edges
+            foreach (var plsp in pl.PackagingLibrarySupplierProducts)
+            {
+                var sp = plsp.PackagingSupplierProduct;
+                var spNodeId = $"supplier-pkg-{sp.Id}";
+                if (addedNodeIds.Add(spNodeId))
+                {
+                    nodes.Add(new { id = spNodeId, type = "supplier-packaging", entityId = sp.Id, label = sp.Name, productCode = sp.ProductCode });
+                }
+                edges.Add(new { from = spNodeId, to = plNodeId, relationship = "PackagingLibrarySupplierProduct" });
+
+                // Parent supplier node
+                var supplier = sp.PackagingSupplier;
+                var supplierNodeId = $"supplier-{supplier.Id}";
+                if (addedNodeIds.Add(supplierNodeId))
+                {
+                    nodes.Add(new { id = supplierNodeId, type = "supplier", entityId = supplier.Id, label = supplier.Name, city = supplier.City, country = supplier.Country });
+                }
+                edges.Add(new { from = supplierNodeId, to = spNodeId, relationship = "SupplierProduct" });
+            }
+        }
+
+        // 3. Packaging Groups containing the packaging library items
+        var packagingGroups = await _context.PackagingGroups
+            .Where(g => g.IsActive)
+            .Include(g => g.Items).ThenInclude(gi => gi.PackagingLibrary)
+            .ToListAsync();
+
+        var groupsFiltered = packagingGroups
+            .Where(g => g.Items.Any(gi => pkgLibIds.Contains(gi.PackagingLibraryId)))
+            .ToList();
+
+        foreach (var g in groupsFiltered)
+        {
+            var gNodeId = $"packaging-group-{g.Id}";
+            if (addedNodeIds.Add(gNodeId))
+            {
+                nodes.Add(new { id = gNodeId, type = "packaging-group", entityId = g.Id, label = g.Name, packId = g.PackId, layer = g.PackagingLayer });
+            }
+            foreach (var gi in g.Items)
+            {
+                if (!pkgLibIds.Contains(gi.PackagingLibraryId)) continue;
+                edges.Add(new { from = $"packaging-{gi.PackagingLibraryId}", to = gNodeId, relationship = "PackagingGroupItem" });
+            }
+        }
+
+        // 4. Packaging Group -> Product edges (via matching PackagingUnit name to PackagingGroup name)
+        foreach (var g in groupsFiltered)
+        {
+            if (packagingUnitNameToProductIds.TryGetValue(g.Name, out var pIds))
+            {
+                foreach (var pid in pIds)
+                    edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct" });
+            }
+        }
+
+        // 5. Distribution records
+        var distributionsQuery = _context.Distributions.AsQueryable();
+        if (singleProductId.HasValue)
+            distributionsQuery = distributionsQuery.Where(d => d.ProductId == singleProductId.Value);
+        else if (!string.IsNullOrEmpty(datasetKey))
+            distributionsQuery = distributionsQuery.Where(d => d.DatasetKey == datasetKey && productIds.Contains(d.ProductId));
+        else
+            distributionsQuery = distributionsQuery.Where(d => productIds.Contains(d.ProductId));
+        var distributions = await distributionsQuery.ToListAsync();
+
+        foreach (var d in distributions)
+        {
+            var distNodeId = $"distribution-{d.Id}";
+            if (addedNodeIds.Add(distNodeId))
+            {
+                nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country });
+            }
+            edges.Add(new { from = $"product-{d.ProductId}", to = distNodeId, relationship = "Distribution" });
+        }
+
+        return (nodes, edges);
     }
 
     [HttpPost]

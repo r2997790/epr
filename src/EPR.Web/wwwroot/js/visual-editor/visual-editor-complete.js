@@ -8025,7 +8025,6 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
         }
         
         async addSelectedProduct() {
-            // Check both unified and split dropdowns
             let dropdown = document.getElementById('eprProductLibraryDropdown');
             if (!dropdown || !dropdown.value) {
                 dropdown = document.getElementById('eprProductLibraryDropdownSplit');
@@ -8045,39 +8044,25 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 return;
             }
             
-            console.log('[EPR Types Toolbar] Adding product with ID:', productId);
-            
-            // Check if we have seed data first
-            const seedProduct = this.products.find(p => p.id === productId);
-            if (seedProduct) {
-                console.log('[EPR Types Toolbar] Using seed product data');
-                // Don't provide x/y so it uses default positioning (150px to the right of last node)
-                const node = this.canvasManager.addNode({
-                    type: 'product',
-                    entityId: seedProduct.id,
-                    name: seedProduct.name,
-                    icon: 'bi-bag',
-                    parameters: {
-                        sku: seedProduct.sku,
-                        description: seedProduct.description,
-                        size: seedProduct.size,
-                        weight: seedProduct.weight,
-                        height: seedProduct.height,
-                        quantity: seedProduct.quantity
-                    }
-                });
-                this.canvasManager.selectNode(node.id);
-                return;
-            }
+            console.log('[EPR Types Toolbar] Adding product with full supply chain, ID:', productId);
             
             try {
-                const res = await fetch(`/api/visual-editor/product/${productId}`);
-                if (!res.ok) {
-                    throw new Error('Failed to fetch product');
+                const resp = await fetch(`/api/visual-editor/product/${productId}/supply-chain`);
+                const result = await resp.json();
+                if (result.success && result.nodes && result.nodes.length > 0) {
+                    this._loadSupplyChainIntoCanvas(result, productId);
+                    return;
                 }
+            } catch (err) {
+                console.warn('[EPR Types Toolbar] Supply chain fetch failed, falling back to basic add:', err);
+            }
+            
+            // Fallback: add just the product node if supply chain endpoint unavailable
+            try {
+                const res = await fetch(`/api/visual-editor/product/${productId}`);
+                if (!res.ok) throw new Error('Failed to fetch product');
                 const product = await res.json();
                 
-                // Don't provide x/y so it uses default positioning (150px to the right of last node)
                 const node = this.canvasManager.addNode({
                     type: 'product',
                     entityId: product.id,
@@ -8092,12 +8077,121 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                         quantity: product.quantity
                     }
                 });
-                
                 this.canvasManager.selectNode(node.id);
             } catch (error) {
                 console.error('[EPR Types Toolbar] Error adding product:', error);
                 alert('Error loading product: ' + error.message);
             }
+        }
+        
+        _loadSupplyChainIntoCanvas(result, focusProductId) {
+            const columnOffsets = {
+                'supplier':           -1270,
+                'supplier-packaging': -990,
+                'raw-material':       -990,
+                'packaging':          -660,
+                'packaging-group':    -330,
+                'product':            0,
+                'distribution':       330
+            };
+            const columnLabels = {
+                'supplier':           'Suppliers',
+                'supplier-packaging': 'Supplier Products',
+                'raw-material':       'Raw Materials',
+                'packaging':          'Packaging Items',
+                'packaging-group':    'Packaging Groups',
+                'product':            'Products',
+                'distribution':       'Distribution'
+            };
+            const ySpacing = 140;
+
+            // Find rightmost node to position the new subgraph
+            let baseX = 100;
+            let baseY = 80;
+            if (this.canvasManager.nodes.size > 0) {
+                let maxX = 0;
+                for (const [, n] of this.canvasManager.nodes) {
+                    if (n.x + 250 > maxX) maxX = n.x + 250;
+                }
+                baseX = maxX + 100;
+            }
+
+            const productCol = baseX + Math.abs(columnOffsets['supplier']);
+            const columnY = {};
+            for (const t of Object.keys(columnOffsets)) columnY[t] = 0;
+
+            const nodeIdMap = new Map();
+            const addedIds = new Set();
+
+            for (const n of result.nodes) {
+                if (this.canvasManager.nodes.has(n.id)) {
+                    nodeIdMap.set(n.id, true);
+                    addedIds.add(n.id);
+                    continue;
+                }
+
+                const offset = columnOffsets[n.type] ?? 0;
+                const yOff = columnY[n.type] ?? 0;
+
+                const nodeData = {
+                    id: n.id,
+                    type: n.type,
+                    entityId: n.entityId,
+                    name: n.label || n.sku || 'Unknown',
+                    x: productCol + offset,
+                    y: baseY + yOff,
+                    parameters: {}
+                };
+
+                if (n.sku) nodeData.parameters.sku = n.sku;
+                if (n.imageUrl) nodeData.parameters.imageUrl = n.imageUrl;
+                if (n.code) nodeData.parameters.code = n.code;
+                if (n.city) nodeData.parameters.city = n.city;
+                if (n.country) nodeData.parameters.country = n.country;
+                if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
+                if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
+                if (n.packId) nodeData.parameters.packId = n.packId;
+                if (n.layer) nodeData.parameters.layer = n.layer;
+                if (n.productCode) nodeData.parameters.productCode = n.productCode;
+
+                this.canvasManager.nodes.set(n.id, nodeData);
+                this.canvasManager.renderNode(nodeData);
+                nodeIdMap.set(n.id, true);
+                addedIds.add(n.id);
+                columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+            }
+
+            // Column headers
+            const renderedLabels = new Set();
+            for (const [type, label] of Object.entries(columnLabels)) {
+                if (columnY[type] === 0) continue;
+                const xPos = productCol + (columnOffsets[type] ?? 0);
+                const key = `${xPos}-${label}`;
+                if (renderedLabels.has(key)) continue;
+                renderedLabels.add(key);
+                const header = document.createElement('div');
+                header.className = 'epr-column-header';
+                header.style.cssText = `position:absolute;left:${xPos}px;top:${baseY - 30}px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--bs-secondary,#6c757d);pointer-events:none;white-space:nowrap;z-index:1;`;
+                header.textContent = label;
+                this.canvasManager.nodesLayer.appendChild(header);
+            }
+
+            this.canvasManager.updatePlaceholder();
+
+            for (const e of result.edges) {
+                if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
+                    this.canvasManager.addConnection(e.from, e.to);
+                }
+            }
+
+            this.canvasManager.updateConnections();
+
+            const productNodeId = `product-${focusProductId}`;
+            if (this.canvasManager.nodes.has(productNodeId)) {
+                this.canvasManager.selectNode(productNodeId);
+            }
+
+            console.log(`[EPR] Loaded product supply chain: ${addedIds.size} nodes, ${result.edges.length} edges`);
         }
         
         showNewProductModal() {
@@ -10818,6 +10912,100 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             bsModal.show();
         }
         
+        _renderSupplyChainGraph(result, titlePrefix) {
+            this.canvasManager.nodes.clear();
+            this.canvasManager.connections = [];
+            this.canvasManager.selectedNode = null;
+            this.canvasManager.nodesLayer.innerHTML = '';
+            this.canvasManager.connectionsLayer.innerHTML = '';
+
+            const columnConfig = {
+                'supplier':           { x: 50,   label: 'Suppliers' },
+                'supplier-packaging': { x: 330,  label: 'Supplier Products' },
+                'raw-material':       { x: 330,  label: 'Raw Materials' },
+                'packaging':          { x: 660,  label: 'Packaging Items' },
+                'packaging-group':    { x: 990,  label: 'Packaging Groups' },
+                'product':            { x: 1320, label: 'Products' },
+                'distribution':       { x: 1650, label: 'Distribution' }
+            };
+            const columnY = {};
+            for (const t of Object.keys(columnConfig)) columnY[t] = 0;
+            const ySpacing = 140;
+            const headerY = 20;
+            const nodeStartY = 70;
+
+            const nodeIdMap = new Map();
+
+            for (const n of result.nodes) {
+                const cfg = columnConfig[n.type];
+                const col = cfg ? cfg.x : 600;
+                const yOff = columnY[n.type] ?? 0;
+
+                const nodeData = {
+                    id: n.id,
+                    type: n.type,
+                    entityId: n.entityId,
+                    name: n.label || n.sku || 'Unknown',
+                    x: col,
+                    y: nodeStartY + yOff,
+                    parameters: {}
+                };
+
+                if (n.sku) nodeData.parameters.sku = n.sku;
+                if (n.imageUrl) nodeData.parameters.imageUrl = n.imageUrl;
+                if (n.code) nodeData.parameters.code = n.code;
+                if (n.city) nodeData.parameters.city = n.city;
+                if (n.country) nodeData.parameters.country = n.country;
+                if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
+                if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
+                if (n.packId) nodeData.parameters.packId = n.packId;
+                if (n.layer) nodeData.parameters.layer = n.layer;
+                if (n.productCode) nodeData.parameters.productCode = n.productCode;
+
+                this.canvasManager.nodes.set(n.id, nodeData);
+                nodeIdMap.set(n.id, true);
+                columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
+            }
+
+            // Render column header labels
+            const existingHeaders = this.canvasManager.nodesLayer.querySelectorAll('.epr-column-header');
+            existingHeaders.forEach(h => h.remove());
+
+            const renderedLabels = new Set();
+            for (const [type, cfg] of Object.entries(columnConfig)) {
+                if (columnY[type] === 0) continue;
+                const key = `${cfg.x}-${cfg.label}`;
+                if (renderedLabels.has(key)) continue;
+                renderedLabels.add(key);
+                const header = document.createElement('div');
+                header.className = 'epr-column-header';
+                header.style.cssText = `position:absolute;left:${cfg.x}px;top:${headerY}px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--bs-secondary,#6c757d);pointer-events:none;white-space:nowrap;z-index:1;`;
+                header.textContent = cfg.label;
+                this.canvasManager.nodesLayer.appendChild(header);
+            }
+
+            for (const [, nodeData] of this.canvasManager.nodes) {
+                this.canvasManager.renderNode(nodeData);
+            }
+            this.canvasManager.updatePlaceholder();
+
+            for (const e of result.edges) {
+                if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
+                    this.canvasManager.addConnection(e.from, e.to);
+                }
+            }
+
+            this.canvasManager.updateConnections();
+
+            const projectNameInput = document.getElementById('eprProjectName');
+            if (projectNameInput) {
+                projectNameInput.value = titlePrefix;
+                this.updateBrowserTabTitle();
+            }
+
+            console.log(`[EPR] Loaded supply chain graph: ${result.nodes.length} nodes, ${result.edges.length} edges`);
+        }
+
         async loadRelationshipGraph(datasetKey) {
             if (this.canvasManager.nodes.size > 0 || this.canvasManager.connections.length > 0) {
                 if (!confirm('Loading relationships will replace all current work on the canvas. Continue?')) return;
@@ -10835,72 +11023,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     return;
                 }
 
-                this.canvasManager.nodes.clear();
-                this.canvasManager.connections = [];
-                this.canvasManager.selectedNode = null;
-                this.canvasManager.nodesLayer.innerHTML = '';
-                this.canvasManager.connectionsLayer.innerHTML = '';
-
-                const columnX = { 'raw-material': 100, 'packaging': 450, 'product': 800, 'supplier-packaging': 800, 'distribution': 1200 };
-                const columnY = { 'raw-material': 0, 'packaging': 0, 'product': 0, 'supplier-packaging': 0, 'distribution': 0 };
-                const ySpacing = 140;
-                const supplierYOffset = 2000;
-
-                const nodeIdMap = new Map();
-
-                for (const n of result.nodes) {
-                    const col = columnX[n.type] ?? 600;
-                    let yOff = columnY[n.type] ?? 0;
-                    if (n.type === 'supplier-packaging') yOff += supplierYOffset;
-
-                    const nodeData = {
-                        id: n.id,
-                        type: n.type,
-                        entityId: n.entityId,
-                        name: n.label || n.sku || 'Unknown',
-                        x: col,
-                        y: 80 + yOff,
-                        parameters: {}
-                    };
-
-                    if (n.sku) nodeData.parameters.sku = n.sku;
-                    if (n.imageUrl) nodeData.parameters.imageUrl = n.imageUrl;
-                    if (n.code) nodeData.parameters.code = n.code;
-                    if (n.city) nodeData.parameters.city = n.city;
-                    if (n.country) nodeData.parameters.country = n.country;
-                    if (n.supplierName) nodeData.parameters.supplierName = n.supplierName;
-                    if (n.taxonomyCode) nodeData.parameters.taxonomyCode = n.taxonomyCode;
-
-                    this.canvasManager.nodes.set(n.id, nodeData);
-                    nodeIdMap.set(n.id, true);
-
-                    if (n.type === 'supplier-packaging') {
-                        columnY['supplier-packaging'] += ySpacing;
-                    } else {
-                        columnY[n.type] = (columnY[n.type] || 0) + ySpacing;
-                    }
-                }
-
-                for (const [, nodeData] of this.canvasManager.nodes) {
-                    this.canvasManager.renderNode(nodeData);
-                }
-                this.canvasManager.updatePlaceholder();
-
-                for (const e of result.edges) {
-                    if (nodeIdMap.has(e.from) && nodeIdMap.has(e.to)) {
-                        this.canvasManager.addConnection(e.from, e.to);
-                    }
-                }
-
-                this.canvasManager.updateConnections();
-
-                const projectNameInput = document.getElementById('eprProjectName');
-                if (projectNameInput) {
-                    projectNameInput.value = datasetKey ? `${datasetKey} Relationships` : 'All Relationships';
-                    this.updateBrowserTabTitle();
-                }
-
-                console.log(`[EPR] Loaded relationship graph: ${result.nodes.length} nodes, ${result.edges.length} edges`);
+                const title = datasetKey ? `${datasetKey} Supply Chain` : 'All Supply Chains';
+                this._renderSupplyChainGraph(result, title);
             } catch (err) {
                 console.error('[EPR] Failed to load relationship graph:', err);
                 alert('Failed to load relationships: ' + err.message);
