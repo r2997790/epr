@@ -1247,8 +1247,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     const orphanRawMaterials = rawMaterials.filter(rawId => {
                         const rawNode = this.nodes.get(rawId);
                         if (!rawNode) return false;
-                        // Check if this raw material is NOT connected to any packaging in the group
-                        // Note: rawMaterials already contains only items in this group
+                        if (rawNode.parentItemId && packagingItems.includes(rawNode.parentItemId)) return false;
                         return !this.connections.some(conn => 
                             conn.from === rawId && packagingItems.includes(conn.to)
                         );
@@ -1715,7 +1714,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
 
                 let quantityInfo = '';
                 if (node.type === 'distribution' && node.parameters?.quantity != null) {
-                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-box me-1"></i>Qty: ${node.parameters.quantity}</div>`;
+                    const breakdown = node.parameters.quantityBreakdown || `Qty: ${node.parameters.quantity}`;
+                    quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-box me-1"></i>${this.escapeHtml(breakdown)}</div>`;
                 } else if (node.type === 'packaging' && node.parameters?.weight != null) {
                     quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-speedometer me-1"></i>Weight: ${node.parameters.weight}g</div>`;
                 } else if (node.type === 'packaging-group' && node.parameters?.totalWeight != null) {
@@ -8222,6 +8222,8 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.totalWeight) nodeData.parameters.totalWeight = n.totalWeight;
                 if (n.weight != null) nodeData.parameters.weight = n.weight;
                 if (n.quantity != null) nodeData.parameters.quantity = n.quantity;
+                if (n.quantityBreakdown) nodeData.parameters.quantityBreakdown = n.quantityBreakdown;
+                if (n.packagingUnitName) nodeData.parameters.packagingUnitName = n.packagingUnitName;
                 if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
                 if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
 

@@ -1088,7 +1088,7 @@ public class VisualEditorController : Controller
         }
 
         // 5. Distribution records (no direct product -> distribution edges)
-        var distributionsQuery = _context.Distributions.AsQueryable();
+        var distributionsQuery = _context.Distributions.Include(d => d.PackagingUnit).AsQueryable();
         if (singleProductId.HasValue)
             distributionsQuery = distributionsQuery.Where(d => d.ProductId == singleProductId.Value);
         else if (!string.IsNullOrEmpty(datasetKey))
@@ -1097,11 +1097,52 @@ public class VisualEditorController : Controller
             distributionsQuery = distributionsQuery.Where(d => productIds.Contains(d.ProductId));
         var distributions = await distributionsQuery.ToListAsync();
 
+        // Compute hierarchy multipliers for quantity breakdown
+        var primaryGroup = chainGroups.FirstOrDefault(g => (g.PackagingLayer ?? "").Equals("Primary", StringComparison.OrdinalIgnoreCase));
+        var secondaryGroup = chainGroups.FirstOrDefault(g => (g.PackagingLayer ?? "").Equals("Secondary", StringComparison.OrdinalIgnoreCase));
+        var tertiaryGroup = chainGroups.FirstOrDefault(g => (g.PackagingLayer ?? "").Equals("Tertiary", StringComparison.OrdinalIgnoreCase));
+        var primaryQIP = primaryGroup?.QuantityInParent ?? 1;
+        var secondaryQIP = secondaryGroup?.QuantityInParent ?? 1;
+
         foreach (var d in distributions)
         {
             var distNodeId = $"distribution-{d.Id}";
-            if (addedNodeIds.Add(distNodeId))
-                nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country, quantity = d.Quantity });
+            if (!addedNodeIds.Add(distNodeId)) continue;
+
+            var unitName = d.PackagingUnit?.Name ?? "units";
+            var unitLevel = (d.PackagingUnit?.UnitLevel ?? "").ToLowerInvariant();
+            var qty = (int)d.Quantity;
+
+            var breakdownParts = new List<string>();
+            if (tertiaryGroup != null && secondaryQIP > 0 && primaryQIP > 0)
+            {
+                int primaryCount, secondaryCount, tertiaryCount;
+                if (unitLevel.Contains("tertiary"))
+                {
+                    tertiaryCount = qty;
+                    secondaryCount = qty * secondaryQIP;
+                    primaryCount = secondaryCount * primaryQIP;
+                }
+                else if (unitLevel.Contains("secondary"))
+                {
+                    secondaryCount = qty;
+                    primaryCount = qty * primaryQIP;
+                    tertiaryCount = (int)Math.Ceiling((double)qty / secondaryQIP);
+                }
+                else
+                {
+                    primaryCount = qty;
+                    secondaryCount = (int)Math.Ceiling((double)qty / primaryQIP);
+                    tertiaryCount = (int)Math.Ceiling((double)secondaryCount / secondaryQIP);
+                }
+                if (tertiaryGroup != null) breakdownParts.Add($"{tertiaryCount} × {tertiaryGroup.Name}");
+                if (secondaryGroup != null) breakdownParts.Add($"{secondaryCount} × {secondaryGroup.Name}");
+                if (primaryGroup != null) breakdownParts.Add($"{primaryCount} × {primaryGroup.Name}");
+            }
+
+            var breakdown = breakdownParts.Count > 0 ? string.Join(", ", breakdownParts) : $"{qty} × {unitName}";
+
+            nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country, quantity = d.Quantity, packagingUnitName = unitName, quantityBreakdown = breakdown });
         }
 
         // 6. ASN Shipments: tertiary -> ASN -> distribution
@@ -1155,8 +1196,10 @@ public class VisualEditorController : Controller
                     if (gtinToDistNodeIds.TryGetValue(li.Gtin, out var distIds))
                         foreach (var did in distIds) linkedDistIds.Add(did);
 
+            var allProductGtins = products.Where(p => !string.IsNullOrEmpty(p.Gtin)).Select(p => p.Gtin!).ToHashSet();
+            var productPalletCount = s.Pallets.Count(p => p.LineItems.Any(li => allProductGtins.Contains(li.Gtin)));
             foreach (var tgId in tertiaryGroupNodeIds)
-                edges.Add(new { from = tgId, to = asnNodeId, relationship = "TertiaryAsn", quantity = (int?)null, quantityLabel = (string?)null });
+                edges.Add(new { from = tgId, to = asnNodeId, relationship = "TertiaryAsn", quantity = (int?)productPalletCount, quantityLabel = productPalletCount > 0 ? $"×{productPalletCount} pallet{(productPalletCount != 1 ? "s" : "")}" : (string?)null });
             foreach (var did in linkedDistIds)
                 edges.Add(new { from = asnNodeId, to = did, relationship = "AsnDistribution", quantity = (int?)null, quantityLabel = (string?)null });
         }

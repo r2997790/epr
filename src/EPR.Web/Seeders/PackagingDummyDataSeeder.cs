@@ -21,8 +21,8 @@ public class PackagingDummyDataSeeder
     {
         var now = DateTime.UtcNow;
 
-        // 1. Seed MaterialTaxonomy (raw materials) if empty
-        if (!await _context.MaterialTaxonomies.AnyAsync())
+        // 1. Seed MaterialTaxonomy (raw materials) if the dummy-specific entries don't exist
+        if (!await _context.MaterialTaxonomies.AnyAsync(t => t.Code == "PET"))
         {
             var materials = new List<MaterialTaxonomy>
             {
@@ -41,8 +41,8 @@ public class PackagingDummyDataSeeder
             await _context.SaveChangesAsync();
         }
 
-        // 2. Seed PackagingLibrary (packaging items) if empty
-        if (!await _context.PackagingLibraries.AnyAsync())
+        // 2. Seed PackagingLibrary (packaging items) if the dummy-specific entries don't exist
+        if (!await _context.PackagingLibraries.AnyAsync(l => l.TaxonomyCode == "PET.BF.BT.500"))
         {
             var pet = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PET");
             var pap = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PAP");
