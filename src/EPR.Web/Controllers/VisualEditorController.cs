@@ -1074,7 +1074,7 @@ public class VisualEditorController : Controller
 
                 foreach (var pid in linkedProducts)
                 {
-                    edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct", quantity = (int?)1, quantityLabel = (string?)null });
+                    edges.Add(new { from = $"packaging-group-{g.Id}", to = $"product-{pid}", relationship = "PackagingGroupProduct", quantity = (int?)null, quantityLabel = (string?)null });
 
                     // product -> secondary (parent of primary), with quantity = primary.QuantityInParent
                     if (g.ParentPackagingGroupId.HasValue && chainGroupIds.Contains(g.ParentPackagingGroupId.Value))

@@ -4418,17 +4418,19 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     circleBg.style.cursor = 'pointer';
                     this.connectionsLayer.appendChild(circleBg);
                     
-                    // Format display - value and unit on separate lines if unit exists
-                    let valueText = connectionQuantity.toString();
-                    if (connectionQuantityType === 'quantity' && connectionQuantityUnit) {
-                        // Format to 2 decimal places for quantity type
+                    // Use quantityLabel as display value when available, otherwise numeric value
+                    let valueText;
+                    if (connectionQuantityUnit && connectionQuantityUnit !== 'count') {
+                        valueText = connectionQuantityUnit;
+                    } else if (connectionQuantityType === 'quantity') {
                         valueText = parseFloat(connectionQuantity).toFixed(2);
+                    } else {
+                        valueText = connectionQuantity.toString();
                     }
                     
-                    // Create value text (always shown)
                     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                     text.setAttribute('x', midX);
-                    text.setAttribute('y', midY - (connectionQuantityUnit && connectionQuantityUnit !== 'count' ? 4 : 0));
+                    text.setAttribute('y', midY);
                     text.setAttribute('text-anchor', 'middle');
                     text.setAttribute('dominant-baseline', 'central');
                     text.setAttribute('fill', 'white');
@@ -4437,30 +4439,6 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                     text.setAttribute('class', 'epr-connection-quantity-text');
                     text.textContent = valueText;
                     this.connectionsLayer.appendChild(text);
-                    
-                    // Create unit text on separate line if unit exists and is not 'count'
-                    if (connectionQuantityUnit && connectionQuantityUnit !== 'count') {
-                        const unitText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        unitText.setAttribute('x', midX);
-                        unitText.setAttribute('y', midY + 8);
-                        unitText.setAttribute('text-anchor', 'middle');
-                        unitText.setAttribute('dominant-baseline', 'central');
-                        unitText.setAttribute('fill', 'white');
-                        unitText.setAttribute('font-size', '9');
-                        unitText.setAttribute('font-weight', 'normal');
-                        unitText.setAttribute('class', 'epr-connection-quantity-unit');
-                        unitText.textContent = connectionQuantityUnit;
-                        this.connectionsLayer.appendChild(unitText);
-                        
-                        // Make unit text clickable too
-                        unitText.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const fromNode = this.nodes.get(conn.from);
-                            const toNode = this.nodes.get(conn.to);
-                            const isProductConnection = (fromNode && fromNode.type === 'product') || (toNode && toNode.type === 'product');
-                            this.showQuantityModal({ from: conn.from, to: conn.to, fromPort: conn.fromPort, toPort: conn.toPort }, isProductConnection);
-                        });
-                    }
                     
                     // Make circle and value text clickable to open quantity modal for editing
                     const connectionInfo = { from: conn.from, to: conn.to, fromPort: conn.fromPort, toPort: conn.toPort };
@@ -8183,7 +8161,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 baseX = maxX + 100;
             }
 
-            const productCol = baseX + Math.abs(columnOffsets['raw-material']);
+            const productCol = baseX + Math.abs(Math.min(...Object.values(columnOffsets)));
             const columnY = {};
             for (const t of Object.keys(columnOffsets)) columnY[t] = 0;
 
