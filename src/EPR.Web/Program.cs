@@ -1175,6 +1175,27 @@ _ = Task.Run(async () =>
     }
 });
 
+// One-time reseed trigger via environment variable
+if (Environment.GetEnvironmentVariable("RESEED_ON_STARTUP") == "true")
+{
+    _ = Task.Run(async () =>
+    {
+        await Task.Delay(5000);
+        try
+        {
+            using var scope = app.Services.CreateScope();
+            var ctx = scope.ServiceProvider.GetRequiredService<EPRDbContext>();
+            Console.WriteLine("RESEED_ON_STARTUP=true detected, reseeding all datasets...");
+            await EPR.Web.Scripts.ReseedDatasets.RunAsync(ctx);
+            Console.WriteLine("Reseed complete.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Reseed failed: {ex.Message}");
+        }
+    });
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
