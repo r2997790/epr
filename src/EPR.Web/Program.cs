@@ -852,6 +852,17 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("✓ DatasetKey columns verified (PostgreSQL)");
             }
             catch (Exception ex) { Console.WriteLine($"⚠ DatasetKey PostgreSQL: {ex.Message}"); }
+
+        if (isPostgres)
+        {
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""PackagingGroups"" ADD COLUMN IF NOT EXISTS ""ParentPackagingGroupId"" integer REFERENCES ""PackagingGroups""(""Id"") ON DELETE RESTRICT");
+                await context.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""PackagingGroups"" ADD COLUMN IF NOT EXISTS ""QuantityInParent"" integer");
+                Console.WriteLine("✓ PackagingGroup hierarchy columns verified (PostgreSQL)");
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ PackagingGroup hierarchy PostgreSQL: {ex.Message}"); }
+        }
         }
 
             // Always ensure admin user exists with correct password
