@@ -933,6 +933,11 @@ public class VisualEditorController : Controller
             productDatasetKey = products.FirstOrDefault()?.DatasetKey;
             if (!string.IsNullOrEmpty(productDatasetKey))
                 packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == productDatasetKey);
+            else
+            {
+                var ptNames = ptNameToProductIds.Keys.ToHashSet();
+                packagingLibQuery = packagingLibQuery.Where(pl => ptNames.Contains(pl.Name));
+            }
         }
         else if (!string.IsNullOrEmpty(datasetKey))
             packagingLibQuery = packagingLibQuery.Where(pl => pl.DatasetKey == datasetKey);
@@ -1017,17 +1022,6 @@ public class VisualEditorController : Controller
             {
                 chainGroups.Add(current);
                 current = current.ParentPackagingGroupId.HasValue && allGroupsById.TryGetValue(current.ParentPackagingGroupId.Value, out var parent) ? parent : null;
-            }
-        }
-
-        // Also include any non-primary groups that have items matching our product packaging
-        foreach (var g in allGroups)
-        {
-            if (chainGroupIds.Contains(g.Id)) continue;
-            if (g.Items.Any(gi => pkgLibIds.Contains(gi.PackagingLibraryId)))
-            {
-                chainGroups.Add(g);
-                chainGroupIds.Add(g.Id);
             }
         }
 
