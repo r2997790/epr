@@ -122,6 +122,29 @@ public static class ReseedDatasets
 
     private static async Task DeleteDummyPackagingGroupsAsync(EPRDbContext context)
     {
+        // Delete dummy PackagingLibraries (null DatasetKey) and their join-table rows
+        var dummyLibraries = await context.PackagingLibraries
+            .Where(l => l.DatasetKey == null)
+            .ToListAsync();
+
+        if (dummyLibraries.Any())
+        {
+            var dummyLibIds = dummyLibraries.Select(l => l.Id).ToHashSet();
+            var dummyLibMaterials = await context.PackagingLibraryMaterials
+                .Where(m => dummyLibIds.Contains(m.PackagingLibraryId))
+                .ToListAsync();
+            context.PackagingLibraryMaterials.RemoveRange(dummyLibMaterials);
+
+            var dummyLibSupplierProducts = await context.PackagingLibrarySupplierProducts
+                .Where(sp => dummyLibIds.Contains(sp.PackagingLibraryId))
+                .ToListAsync();
+            context.PackagingLibrarySupplierProducts.RemoveRange(dummyLibSupplierProducts);
+
+            context.PackagingLibraries.RemoveRange(dummyLibraries);
+            await context.SaveChangesAsync();
+        }
+
+        // Delete dummy PackagingGroups (null DatasetKey)
         var dummyGroups = await context.PackagingGroups
             .Where(g => g.DatasetKey == null)
             .Include(g => g.Items)
@@ -129,11 +152,9 @@ public static class ReseedDatasets
 
         if (!dummyGroups.Any()) return;
 
-        // Remove group items first
         var allItems = dummyGroups.SelectMany(g => g.Items).ToList();
         context.PackagingGroupItems.RemoveRange(allItems);
 
-        // Null out self-FK to avoid Restrict violation
         foreach (var g in dummyGroups)
             g.ParentPackagingGroupId = null;
         await context.SaveChangesAsync();

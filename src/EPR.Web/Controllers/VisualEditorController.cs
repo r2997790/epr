@@ -1110,31 +1110,14 @@ public class VisualEditorController : Controller
             if (!addedNodeIds.Add(distNodeId)) continue;
 
             var unitName = d.PackagingUnit?.Name ?? "units";
-            var unitLevel = (d.PackagingUnit?.UnitLevel ?? "").ToLowerInvariant();
             var qty = (int)d.Quantity;
 
             var breakdownParts = new List<string>();
             if (tertiaryGroup != null && secondaryQIP > 0 && primaryQIP > 0)
             {
-                int primaryCount, secondaryCount, tertiaryCount;
-                if (unitLevel.Contains("tertiary"))
-                {
-                    tertiaryCount = qty;
-                    secondaryCount = qty * secondaryQIP;
-                    primaryCount = secondaryCount * primaryQIP;
-                }
-                else if (unitLevel.Contains("secondary"))
-                {
-                    secondaryCount = qty;
-                    primaryCount = qty * primaryQIP;
-                    tertiaryCount = (int)Math.Ceiling((double)qty / secondaryQIP);
-                }
-                else
-                {
-                    primaryCount = qty;
-                    secondaryCount = (int)Math.Ceiling((double)qty / primaryQIP);
-                    tertiaryCount = (int)Math.Ceiling((double)secondaryCount / secondaryQIP);
-                }
+                int primaryCount = qty;
+                int secondaryCount = primaryQIP > 0 ? (int)Math.Ceiling((double)qty / primaryQIP) : qty;
+                int tertiaryCount = secondaryQIP > 0 ? (int)Math.Ceiling((double)secondaryCount / secondaryQIP) : secondaryCount;
                 if (tertiaryGroup != null) breakdownParts.Add($"{tertiaryCount} × {tertiaryGroup.Name}");
                 if (secondaryGroup != null) breakdownParts.Add($"{secondaryCount} × {secondaryGroup.Name}");
                 if (primaryGroup != null) breakdownParts.Add($"{primaryCount} × {primaryGroup.Name}");
@@ -1142,7 +1125,18 @@ public class VisualEditorController : Controller
 
             var breakdown = breakdownParts.Count > 0 ? string.Join(", ", breakdownParts) : $"{qty} × {unitName}";
 
-            nodes.Add(new { id = distNodeId, type = "distribution", entityId = d.Id, label = $"{d.City} - {d.RetailerName}", city = d.City, country = d.Country, quantity = d.Quantity, packagingUnitName = unitName, quantityBreakdown = breakdown });
+            nodes.Add(new {
+                id = distNodeId, type = "distribution", entityId = d.Id,
+                label = $"{d.City} - {d.RetailerName}",
+                city = d.City, country = d.Country,
+                streetAddress = d.StreetAddress,
+                stateProvince = d.StateProvince,
+                postcodeZipcode = d.PostcodeZipcode,
+                retailerName = d.RetailerName,
+                quantity = d.Quantity,
+                packagingUnitName = unitName,
+                quantityBreakdown = breakdown
+            });
         }
 
         // 6. ASN Shipments: tertiary -> ASN -> distribution

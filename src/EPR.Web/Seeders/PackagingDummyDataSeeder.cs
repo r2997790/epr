@@ -21,70 +21,70 @@ public class PackagingDummyDataSeeder
     {
         var now = DateTime.UtcNow;
 
-        // 1. Seed MaterialTaxonomy (raw materials) if the dummy-specific entries don't exist
-        if (!await _context.MaterialTaxonomies.AnyAsync(t => t.Code == "PET"))
+        // 1. Seed MaterialTaxonomy (raw materials) — ensure each individually to avoid bulk-insert failures
+        async Task<MaterialTaxonomy> EnsureMaterial(string code, string displayName, string name, int sortOrder)
         {
-            var materials = new List<MaterialTaxonomy>
+            var existing = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == code);
+            if (existing != null) return existing;
+            var m = new MaterialTaxonomy
             {
-                new() { Level = 1, Code = "PET", DisplayName = "Polyethylene Terephthalate", Name = "PET", SortOrder = 1, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "PAP", DisplayName = "Paper & Cardboard", Name = "Paper", SortOrder = 2, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "GLS", DisplayName = "Glass", Name = "Glass", SortOrder = 3, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "ALU", DisplayName = "Aluminium", Name = "Aluminium", SortOrder = 4, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "PP", DisplayName = "Polypropylene", Name = "PP", SortOrder = 5, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "HDPE", DisplayName = "High-Density Polyethylene", Name = "HDPE", SortOrder = 6, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "PLA", DisplayName = "Polylactic Acid (Compostable)", Name = "PLA", SortOrder = 7, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "WOOD", DisplayName = "Softwood Timber", Name = "Wood", SortOrder = 8, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "LDPE", DisplayName = "Low-Density Polyethylene Film", Name = "LDPE", SortOrder = 9, IsActive = true, CreatedAt = now },
-                new() { Level = 1, Code = "STEEL", DisplayName = "Steel (Nails/Fasteners)", Name = "Steel", SortOrder = 10, IsActive = true, CreatedAt = now }
+                Level = 1, Code = code, DisplayName = displayName,
+                Name = name, SortOrder = sortOrder, IsActive = true, CreatedAt = now
             };
-            _context.MaterialTaxonomies.AddRange(materials);
+            _context.MaterialTaxonomies.Add(m);
             await _context.SaveChangesAsync();
+            return m;
         }
 
-        // 2. Seed PackagingLibrary (packaging items) if the dummy-specific entries don't exist
-        if (!await _context.PackagingLibraries.AnyAsync(l => l.TaxonomyCode == "PET.BF.BT.500"))
-        {
-            var pet = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PET");
-            var pap = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PAP");
-            var hdpe = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "HDPE");
-            var pp = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PP");
-            var pla = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "PLA");
-            var gls = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "GLS");
-            var alu = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "ALU");
-            var wood = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "WOOD");
-            var ldpe = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "LDPE");
-            var steel = await _context.MaterialTaxonomies.FirstOrDefaultAsync(t => t.Code == "STEEL");
+        var pet   = await EnsureMaterial("PET",   "Polyethylene Terephthalate",    "PET",       1);
+        var pap   = await EnsureMaterial("PAP",   "Paper & Cardboard",             "Paper",     2);
+        var gls   = await EnsureMaterial("GLS",   "Glass",                         "Glass",     3);
+        var alu   = await EnsureMaterial("ALU",   "Aluminium",                     "Aluminium", 4);
+        var pp    = await EnsureMaterial("PP",    "Polypropylene",                 "PP",        5);
+        var hdpe  = await EnsureMaterial("HDPE",  "High-Density Polyethylene",     "HDPE",      6);
+        var pla   = await EnsureMaterial("PLA",   "Polylactic Acid (Compostable)", "PLA",       7);
+        var wood  = await EnsureMaterial("WOOD",  "Softwood Timber",               "Wood",      8);
+        var ldpe  = await EnsureMaterial("LDPE",  "Low-Density Polyethylene Film", "LDPE",      9);
+        var steel = await EnsureMaterial("STEEL", "Steel (Nails/Fasteners)",       "Steel",    10);
 
-            var items = new List<PackagingLibrary>
+        // 2. Seed PackagingLibrary (packaging items) — ensure each individually
+        async Task<PackagingLibrary> EnsureLibrary(string taxonomyCode, string name, decimal weight, int? materialTaxonomyId)
+        {
+            var existing = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == taxonomyCode);
+            if (existing != null) return existing;
+            var lib = new PackagingLibrary
             {
-                new() { TaxonomyCode = "PET.BF.BT.500", Name = "PET Bottle 500ml", Weight = 25, MaterialTaxonomyId = pet?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "HDPE.CAP.28", Name = "HDPE Cap 28mm", Weight = 2, MaterialTaxonomyId = hdpe?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "PAP.LBL", Name = "Paper Label", Weight = 1, MaterialTaxonomyId = pap?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "CB.BOX.SML", Name = "Cardboard Box Small", Weight = 50, MaterialTaxonomyId = pap?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "GLS.JAR.250", Name = "Glass Jar 250g", Weight = 180, MaterialTaxonomyId = gls?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "PP.CON.500", Name = "PP Container 500ml", Weight = 30, MaterialTaxonomyId = pp?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "PLA.FILM", Name = "Compostable Film", Weight = 5, MaterialTaxonomyId = pla?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "ALU.TRAY", Name = "Aluminium Tray", Weight = 15, MaterialTaxonomyId = alu?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "WOOD.PLT", Name = "Wood Pallet", Weight = 22000, MaterialTaxonomyId = wood?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "LDPE.WRAP", Name = "Stretch Wrap", Weight = 300, MaterialTaxonomyId = ldpe?.Id, IsActive = true, CreatedAt = now },
-                new() { TaxonomyCode = "STEEL.NAIL", Name = "Pallet Nails", Weight = 200, MaterialTaxonomyId = steel?.Id, IsActive = true, CreatedAt = now }
+                TaxonomyCode = taxonomyCode, Name = name, Weight = weight,
+                MaterialTaxonomyId = materialTaxonomyId, IsActive = true, CreatedAt = now
             };
-            _context.PackagingLibraries.AddRange(items);
+            _context.PackagingLibraries.Add(lib);
             await _context.SaveChangesAsync();
 
-            // Add PackagingLibraryMaterials for each item (many-to-many raw materials)
-            foreach (var item in items.Where(i => i.MaterialTaxonomyId != null))
+            if (materialTaxonomyId != null)
             {
                 _context.PackagingLibraryMaterials.Add(new PackagingLibraryMaterial
                 {
-                    PackagingLibraryId = item.Id,
-                    MaterialTaxonomyId = item.MaterialTaxonomyId!.Value,
+                    PackagingLibraryId = lib.Id,
+                    MaterialTaxonomyId = materialTaxonomyId.Value,
                     SortOrder = 0,
                     CreatedAt = now
                 });
+                await _context.SaveChangesAsync();
             }
-            await _context.SaveChangesAsync();
+            return lib;
         }
+
+        await EnsureLibrary("PET.BF.BT.500", "PET Bottle 500ml",   25,    pet.Id);
+        await EnsureLibrary("HDPE.CAP.28",    "HDPE Cap 28mm",      2,     hdpe.Id);
+        await EnsureLibrary("PAP.LBL",        "Paper Label",        1,     pap.Id);
+        await EnsureLibrary("CB.BOX.SML",     "Cardboard Box Small", 50,   pap.Id);
+        await EnsureLibrary("GLS.JAR.250",    "Glass Jar 250g",     180,   gls.Id);
+        await EnsureLibrary("PP.CON.500",     "PP Container 500ml", 30,    pp.Id);
+        await EnsureLibrary("PLA.FILM",       "Compostable Film",   5,     pla.Id);
+        await EnsureLibrary("ALU.TRAY",       "Aluminium Tray",     15,    alu.Id);
+        await EnsureLibrary("WOOD.PLT",       "Wood Pallet",        22000, wood.Id);
+        await EnsureLibrary("LDPE.WRAP",      "Stretch Wrap",       300,   ldpe.Id);
+        await EnsureLibrary("STEEL.NAIL",     "Pallet Nails",       200,   steel.Id);
 
         // 4. Seed PackagingGroups if the specific dummy groups don't exist
         if (!await _context.PackagingGroups.AnyAsync(g => g.PackId == "PG-001"))

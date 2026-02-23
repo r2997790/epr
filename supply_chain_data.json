@@ -1,0 +1,492 @@
+{
+  "success": true,
+  "nodes": [
+    {
+      "id": "product-20",
+      "type": "product",
+      "entityId": 20,
+      "label": "Fabric Softener 2L",
+      "sku": "05012345679092",
+      "imageUrl": null,
+      "suppliers": [
+        {
+          "name": "Recycled PET Bottles 500ml",
+          "supplierName": "EcoPack Solutions Ltd",
+          "city": "Manchester",
+          "country": "UK"
+        }
+      ]
+    },
+    {
+      "id": "packaging-1",
+      "type": "packaging",
+      "entityId": 1,
+      "label": "PET Bottle 500ml",
+      "taxonomyCode": "PET.BF.BT.500",
+      "suppliers": [
+        {
+          "name": "Recycled PET Bottles 500ml",
+          "supplierName": "EcoPack Solutions Ltd",
+          "city": "Manchester",
+          "country": "UK"
+        }
+      ],
+      "rawMaterialIds": [
+        1
+      ],
+      "weight": 25.0
+    },
+    {
+      "id": "raw-material-1",
+      "type": "raw-material",
+      "entityId": 1,
+      "label": "Polyethylene Terephthalate",
+      "code": "PET"
+    },
+    {
+      "id": "packaging-4",
+      "type": "packaging",
+      "entityId": 4,
+      "label": "Cardboard Box Small",
+      "taxonomyCode": "CB.BOX.SML",
+      "suppliers": [],
+      "rawMaterialIds": [
+        2
+      ],
+      "weight": 50.0
+    },
+    {
+      "id": "raw-material-2",
+      "type": "raw-material",
+      "entityId": 2,
+      "label": "Paper & Cardboard",
+      "code": "PAP"
+    },
+    {
+      "id": "packaging-186",
+      "type": "packaging",
+      "entityId": 186,
+      "label": "Wood Pallet",
+      "taxonomyCode": "ELEC-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        14
+      ],
+      "weight": 22000.0
+    },
+    {
+      "id": "raw-material-14",
+      "type": "raw-material",
+      "entityId": 14,
+      "label": "Softwood Timber",
+      "code": "WOOD"
+    },
+    {
+      "id": "packaging-187",
+      "type": "packaging",
+      "entityId": 187,
+      "label": "Stretch Wrap",
+      "taxonomyCode": "ELEC-WRAP-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        15
+      ],
+      "weight": 300.0
+    },
+    {
+      "id": "raw-material-15",
+      "type": "raw-material",
+      "entityId": 15,
+      "label": "Low-Density Polyethylene Film",
+      "code": "LDPE"
+    },
+    {
+      "id": "packaging-194",
+      "type": "packaging",
+      "entityId": 194,
+      "label": "Wood Pallet",
+      "taxonomyCode": "ALC-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        14
+      ],
+      "weight": 22000.0
+    },
+    {
+      "id": "packaging-195",
+      "type": "packaging",
+      "entityId": 195,
+      "label": "Stretch Wrap",
+      "taxonomyCode": "ALC-WRAP-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        15
+      ],
+      "weight": 300.0
+    },
+    {
+      "id": "packaging-202",
+      "type": "packaging",
+      "entityId": 202,
+      "label": "Wood Pallet",
+      "taxonomyCode": "CONF-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        14
+      ],
+      "weight": 22000.0
+    },
+    {
+      "id": "packaging-203",
+      "type": "packaging",
+      "entityId": 203,
+      "label": "Stretch Wrap",
+      "taxonomyCode": "CONF-WRAP-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        15
+      ],
+      "weight": 300.0
+    },
+    {
+      "id": "packaging-209",
+      "type": "packaging",
+      "entityId": 209,
+      "label": "Wood Pallet",
+      "taxonomyCode": "HW-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        14
+      ],
+      "weight": 22000.0
+    },
+    {
+      "id": "packaging-210",
+      "type": "packaging",
+      "entityId": 210,
+      "label": "Stretch Wrap",
+      "taxonomyCode": "HW-WRAP-PLT-001",
+      "suppliers": [],
+      "rawMaterialIds": [
+        15
+      ],
+      "weight": 300.0
+    },
+    {
+      "id": "packaging-2",
+      "type": "packaging",
+      "entityId": 2,
+      "label": "HDPE Cap 28mm",
+      "taxonomyCode": "HDPE.CAP.28",
+      "suppliers": [],
+      "rawMaterialIds": [
+        6
+      ],
+      "weight": 2.0
+    },
+    {
+      "id": "raw-material-6",
+      "type": "raw-material",
+      "entityId": 6,
+      "label": "High-Density Polyethylene",
+      "code": "HDPE"
+    },
+    {
+      "id": "packaging-3",
+      "type": "packaging",
+      "entityId": 3,
+      "label": "Paper Label",
+      "taxonomyCode": "PAP.LBL",
+      "suppliers": [],
+      "rawMaterialIds": [
+        2
+      ],
+      "weight": 1.0
+    },
+    {
+      "id": "packaging-group-102",
+      "type": "packaging-group",
+      "entityId": 102,
+      "label": "Bottle + Cap + Label",
+      "packId": "PG-001",
+      "layer": "Primary",
+      "packagingItemIds": [
+        1,
+        2,
+        3
+      ],
+      "totalWeight": 28.0,
+      "parentPackagingGroupId": 101,
+      "quantityInParent": 20
+    },
+    {
+      "id": "packaging-group-101",
+      "type": "packaging-group",
+      "entityId": 101,
+      "label": "Shipping Carton",
+      "packId": "PG-002",
+      "layer": "Secondary",
+      "packagingItemIds": [
+        4,
+        3
+      ],
+      "totalWeight": 80.0,
+      "parentPackagingGroupId": 100,
+      "quantityInParent": 40
+    },
+    {
+      "id": "packaging-group-100",
+      "type": "packaging-group",
+      "entityId": 100,
+      "label": "Shipping Pallet",
+      "packId": "PG-PLT",
+      "layer": "Tertiary",
+      "packagingItemIds": [],
+      "totalWeight": 22500.0,
+      "parentPackagingGroupId": null,
+      "quantityInParent": null
+    },
+    {
+      "id": "distribution-36",
+      "type": "distribution",
+      "entityId": 36,
+      "label": "Sydney - ",
+      "city": "Sydney",
+      "country": "AU",
+      "quantity": 11.0
+    },
+    {
+      "id": "distribution-91",
+      "type": "distribution",
+      "entityId": 91,
+      "label": "Hobart - ",
+      "city": "Hobart",
+      "country": "AU",
+      "quantity": 339.0
+    },
+    {
+      "id": "distribution-92",
+      "type": "distribution",
+      "entityId": 92,
+      "label": "Brisbane - ",
+      "city": "Brisbane",
+      "country": "AU",
+      "quantity": 280.0
+    },
+    {
+      "id": "distribution-93",
+      "type": "distribution",
+      "entityId": 93,
+      "label": "Hobart - ",
+      "city": "Hobart",
+      "country": "AU",
+      "quantity": 21.0
+    },
+    {
+      "id": "distribution-111",
+      "type": "distribution",
+      "entityId": 111,
+      "label": "Hobart - ",
+      "city": "Hobart",
+      "country": "AU",
+      "quantity": 297.0
+    },
+    {
+      "id": "asn-shipment-10",
+      "type": "asn-shipment",
+      "entityId": 10,
+      "label": "Pet & Home Supplies \u2192 Pet Store National",
+      "asnNumber": "ASN-SEED-010",
+      "shipperName": "Pet & Home Supplies",
+      "receiverName": "Pet Store National",
+      "status": "DELIVERED",
+      "shipDate": "2026-02-13",
+      "transportMode": "ROAD",
+      "totalWeight": 650.0
+    }
+  ],
+  "edges": [
+    {
+      "from": "raw-material-1",
+      "to": "packaging-1",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-2",
+      "to": "packaging-4",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-14",
+      "to": "packaging-186",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-15",
+      "to": "packaging-187",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-14",
+      "to": "packaging-194",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-15",
+      "to": "packaging-195",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-14",
+      "to": "packaging-202",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-15",
+      "to": "packaging-203",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-14",
+      "to": "packaging-209",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-15",
+      "to": "packaging-210",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-6",
+      "to": "packaging-2",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "raw-material-2",
+      "to": "packaging-3",
+      "relationship": "PackagingLibraryMaterial",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-1",
+      "to": "packaging-group-102",
+      "relationship": "PackagingGroupItem",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-2",
+      "to": "packaging-group-102",
+      "relationship": "PackagingGroupItem",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-3",
+      "to": "packaging-group-102",
+      "relationship": "PackagingGroupItem",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-4",
+      "to": "packaging-group-101",
+      "relationship": "PackagingGroupItem",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-3",
+      "to": "packaging-group-101",
+      "relationship": "PackagingGroupItem",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "packaging-group-102",
+      "to": "product-20",
+      "relationship": "PackagingGroupProduct",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "product-20",
+      "to": "packaging-group-101",
+      "relationship": "ProductSecondary",
+      "quantity": 20,
+      "quantityLabel": "\u00d720"
+    },
+    {
+      "from": "packaging-group-101",
+      "to": "packaging-group-100",
+      "relationship": "GroupHierarchy",
+      "quantity": 40,
+      "quantityLabel": "\u00d740"
+    },
+    {
+      "from": "packaging-group-100",
+      "to": "asn-shipment-10",
+      "relationship": "TertiaryAsn",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "asn-shipment-10",
+      "to": "distribution-36",
+      "relationship": "AsnDistribution",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "asn-shipment-10",
+      "to": "distribution-91",
+      "relationship": "AsnDistribution",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "asn-shipment-10",
+      "to": "distribution-92",
+      "relationship": "AsnDistribution",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "asn-shipment-10",
+      "to": "distribution-93",
+      "relationship": "AsnDistribution",
+      "quantity": null,
+      "quantityLabel": null
+    },
+    {
+      "from": "asn-shipment-10",
+      "to": "distribution-111",
+      "relationship": "AsnDistribution",
+      "quantity": null,
+      "quantityLabel": null
+    }
+  ]
+}

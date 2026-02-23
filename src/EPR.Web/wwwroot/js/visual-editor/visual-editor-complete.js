@@ -1716,6 +1716,16 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (node.type === 'distribution' && node.parameters?.quantity != null) {
                     const breakdown = node.parameters.quantityBreakdown || `Qty: ${node.parameters.quantity}`;
                     quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-box me-1"></i>${this.escapeHtml(breakdown)}</div>`;
+                    const addrParts = [
+                        node.parameters.streetAddress,
+                        node.parameters.city,
+                        node.parameters.stateProvince,
+                        node.parameters.postcodeZipcode,
+                        node.parameters.country
+                    ].filter(Boolean);
+                    if (addrParts.length > 0) {
+                        quantityInfo += `<div style="padding:0.1rem 0.5rem;font-size:0.65rem;color:#6c757d;"><i class="bi bi-geo me-1"></i>${this.escapeHtml(addrParts.join(', '))}</div>`;
+                    }
                 } else if (node.type === 'packaging' && node.parameters?.weight != null) {
                     quantityInfo = `<div style="padding:0.1rem 0.5rem;font-size:0.7rem;color:#6c757d;border-top:1px solid #eee;"><i class="bi bi-speedometer me-1"></i>Weight: ${node.parameters.weight}g</div>`;
                 } else if (node.type === 'packaging-group' && node.parameters?.totalWeight != null) {
@@ -8224,6 +8234,12 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                 if (n.quantity != null) nodeData.parameters.quantity = n.quantity;
                 if (n.quantityBreakdown) nodeData.parameters.quantityBreakdown = n.quantityBreakdown;
                 if (n.packagingUnitName) nodeData.parameters.packagingUnitName = n.packagingUnitName;
+                if (n.streetAddress) nodeData.parameters.streetAddress = n.streetAddress;
+                if (n.stateProvince) nodeData.parameters.stateProvince = n.stateProvince;
+                if (n.postcodeZipcode) nodeData.parameters.postcodeZipcode = n.postcodeZipcode;
+                if (n.retailerName) nodeData.parameters.retailerName = n.retailerName;
+                if (n.city) nodeData.parameters.city = n.city;
+                if (n.country) nodeData.parameters.country = n.country;
                 if (n.rawMaterialIds) nodeData._rawMaterialIds = n.rawMaterialIds;
                 if (n.packagingItemIds) nodeData._packagingItemIds = n.packagingItemIds;
 
