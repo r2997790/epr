@@ -60,6 +60,76 @@ if (args.Length > 0 && args[0] == "verify-packaging")
     return;
 }
 
+// Check for reseed datasets command (Electronics, Alcoholic Beverages, Confectionary - 80% AU / 20% international)
+if (args.Length > 0 && args[0] == "reseed-datasets")
+{
+    var dbUrl = (Environment.GetEnvironmentVariable("DATABASE_URL") ?? "").Trim();
+    var dbPgHost = (Environment.GetEnvironmentVariable("PGHOST") ?? "").Trim();
+    var dbPgUser = (Environment.GetEnvironmentVariable("PGUSER") ?? "").Trim();
+    string dbConnectionString;
+    if (!string.IsNullOrEmpty(dbPgHost) && !string.IsNullOrEmpty(dbPgUser))
+    {
+        var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+        var pgPass = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+        var pgDb = Environment.GetEnvironmentVariable("PGDATABASE") ?? "railway";
+        var csb = new Npgsql.NpgsqlConnectionStringBuilder { Host = dbPgHost, Port = int.TryParse(pgPort, out var p) ? p : 5432, Username = dbPgUser, Password = pgPass, Database = pgDb, SslMode = Npgsql.SslMode.Require };
+        dbConnectionString = csb.ConnectionString;
+    }
+    else if (dbUrl.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+    {
+        try { dbConnectionString = new Npgsql.NpgsqlConnectionStringBuilder(dbUrl).ConnectionString; }
+        catch { dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db"; }
+    }
+    else
+    {
+        dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=epr.db";
+    }
+    var optionsBuilder = new DbContextOptionsBuilder<EPRDbContext>();
+    if (dbConnectionString.StartsWith("Host=", StringComparison.OrdinalIgnoreCase) || dbConnectionString.StartsWith("postgres", StringComparison.OrdinalIgnoreCase))
+        optionsBuilder.UseNpgsql(dbConnectionString);
+    else
+        optionsBuilder.UseSqlite(dbConnectionString);
+    using var context = new EPRDbContext(optionsBuilder.Options);
+    await context.Database.EnsureCreatedAsync();
+
+    // Ensure DatasetKey columns exist (for older SQLite DBs)
+    var isPg = dbConnectionString.StartsWith("Host=", StringComparison.OrdinalIgnoreCase) || dbConnectionString.StartsWith("postgres", StringComparison.OrdinalIgnoreCase);
+    if (!isPg)
+    {
+        try
+        {
+            var conn = context.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open) await conn.OpenAsync();
+            foreach (var (table, col) in new[] { ("Products", "DatasetKey"), ("PackagingLibraries", "DatasetKey"), ("PackagingGroups", "DatasetKey"), ("Distributions", "DatasetKey"), ("AsnShipments", "DatasetKey") })
+            {
+                var hasCol = false;
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = $"PRAGMA table_info({table})";
+                    try
+                    {
+                        using var r = await cmd.ExecuteReaderAsync();
+                        while (await r.ReadAsync()) { if (r.GetString(1) == col) { hasCol = true; break; } }
+                    }
+                    catch { }
+                }
+                if (!hasCol)
+                {
+                    using var cmd = conn.CreateCommand();
+                    cmd.CommandText = $"ALTER TABLE {table} ADD COLUMN {col} TEXT";
+                    await cmd.ExecuteNonQueryAsync();
+                    Console.WriteLine($"✓ Added {table}.{col}");
+                }
+            }
+            if (conn.State == System.Data.ConnectionState.Open) await conn.CloseAsync();
+        }
+        catch (Exception ex) { Console.WriteLine($"⚠ Schema migration: {ex.Message}"); }
+    }
+
+    await ReseedDatasets.RunAsync(context);
+    return;
+}
+
 // Check for seed admin user command
 if (args.Length > 0 && args[0] == "seed-admin-user")
 {

@@ -41,9 +41,11 @@ public class ConfectionaryDatasetSeeder
         var paperTax = await EnsureMaterialTaxonomy("PAPER", "Paper & Cardboard", 1);
         var foilTax = await EnsureMaterialTaxonomy("FOIL", "Aluminium Foil", 1);
 
-        var supplierBoxes = await EnsureSupplier("SweetPack Solutions", "15 Candy Lane", "Manchester", "UK", "sales@sweetpack.co.uk");
-        var supplierWrappers = await EnsureSupplier("WrapperTech UK", "7 Wrap Street", "Leeds", "UK", "info@wrappertech.co.uk");
-        var supplierLabels = await EnsureSupplier("LabelCandy Ltd", "3 Print Road", "Birmingham", "UK", "orders@labelcandy.co.uk");
+        // Suppliers: 80% Australian, 20% international (UK)
+        var supplierBoxes = await EnsureSupplier("SweetPack Solutions Australia", "15 Candy Lane", "Sydney", "Australia", "sales@sweetpack.com.au");
+        var supplierWrappers = await EnsureSupplier("WrapperTech Australia", "7 Wrap Street", "Melbourne", "Australia", "info@wrappertech.com.au");
+        var supplierLabels = await EnsureSupplier("LabelCandy Australia", "3 Print Road", "Brisbane", "Australia", "orders@labelcandy.com.au");
+        var supplierLabelsUK = await EnsureSupplier("LabelCandy Ltd", "3 Print Road", "Birmingham", "UK", "orders@labelcandy.co.uk");
 
         var chocolateBox = await EnsurePackagingLibrary("Chocolate gift box 250g", "CONF-BOX-001", 85m, paperTax.Id, DatasetKey);
         var plasticTray = await EnsurePackagingLibrary("Plastic chocolate tray", "CONF-TRAY-001", 25m, plasticTax.Id, DatasetKey);
@@ -65,11 +67,12 @@ public class ConfectionaryDatasetSeeder
         var spLabel = await EnsureSupplierProduct(supplierLabels.Id, "Confectionary Label", "CONF-LABEL-001");
         var spShip = await EnsureSupplierProduct(supplierBoxes.Id, "Shipping Box 24pk", "CONF-SHIP-001");
         var spBag = await EnsureSupplierProduct(supplierWrappers.Id, "Inner Bags 100pk", "CONF-BAG-001");
+        var spLabelUK = await EnsureSupplierProduct(supplierLabelsUK.Id, "Confectionary Label UK", "CONF-LABEL-002");
 
         await LinkPackagingSupplier(chocolateBox.Id, spBox.Id, true);
         await LinkPackagingSupplier(plasticTray.Id, spTray.Id, true);
         await LinkPackagingSupplier(foilWrapper.Id, spWrap.Id, true);
-        await LinkPackagingSupplier(productLabel.Id, spLabel.Id, true);
+        await LinkPackagingSupplier(productLabel.Id, spLabelUK.Id, true);
         await LinkPackagingSupplier(shippingBox.Id, spShip.Id, true);
         await LinkPackagingSupplier(innerBags.Id, spBag.Id, true);
 
@@ -110,6 +113,10 @@ public class ConfectionaryDatasetSeeder
         var puShipping = await EnsurePackagingUnitFromGroup(groupShipping, shippingLibs, libToPt);
         var puProduct = await EnsurePackagingUnitFromGroup(groupProduct, productLibs, libToPt);
 
+        var auJurisdiction = await EnsureJurisdiction("AU", "Australia", "AU");
+        var sydneyGeo = await EnsureGeography("SYD", "Sydney", auJurisdiction.Id);
+        var melbourneGeo = await EnsureGeography("MEL", "Melbourne", auJurisdiction.Id);
+        var brisbaneGeo = await EnsureGeography("BNE", "Brisbane", auJurisdiction.Id);
         var ukJurisdiction = await EnsureJurisdiction("UK", "United Kingdom", "GB");
         var londonGeo = await EnsureGeography("LON", "London", ukJurisdiction.Id);
         var manchesterGeo = await EnsureGeography("MAN", "Manchester", ukJurisdiction.Id);
@@ -144,10 +151,11 @@ public class ConfectionaryDatasetSeeder
         for (var idx = 0; idx < products.Length; idx++)
         {
             var (sku, name, brand, gtin, imageUrl) = products[idx];
-            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl);
+            var isAustralian = idx < 16;
+            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl, isAustralian ? "AU" : "BE");
             productEntities.Add(p);
 
-            await EnsureProductForm(p.Id, gtin, name, brand, "Confectionary", "Chocolates & Sweets");
+            await EnsureProductForm(p.Id, gtin, name, brand, "Confectionary", "Chocolates & Sweets", isAustralian ? "AU" : "BE");
             await EnsureProductPackaging(p.Id, puShipping.Id);
             await EnsureProductPackaging(p.Id, puProduct.Id);
 
@@ -156,26 +164,31 @@ public class ConfectionaryDatasetSeeder
         }
 
         var rnd = new Random(44);
-        var geos = new[] { (londonGeo, "London"), (manchesterGeo, "Manchester"), (birminghamGeo, "Birmingham") };
-        foreach (var p in productEntities)
+        var auGeos = new[] { (sydneyGeo, "Sydney", "Australia", auJurisdiction.Id), (melbourneGeo, "Melbourne", "Australia", auJurisdiction.Id), (brisbaneGeo, "Brisbane", "Australia", auJurisdiction.Id) };
+        var ukGeos = new[] { (londonGeo, "London", "UK", ukJurisdiction.Id), (manchesterGeo, "Manchester", "UK", ukJurisdiction.Id), (birminghamGeo, "Birmingham", "UK", ukJurisdiction.Id) };
+        for (var i = 0; i < productEntities.Count; i++)
         {
-            var (geo, cityName) = geos[rnd.Next(geos.Length)];
-            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(80, 600), "Sweet Shop", cityName, "UK", geo.Id, ukJurisdiction.Id);
+            var p = productEntities[i];
+            var (geo, cityName, country, jurisdictionId) = i < 16 ? auGeos[rnd.Next(auGeos.Length)] : ukGeos[rnd.Next(ukGeos.Length)];
+            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(80, 600), "Sweet Shop", cityName, country, geo.Id, jurisdictionId);
         }
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "SweetRetail London", "London"), ("5060987654322", "CandyHub Manchester", "Manchester"), ("5060987654323", "ChocoDepot Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "SweetPack Solutions"), ("5060987654325", "ChocoLuxe Logistics"), ("5060987654326", "SweetTreats Distribution") };
+        var auReceivers = new[] { ("9390987654321", "SweetRetail Sydney", "Sydney"), ("9390987654322", "CandyHub Melbourne", "Melbourne"), ("9390987654323", "ChocoDepot Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "SweetRetail London", "London"), ("5060987654322", "CandyHub Manchester", "Manchester"), ("5060987654323", "ChocoDepot Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "SweetPack Solutions Australia"), ("9390987654325", "ChocoLuxe Logistics AU"), ("9390987654326", "SweetTreats Distribution AU") };
+        var ukShippers = new[] { ("5060987654324", "SweetPack Solutions"), ("5060987654325", "ChocoLuxe Logistics"), ("5060987654326", "SweetTreats Distribution") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
-            var ship = await EnsureAsnShipment($"ASN-CONF-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey);
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
+            var ship = await EnsureAsnShipment($"ASN-CONF-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey, isAustralian ? "Sydney" : "Manchester", isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579323456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579323456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -186,7 +199,7 @@ public class ConfectionaryDatasetSeeder
         }
 
         await _context.SaveChangesAsync();
-        Console.WriteLine($"✓ Confectionary dataset seeded: 20 products, packaging, distribution, ASNs");
+        Console.WriteLine($"✓ Confectionary dataset seeded: 20 products, packaging, distribution, ASNs (80% AU, 20% international)");
     }
 
     private async Task EnsureAsnsAsync()
@@ -198,18 +211,21 @@ public class ConfectionaryDatasetSeeder
         if (productEntities.Count == 0) return;
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "SweetRetail London", "London"), ("5060987654322", "CandyHub Manchester", "Manchester"), ("5060987654323", "ChocoDepot Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "SweetPack Solutions"), ("5060987654325", "ChocoLuxe Logistics"), ("5060987654326", "SweetTreats Distribution") };
+        var auReceivers = new[] { ("9390987654321", "SweetRetail Sydney", "Sydney"), ("9390987654322", "CandyHub Melbourne", "Melbourne"), ("9390987654323", "ChocoDepot Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "SweetRetail London", "London"), ("5060987654322", "CandyHub Manchester", "Manchester"), ("5060987654323", "ChocoDepot Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "SweetPack Solutions Australia"), ("9390987654325", "ChocoLuxe Logistics AU"), ("9390987654326", "SweetTreats Distribution AU") };
+        var ukShippers = new[] { ("5060987654324", "SweetPack Solutions"), ("5060987654325", "ChocoLuxe Logistics"), ("5060987654326", "SweetTreats Distribution") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
-            var ship = await EnsureAsnShipment($"ASN-CONF-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey);
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
+            var ship = await EnsureAsnShipment($"ASN-CONF-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey, isAustralian ? "Sydney" : "Manchester", isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579323456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579323456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -376,12 +392,12 @@ public class ConfectionaryDatasetSeeder
         return g;
     }
 
-    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null)
+    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null, string? countryOfOrigin = "AU")
     {
         var p = await _context.Products.FirstOrDefaultAsync(x => x.Sku == sku);
         if (p == null)
         {
-            p = new Product { Sku = sku, Name = name, Brand = brand, Gtin = gtin, ProductCategory = "Confectionary", ProductSubCategory = "Chocolates & Sweets", CountryOfOrigin = "BE", DatasetKey = datasetKey, ImageUrl = imageUrl };
+            p = new Product { Sku = sku, Name = name, Brand = brand, Gtin = gtin, ProductCategory = "Confectionary", ProductSubCategory = "Chocolates & Sweets", CountryOfOrigin = countryOfOrigin ?? "AU", DatasetKey = datasetKey, ImageUrl = imageUrl };
             _context.Products.Add(p);
             await _context.SaveChangesAsync();
         }
@@ -389,10 +405,10 @@ public class ConfectionaryDatasetSeeder
         return p;
     }
 
-    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory)
+    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory, string? countryOfOrigin = "AU")
     {
         if (await _context.ProductForms.AnyAsync(pf => pf.ProductId == productId)) return;
-        _context.ProductForms.Add(new ProductForm { ProductId = productId, Gtin = gtin, ProductName = productName, Brand = brand, ProductCategory = category, ProductSubCategory = subCategory, CountryOfOrigin = "BE", PackagingLevel = "Consumer Unit", PackagingType = "Box", PackagingConfiguration = "Multi-component", Status = "submitted" });
+        _context.ProductForms.Add(new ProductForm { ProductId = productId, Gtin = gtin, ProductName = productName, Brand = brand, ProductCategory = category, ProductSubCategory = subCategory, CountryOfOrigin = countryOfOrigin ?? "AU", PackagingLevel = "Consumer Unit", PackagingType = "Box", PackagingConfiguration = "Multi-component", Status = "submitted" });
         await _context.SaveChangesAsync();
     }
 
@@ -409,9 +425,9 @@ public class ConfectionaryDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey)
+    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey, string? shipperCity = "Sydney", string? shipperCountryCode = "AU")
     {
-        var s = new AsnShipment { AsnNumber = asnNumber, ShipperGln = shipperGln, ShipperName = shipperName, ShipperCity = "Manchester", ShipperCountryCode = "GB", ReceiverGln = receiverGln, ReceiverName = receiverName, ShipDate = shipDate, DeliveryDate = shipDate.AddDays(1), CarrierName = "FastFreight UK", TransportMode = "ROAD", TotalPackages = 1, TotalWeight = 25.5m, SourceFormat = "GS1_XML", Status = "DELIVERED", DatasetKey = datasetKey };
+        var s = new AsnShipment { AsnNumber = asnNumber, ShipperGln = shipperGln, ShipperName = shipperName, ShipperCity = shipperCity ?? "Sydney", ShipperCountryCode = shipperCountryCode ?? "AU", ReceiverGln = receiverGln, ReceiverName = receiverName, ShipDate = shipDate, DeliveryDate = shipDate.AddDays(1), CarrierName = "FastFreight AU", TransportMode = "ROAD", TotalPackages = 1, TotalWeight = 25.5m, SourceFormat = "GS1_XML", Status = "DELIVERED", DatasetKey = datasetKey };
         _context.AsnShipments.Add(s);
         await _context.SaveChangesAsync();
         return s;

@@ -42,9 +42,11 @@ public class AlcoholicBeveragesDatasetSeeder
         var paperTax = await EnsureMaterialTaxonomy("PAPER", "Paper & Cardboard", 1);
         var metalTax = await EnsureMaterialTaxonomy("METAL", "Metal", 1);
 
-        var supplierBottles = await EnsureSupplier("BeveragePack Ltd", "22 Bottle Lane", "Manchester", "UK", "sales@beveragepack.co.uk");
-        var supplierLabels = await EnsureSupplier("LabelPrint Beverages", "5 Print Street", "Leeds", "UK", "info@labelprint.co.uk");
-        var supplierCaps = await EnsureSupplier("CapWorks UK", "8 Closure Road", "Birmingham", "UK", "orders@capworks.co.uk");
+        // Suppliers: 80% Australian, 20% international (UK)
+        var supplierBottles = await EnsureSupplier("BeveragePack Australia", "22 Bottle Lane", "Sydney", "Australia", "sales@beveragepack.com.au");
+        var supplierLabels = await EnsureSupplier("LabelPrint Beverages Australia", "5 Print Street", "Melbourne", "Australia", "info@labelprint.com.au");
+        var supplierCaps = await EnsureSupplier("CapWorks Australia", "8 Closure Road", "Brisbane", "Australia", "orders@capworks.com.au");
+        var supplierFoilUK = await EnsureSupplier("FoilCaps UK", "3 Foil Lane", "Leeds", "UK", "orders@foilcaps.co.uk");
 
         var wineBottle = await EnsurePackagingLibrary("750ml wine bottle", "ALC-BOTTLE-001", 520m, glassTax.Id, DatasetKey);
         var screwCap = await EnsurePackagingLibrary("Screw cap 28mm", "ALC-CAP-001", 5m, metalTax.Id, DatasetKey);
@@ -66,11 +68,12 @@ public class AlcoholicBeveragesDatasetSeeder
         var spFoil = await EnsureSupplierProduct(supplierCaps.Id, "Neck Foil Capsule", "ALC-FOIL-001");
         var spBox = await EnsureSupplierProduct(supplierBottles.Id, "Wine Gift Box", "ALC-BOX-001");
         var spCase = await EnsureSupplierProduct(supplierBottles.Id, "12-Bottle Case", "ALC-CASE-001");
+        var spFoilUK = await EnsureSupplierProduct(supplierFoilUK.Id, "Neck Foil Capsule UK", "ALC-FOIL-002");
 
         await LinkPackagingSupplier(wineBottle.Id, spBottle.Id, true);
         await LinkPackagingSupplier(screwCap.Id, spCap.Id, true);
         await LinkPackagingSupplier(wineLabel.Id, spLabel.Id, true);
-        await LinkPackagingSupplier(neckFoil.Id, spFoil.Id, true);
+        await LinkPackagingSupplier(neckFoil.Id, spFoilUK.Id, true);
         await LinkPackagingSupplier(wineBox.Id, spBox.Id, true);
         await LinkPackagingSupplier(shippingCase.Id, spCase.Id, true);
 
@@ -114,6 +117,10 @@ public class AlcoholicBeveragesDatasetSeeder
         var puShipping = await EnsurePackagingUnitFromGroup(groupShipping, shippingLibs, libToPt);
         var puProduct = await EnsurePackagingUnitFromGroup(groupProduct, productLibs, libToPt);
 
+        var auJurisdiction = await EnsureJurisdiction("AU", "Australia", "AU");
+        var sydneyGeo = await EnsureGeography("SYD", "Sydney", auJurisdiction.Id);
+        var melbourneGeo = await EnsureGeography("MEL", "Melbourne", auJurisdiction.Id);
+        var brisbaneGeo = await EnsureGeography("BNE", "Brisbane", auJurisdiction.Id);
         var ukJurisdiction = await EnsureJurisdiction("UK", "United Kingdom", "GB");
         var londonGeo = await EnsureGeography("LON", "London", ukJurisdiction.Id);
         var manchesterGeo = await EnsureGeography("MAN", "Manchester", ukJurisdiction.Id);
@@ -148,10 +155,11 @@ public class AlcoholicBeveragesDatasetSeeder
         for (var idx = 0; idx < products.Length; idx++)
         {
             var (sku, name, brand, gtin, imageUrl) = products[idx];
-            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl);
+            var isAustralian = idx < 16;
+            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl, isAustralian ? "AU" : "FR");
             productEntities.Add(p);
 
-            await EnsureProductForm(p.Id, gtin, name, brand, "Alcoholic Beverages", "Wines & Spirits");
+            await EnsureProductForm(p.Id, gtin, name, brand, "Alcoholic Beverages", "Wines & Spirits", isAustralian ? "AU" : "FR");
             await EnsureProductPackaging(p.Id, puShipping.Id);
             await EnsureProductPackaging(p.Id, puProduct.Id);
 
@@ -160,26 +168,31 @@ public class AlcoholicBeveragesDatasetSeeder
         }
 
         var rnd = new Random(43);
-        var geos = new[] { (londonGeo, "London"), (manchesterGeo, "Manchester"), (birminghamGeo, "Birmingham") };
-        foreach (var p in productEntities)
+        var auGeos = new[] { (sydneyGeo, "Sydney", "Australia", auJurisdiction.Id), (melbourneGeo, "Melbourne", "Australia", auJurisdiction.Id), (brisbaneGeo, "Brisbane", "Australia", auJurisdiction.Id) };
+        var ukGeos = new[] { (londonGeo, "London", "UK", ukJurisdiction.Id), (manchesterGeo, "Manchester", "UK", ukJurisdiction.Id), (birminghamGeo, "Birmingham", "UK", ukJurisdiction.Id) };
+        for (var i = 0; i < productEntities.Count; i++)
         {
-            var (geo, cityName) = geos[rnd.Next(geos.Length)];
-            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(30, 400), "Liquor Store", cityName, "UK", geo.Id, ukJurisdiction.Id);
+            var p = productEntities[i];
+            var (geo, cityName, country, jurisdictionId) = i < 16 ? auGeos[rnd.Next(auGeos.Length)] : ukGeos[rnd.Next(ukGeos.Length)];
+            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(30, 400), "Liquor Store", cityName, country, geo.Id, jurisdictionId);
         }
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "WineDirect London", "London"), ("5060987654322", "SpiritHub Manchester", "Manchester"), ("5060987654323", "BrewDepot Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "BeveragePack Ltd"), ("5060987654325", "Vineyard Logistics"), ("5060987654326", "SpiritCraft Distribution") };
+        var auReceivers = new[] { ("9390987654321", "WineDirect Sydney", "Sydney"), ("9390987654322", "SpiritHub Melbourne", "Melbourne"), ("9390987654323", "BrewDepot Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "WineDirect London", "London"), ("5060987654322", "SpiritHub Manchester", "Manchester"), ("5060987654323", "BrewDepot Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "BeveragePack Australia"), ("9390987654325", "Vineyard Logistics AU"), ("9390987654326", "SpiritCraft Distribution AU") };
+        var ukShippers = new[] { ("5060987654324", "BeveragePack Ltd"), ("5060987654325", "Vineyard Logistics"), ("5060987654326", "SpiritCraft Distribution") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
-            var ship = await EnsureAsnShipment($"ASN-ALC-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey);
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
+            var ship = await EnsureAsnShipment($"ASN-ALC-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey, isAustralian ? "Sydney" : "Manchester", isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579223456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579223456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -190,7 +203,7 @@ public class AlcoholicBeveragesDatasetSeeder
         }
 
         await _context.SaveChangesAsync();
-        Console.WriteLine($"✓ Alcoholic Beverages dataset seeded: 20 products, packaging, distribution, ASNs");
+        Console.WriteLine($"✓ Alcoholic Beverages dataset seeded: 20 products, packaging, distribution, ASNs (80% AU, 20% international)");
     }
 
     private async Task EnsureAsnsAsync()
@@ -202,18 +215,21 @@ public class AlcoholicBeveragesDatasetSeeder
         if (productEntities.Count == 0) return;
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "WineDirect London", "London"), ("5060987654322", "SpiritHub Manchester", "Manchester"), ("5060987654323", "BrewDepot Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "BeveragePack Ltd"), ("5060987654325", "Vineyard Logistics"), ("5060987654326", "SpiritCraft Distribution") };
+        var auReceivers = new[] { ("9390987654321", "WineDirect Sydney", "Sydney"), ("9390987654322", "SpiritHub Melbourne", "Melbourne"), ("9390987654323", "BrewDepot Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "WineDirect London", "London"), ("5060987654322", "SpiritHub Manchester", "Manchester"), ("5060987654323", "BrewDepot Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "BeveragePack Australia"), ("9390987654325", "Vineyard Logistics AU"), ("9390987654326", "SpiritCraft Distribution AU") };
+        var ukShippers = new[] { ("5060987654324", "BeveragePack Ltd"), ("5060987654325", "Vineyard Logistics"), ("5060987654326", "SpiritCraft Distribution") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
-            var ship = await EnsureAsnShipment($"ASN-ALC-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey);
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
+            var ship = await EnsureAsnShipment($"ASN-ALC-{1000 + i}", shipGln, shipName, recGln, recName, baseDate.AddDays(i * 2), DatasetKey, isAustralian ? "Sydney" : "Manchester", isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579223456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579223456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -383,12 +399,12 @@ public class AlcoholicBeveragesDatasetSeeder
         return g;
     }
 
-    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null)
+    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null, string? countryOfOrigin = "AU")
     {
         var p = await _context.Products.FirstOrDefaultAsync(x => x.Sku == sku);
         if (p == null)
         {
-            p = new Product { Sku = sku, Name = name, Brand = brand, Gtin = gtin, ProductCategory = "Alcoholic Beverages", ProductSubCategory = "Wines & Spirits", CountryOfOrigin = "FR", DatasetKey = datasetKey, ImageUrl = imageUrl };
+            p = new Product { Sku = sku, Name = name, Brand = brand, Gtin = gtin, ProductCategory = "Alcoholic Beverages", ProductSubCategory = "Wines & Spirits", CountryOfOrigin = countryOfOrigin ?? "AU", DatasetKey = datasetKey, ImageUrl = imageUrl };
             _context.Products.Add(p);
             await _context.SaveChangesAsync();
         }
@@ -396,10 +412,10 @@ public class AlcoholicBeveragesDatasetSeeder
         return p;
     }
 
-    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory)
+    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory, string? countryOfOrigin = "AU")
     {
         if (await _context.ProductForms.AnyAsync(pf => pf.ProductId == productId)) return;
-        _context.ProductForms.Add(new ProductForm { ProductId = productId, Gtin = gtin, ProductName = productName, Brand = brand, ProductCategory = category, ProductSubCategory = subCategory, CountryOfOrigin = "FR", PackagingLevel = "Consumer Unit", PackagingType = "Bottle", PackagingConfiguration = "Single component", Status = "submitted" });
+        _context.ProductForms.Add(new ProductForm { ProductId = productId, Gtin = gtin, ProductName = productName, Brand = brand, ProductCategory = category, ProductSubCategory = subCategory, CountryOfOrigin = countryOfOrigin ?? "AU", PackagingLevel = "Consumer Unit", PackagingType = "Bottle", PackagingConfiguration = "Single component", Status = "submitted" });
         await _context.SaveChangesAsync();
     }
 
@@ -416,9 +432,9 @@ public class AlcoholicBeveragesDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey)
+    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey, string? shipperCity = "Sydney", string? shipperCountryCode = "AU")
     {
-        var s = new AsnShipment { AsnNumber = asnNumber, ShipperGln = shipperGln, ShipperName = shipperName, ShipperCity = "Manchester", ShipperCountryCode = "GB", ReceiverGln = receiverGln, ReceiverName = receiverName, ShipDate = shipDate, DeliveryDate = shipDate.AddDays(1), CarrierName = "FastFreight UK", TransportMode = "ROAD", TotalPackages = 1, TotalWeight = 25.5m, SourceFormat = "GS1_XML", Status = "DELIVERED", DatasetKey = datasetKey };
+        var s = new AsnShipment { AsnNumber = asnNumber, ShipperGln = shipperGln, ShipperName = shipperName, ShipperCity = shipperCity ?? "Sydney", ShipperCountryCode = shipperCountryCode ?? "AU", ReceiverGln = receiverGln, ReceiverName = receiverName, ShipDate = shipDate, DeliveryDate = shipDate.AddDays(1), CarrierName = "FastFreight AU", TransportMode = "ROAD", TotalPackages = 1, TotalWeight = 25.5m, SourceFormat = "GS1_XML", Status = "DELIVERED", DatasetKey = datasetKey };
         _context.AsnShipments.Add(s);
         await _context.SaveChangesAsync();
         return s;

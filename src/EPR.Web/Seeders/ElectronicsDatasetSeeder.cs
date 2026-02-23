@@ -44,10 +44,11 @@ public class ElectronicsDatasetSeeder
         var paperTax = await EnsureMaterialTaxonomy("PAPER", "Paper & Cardboard", 1);
         var foamTax = await EnsureMaterialTaxonomy("FOAM", "Foam", 1);
 
-        // Suppliers
-        var supplierBox = await EnsureSupplier("TechPack Solutions Ltd", "12 Industrial Way", "Manchester", "UK", "techpack@example.com");
-        var supplierPlastic = await EnsureSupplier("PlastiForm Industries", "45 Manufacturing Rd", "Birmingham", "UK", "sales@plastiform.co.uk");
-        var supplierLabels = await EnsureSupplier("LabelTech UK", "8 Print Street", "Leeds", "UK", "info@labeltech.co.uk");
+        // Suppliers: 80% Australian, 20% international (UK)
+        var supplierBox = await EnsureSupplier("TechPack Solutions Pty Ltd", "12 Industrial Way", "Sydney", "Australia", "techpack@techpack.com.au");
+        var supplierPlastic = await EnsureSupplier("PlastiForm Industries Australia", "45 Manufacturing Rd", "Melbourne", "Australia", "sales@plastiform.com.au");
+        var supplierLabels = await EnsureSupplier("LabelTech Australia", "8 Print Street", "Brisbane", "Australia", "info@labeltech.com.au");
+        var supplierLabelsUK = await EnsureSupplier("LabelTech UK", "8 Print Street", "Leeds", "UK", "info@labeltech.co.uk");
 
         // Packaging Library items (raw materials / packaging items)
         var boxCardboard = await EnsurePackagingLibrary("Cardboard shipping box 30x20x15cm", "ELEC-BOX-001", 450m, paperTax.Id, DatasetKey);
@@ -62,12 +63,12 @@ public class ElectronicsDatasetSeeder
         await LinkPackagingMaterial(productBox.Id, paperTax.Id);
         await LinkPackagingMaterial(label.Id, paperTax.Id);
 
-        // Supplier products
+        // Supplier products: 80% from AU suppliers, 20% from UK
         var spBox = await EnsureSupplierProduct(supplierBox.Id, "TechBox 30x20x15", "ELEC-BOX-001");
         var spFoam = await EnsureSupplierProduct(supplierPlastic.Id, "E-Foam Insert S", "ELEC-FOAM-001");
         var spWrap = await EnsureSupplierProduct(supplierPlastic.Id, "AntiStatic Wrap 500mm", "ELEC-WRAP-001");
         var spPBox = await EnsureSupplierProduct(supplierBox.Id, "Display Box A4", "ELEC-PBOX-001");
-        var spLabel = await EnsureSupplierProduct(supplierLabels.Id, "Electronics Label 50x30", "ELEC-LBL-001");
+        var spLabel = await EnsureSupplierProduct(supplierLabelsUK.Id, "Electronics Label 50x30", "ELEC-LBL-001");
 
         await LinkPackagingSupplier(boxCardboard.Id, spBox.Id, true);
         await LinkPackagingSupplier(innerFoam.Id, spFoam.Id, true);
@@ -105,7 +106,11 @@ public class ElectronicsDatasetSeeder
         var puShipping = await EnsurePackagingUnitFromGroup(groupShipping, shippingLibs, libToPt);
         var puProduct = await EnsurePackagingUnitFromGroup(groupProduct, productLibs, libToPt);
 
-        // Geographies and Jurisdiction
+        // Geographies and Jurisdictions: 80% Australia, 20% UK
+        var auJurisdiction = await EnsureJurisdiction("AU", "Australia", "AU");
+        var sydneyGeo = await EnsureGeography("SYD", "Sydney", auJurisdiction.Id);
+        var melbourneGeo = await EnsureGeography("MEL", "Melbourne", auJurisdiction.Id);
+        var brisbaneGeo = await EnsureGeography("BNE", "Brisbane", auJurisdiction.Id);
         var ukJurisdiction = await EnsureJurisdiction("UK", "United Kingdom", "GB");
         var londonGeo = await EnsureGeography("LON", "London", ukJurisdiction.Id);
         var manchesterGeo = await EnsureGeography("MAN", "Manchester", ukJurisdiction.Id);
@@ -141,40 +146,42 @@ public class ElectronicsDatasetSeeder
         for (var idx = 0; idx < products.Length; idx++)
         {
             var (sku, name, brand, gtin, imageUrl) = products[idx];
-            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl);
+            var isAustralian = idx < 16;
+            var p = await EnsureProduct(sku, name, brand, gtin, DatasetKey, imageUrl, isAustralian ? "AU" : "CN");
             productEntities.Add(p);
 
-            // ProductForm
-            await EnsureProductForm(p.Id, gtin, name, brand, "Electronics", "Consumer Electronics");
+            await EnsureProductForm(p.Id, gtin, name, brand, "Electronics", "Consumer Electronics", isAustralian ? "AU" : "CN");
 
-            // ProductPackaging - each product has shipping and product pack
             await EnsureProductPackaging(p.Id, puShipping.Id);
             await EnsureProductPackaging(p.Id, puProduct.Id);
 
-            // ProductPackagingSupplierProduct - link product to supplier for traceability
             var spId = supplierProductIds[idx % supplierProductIds.Length];
             await EnsureProductPackagingSupplierProduct(p.Id, spId);
         }
 
-        // Distribution - distribute products to locations
+        // Distribution: 80% Australian destinations, 20% UK
         var rnd = new Random(42);
-        var geos = new[] { (londonGeo, "London"), (manchesterGeo, "Manchester"), (birminghamGeo, "Birmingham") };
-        foreach (var p in productEntities)
+        var auGeos = new[] { (sydneyGeo, "Sydney", "Australia", auJurisdiction.Id), (melbourneGeo, "Melbourne", "Australia", auJurisdiction.Id), (brisbaneGeo, "Brisbane", "Australia", auJurisdiction.Id) };
+        var ukGeos = new[] { (londonGeo, "London", "UK", ukJurisdiction.Id), (manchesterGeo, "Manchester", "UK", ukJurisdiction.Id), (birminghamGeo, "Birmingham", "UK", ukJurisdiction.Id) };
+        for (var i = 0; i < productEntities.Count; i++)
         {
-            var (geo, cityName) = geos[rnd.Next(geos.Length)];
-            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(50, 500), "Retail Store", cityName, "UK", geo.Id, ukJurisdiction.Id);
+            var p = productEntities[i];
+            var (geo, cityName, country, jurisdictionId) = i < 16 ? auGeos[rnd.Next(auGeos.Length)] : ukGeos[rnd.Next(ukGeos.Length)];
+            await EnsureDistribution(p.Id, puShipping.Id, rnd.Next(50, 500), "Retail Store", cityName, country, geo.Id, jurisdictionId);
         }
 
-        // ASN Shipments - comprehensive set cross-referenced to all products and packaging
-        // GLN must be 13 chars (varchar 13); SSCC must be 18 chars
+        // ASN Shipments: 80% Australian receivers/shippers, 20% UK
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
+        var auReceivers = new[] { ("9390987654321", "TechRetail DC Sydney", "Sydney"), ("9390987654322", "ElectroStore Melbourne", "Melbourne"), ("9390987654323", "GadgetHub Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "TechPack Solutions Pty Ltd"), ("9390987654325", "PowerFlow Distribution AU"), ("9390987654326", "CableTech Logistics AU") };
+        var ukShippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
             var ship = await EnsureAsnShipment(
                 $"ASN-ELEC-{1000 + i}",
                 shipGln,
@@ -182,11 +189,13 @@ public class ElectronicsDatasetSeeder
                 recGln,
                 recName,
                 baseDate.AddDays(i * 2),
-                DatasetKey);
+                DatasetKey,
+                isAustralian ? "Sydney" : "Manchester",
+                isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -197,7 +206,7 @@ public class ElectronicsDatasetSeeder
         }
 
         await _context.SaveChangesAsync();
-        Console.WriteLine($"✓ Electronics dataset seeded: 20 products, packaging, distribution, ASNs");
+        Console.WriteLine($"✓ Electronics dataset seeded: 20 products, packaging, distribution, ASNs (80% AU, 20% international)");
     }
 
     /// <summary>
@@ -213,13 +222,16 @@ public class ElectronicsDatasetSeeder
         if (productEntities.Count == 0) return;
 
         var baseDate = DateTime.UtcNow.AddDays(-14);
-        var receivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
-        var shippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
+        var auReceivers = new[] { ("9390987654321", "TechRetail DC Sydney", "Sydney"), ("9390987654322", "ElectroStore Melbourne", "Melbourne"), ("9390987654323", "GadgetHub Brisbane", "Brisbane") };
+        var ukReceivers = new[] { ("5060987654321", "TechRetail DC London", "London"), ("5060987654322", "ElectroStore Manchester", "Manchester"), ("5060987654323", "GadgetHub Birmingham", "Birmingham") };
+        var auShippers = new[] { ("9390987654324", "TechPack Solutions Pty Ltd"), ("9390987654325", "PowerFlow Distribution AU"), ("9390987654326", "CableTech Logistics AU") };
+        var ukShippers = new[] { ("5060987654324", "TechPack Solutions Ltd"), ("5060987654325", "PowerFlow Distribution"), ("5060987654326", "CableTech Logistics") };
         int lineNum = 1;
         for (int i = 0; i < 12; i++)
         {
-            var (recGln, recName, recCity) = receivers[i % receivers.Length];
-            var (shipGln, shipName) = shippers[i % shippers.Length];
+            var isAustralian = i < 10;
+            var (recGln, recName, recCity) = isAustralian ? auReceivers[i % auReceivers.Length] : ukReceivers[i % ukReceivers.Length];
+            var (shipGln, shipName) = isAustralian ? auShippers[i % auShippers.Length] : ukShippers[i % ukShippers.Length];
             var ship = await EnsureAsnShipment(
                 $"ASN-ELEC-{1000 + i}",
                 shipGln,
@@ -227,11 +239,13 @@ public class ElectronicsDatasetSeeder
                 recGln,
                 recName,
                 baseDate.AddDays(i * 2),
-                DatasetKey);
+                DatasetKey,
+                isAustralian ? "Sydney" : "Manchester",
+                isAustralian ? "AU" : "GB");
             var palletsPerShipment = 1 + (i % 3);
             for (int p = 0; p < palletsPerShipment; p++)
             {
-                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, "GB", p + 1, recGln);
+                var pallet = await EnsureAsnPallet(ship.Id, $"3579123456789012{(i * 3 + p):D2}", recName, recCity, isAustralian ? "AU" : "GB", p + 1, recGln);
                 var productsPerPallet = 2 + (i + p) % 4;
                 for (int li = 0; li < productsPerPallet; li++)
                 {
@@ -496,7 +510,7 @@ public class ElectronicsDatasetSeeder
         return g;
     }
 
-    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null)
+    private async Task<Product> EnsureProduct(string sku, string name, string brand, string gtin, string datasetKey, string? imageUrl = null, string? countryOfOrigin = "AU")
     {
         var p = await _context.Products.FirstOrDefaultAsync(x => x.Sku == sku);
         if (p == null)
@@ -509,7 +523,7 @@ public class ElectronicsDatasetSeeder
                 Gtin = gtin,
                 ProductCategory = "Electronics",
                 ProductSubCategory = "Consumer Electronics",
-                CountryOfOrigin = "CN",
+                CountryOfOrigin = countryOfOrigin ?? "AU",
                 DatasetKey = datasetKey,
                 ImageUrl = imageUrl
             };
@@ -524,7 +538,7 @@ public class ElectronicsDatasetSeeder
         return p;
     }
 
-    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory)
+    private async Task EnsureProductForm(int productId, string gtin, string productName, string brand, string category, string subCategory, string? countryOfOrigin = "AU")
     {
         if (await _context.ProductForms.AnyAsync(pf => pf.ProductId == productId))
             return;
@@ -536,7 +550,7 @@ public class ElectronicsDatasetSeeder
             Brand = brand,
             ProductCategory = category,
             ProductSubCategory = subCategory,
-            CountryOfOrigin = "CN",
+            CountryOfOrigin = countryOfOrigin ?? "AU",
             PackagingLevel = "Consumer Unit",
             PackagingType = "Box",
             PackagingConfiguration = "Single component",
@@ -574,20 +588,20 @@ public class ElectronicsDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey)
+    private async Task<AsnShipment> EnsureAsnShipment(string asnNumber, string shipperGln, string shipperName, string receiverGln, string receiverName, DateTime shipDate, string datasetKey, string? shipperCity = "Sydney", string? shipperCountryCode = "AU")
     {
         var s = new AsnShipment
         {
             AsnNumber = asnNumber,
             ShipperGln = shipperGln,
             ShipperName = shipperName,
-            ShipperCity = "Manchester",
-            ShipperCountryCode = "GB",
+            ShipperCity = shipperCity ?? "Sydney",
+            ShipperCountryCode = shipperCountryCode ?? "AU",
             ReceiverGln = receiverGln,
             ReceiverName = receiverName,
             ShipDate = shipDate,
             DeliveryDate = shipDate.AddDays(1),
-            CarrierName = "FastFreight UK",
+            CarrierName = "FastFreight AU",
             TransportMode = "ROAD",
             TotalPackages = 1,
             TotalWeight = 25.5m,
