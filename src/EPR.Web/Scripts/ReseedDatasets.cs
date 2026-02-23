@@ -22,6 +22,18 @@ public static class ReseedDatasets
         Console.WriteLine("Reseeding all datasets...");
         Console.WriteLine();
 
+        // Delete stale dummy PackagingGroups (null DatasetKey) so the dummy seeder
+        // can recreate them with correct ParentPackagingGroupId on next startup.
+        try
+        {
+            await DeleteDummyPackagingGroupsAsync(context);
+            Console.WriteLine("✓ Deleted stale dummy packaging groups");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠ Delete dummy groups: {ex.Message}");
+        }
+
         foreach (var key in DatasetKeys)
         {
             try
@@ -106,5 +118,27 @@ public static class ReseedDatasets
         context.PackagingLibraries.RemoveRange(libraries);
 
         // Distributions cascade-delete when Products are removed
+    }
+
+    private static async Task DeleteDummyPackagingGroupsAsync(EPRDbContext context)
+    {
+        var dummyGroups = await context.PackagingGroups
+            .Where(g => g.DatasetKey == null)
+            .Include(g => g.Items)
+            .ToListAsync();
+
+        if (!dummyGroups.Any()) return;
+
+        // Remove group items first
+        var allItems = dummyGroups.SelectMany(g => g.Items).ToList();
+        context.PackagingGroupItems.RemoveRange(allItems);
+
+        // Null out self-FK to avoid Restrict violation
+        foreach (var g in dummyGroups)
+            g.ParentPackagingGroupId = null;
+        await context.SaveChangesAsync();
+
+        context.PackagingGroups.RemoveRange(dummyGroups);
+        await context.SaveChangesAsync();
     }
 }

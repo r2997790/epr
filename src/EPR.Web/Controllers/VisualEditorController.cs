@@ -1003,6 +1003,8 @@ public class VisualEditorController : Controller
             allGroupsQuery = allGroupsQuery.Where(g => g.DatasetKey == productDatasetKey);
         else if (!string.IsNullOrEmpty(datasetKey))
             allGroupsQuery = allGroupsQuery.Where(g => g.DatasetKey == datasetKey);
+        else if (singleProductId.HasValue)
+            allGroupsQuery = allGroupsQuery.Where(g => g.DatasetKey == null);
         var allGroups = await allGroupsQuery.ToListAsync();
         var allGroupsById = allGroups.ToDictionary(g => g.Id);
 

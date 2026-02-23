@@ -86,8 +86,8 @@ public class PackagingDummyDataSeeder
             await _context.SaveChangesAsync();
         }
 
-        // 4. Seed PackagingGroups if empty
-        if (!await _context.PackagingGroups.AnyAsync())
+        // 4. Seed PackagingGroups if the specific dummy groups don't exist
+        if (!await _context.PackagingGroups.AnyAsync(g => g.PackId == "PG-001"))
         {
             var petBottle = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "PET.BF.BT.500");
             var hdpeCap = await _context.PackagingLibraries.FirstOrDefaultAsync(l => l.TaxonomyCode == "HDPE.CAP.28");
