@@ -5,17 +5,21 @@ using Microsoft.EntityFrameworkCore;
 namespace EPR.Web.Scripts;
 
 /// <summary>
-/// Deletes existing data for Electronics, Alcoholic Beverages, and Confectionary datasets,
-/// then re-runs their seeders to apply the 80% Australia / 20% international split.
+/// Deletes existing data for all dataset seeders, then re-runs them to apply
+/// the packaging hierarchy (ParentPackagingGroupId, QuantityInParent) and
+/// 80% Australia / 20% international split.
 /// </summary>
 public static class ReseedDatasets
 {
-    private static readonly string[] DatasetKeys = { "Electronics", "Alcoholic Beverages", "Confectionary" };
+    private static readonly string[] DatasetKeys = {
+        "Electronics", "Alcoholic Beverages", "Confectionary",
+        "Homewares", "Pharmaceuticals", "Pet Care",
+        "Personal Care", "Garden", "Fresh Produce"
+    };
 
     public static async Task RunAsync(EPRDbContext context)
     {
-        Console.WriteLine("Reseeding Electronics, Alcoholic Beverages, and Confectionary datasets...");
-        Console.WriteLine("(Deleting existing data, then re-seeding with 80% AU / 20% international)");
+        Console.WriteLine("Reseeding all datasets...");
         Console.WriteLine();
 
         foreach (var key in DatasetKeys)
@@ -38,21 +42,28 @@ public static class ReseedDatasets
         {
             try
             {
-                if (key == "Electronics")
+                switch (key)
                 {
-                    var seeder = new ElectronicsDatasetSeeder(context);
-                    await seeder.SeedAsync();
+                    case "Electronics":
+                        await new ElectronicsDatasetSeeder(context).SeedAsync(); break;
+                    case "Alcoholic Beverages":
+                        await new AlcoholicBeveragesDatasetSeeder(context).SeedAsync(); break;
+                    case "Confectionary":
+                        await new ConfectionaryDatasetSeeder(context).SeedAsync(); break;
+                    case "Homewares":
+                        await new HomewaresDatasetSeeder(context).SeedAsync(); break;
+                    case "Pharmaceuticals":
+                        await new PharmaceuticalsDatasetSeeder(context).SeedAsync(); break;
+                    case "Pet Care":
+                        await new PetCareDatasetSeeder(context).SeedAsync(); break;
+                    case "Personal Care":
+                        await new PersonalCareDatasetSeeder(context).SeedAsync(); break;
+                    case "Garden":
+                        await new GardenDatasetSeeder(context).SeedAsync(); break;
+                    case "Fresh Produce":
+                        await new FreshProduceDatasetSeeder(context).SeedAsync(); break;
                 }
-                else if (key == "Alcoholic Beverages")
-                {
-                    var seeder = new AlcoholicBeveragesDatasetSeeder(context);
-                    await seeder.SeedAsync();
-                }
-                else if (key == "Confectionary")
-                {
-                    var seeder = new ConfectionaryDatasetSeeder(context);
-                    await seeder.SeedAsync();
-                }
+                Console.WriteLine($"✓ Seeded {key}");
             }
             catch (Exception ex)
             {
@@ -62,7 +73,7 @@ public static class ReseedDatasets
         }
 
         Console.WriteLine();
-        Console.WriteLine("✅ Reseed complete. Electronics, Alcoholic Beverages, and Confectionary now use 80% AU / 20% international.");
+        Console.WriteLine("✅ Reseed complete for all datasets.");
     }
 
     private static async Task DeleteDatasetDataAsync(EPRDbContext context, string datasetKey)

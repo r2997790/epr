@@ -60,7 +60,7 @@ if (args.Length > 0 && args[0] == "verify-packaging")
     return;
 }
 
-// Check for reseed datasets command (Electronics, Alcoholic Beverages, Confectionary - 80% AU / 20% international)
+// Check for reseed datasets command (all 9 dataset seeders)
 if (args.Length > 0 && args[0] == "reseed-datasets")
 {
     var dbUrl = (Environment.GetEnvironmentVariable("DATABASE_URL") ?? "").Trim();
