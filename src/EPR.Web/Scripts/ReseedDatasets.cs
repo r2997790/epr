@@ -47,7 +47,6 @@ public static class ReseedDatasets
             }
         }
 
-        await context.SaveChangesAsync();
         Console.WriteLine();
 
         foreach (var key in DatasetKeys)
@@ -95,34 +94,75 @@ public static class ReseedDatasets
             .Where(s => s.DatasetKey == datasetKey)
             .ToListAsync();
         context.AsnShipments.RemoveRange(shipments);
+        await context.SaveChangesAsync();
 
-        // 2. Delete Products (cascades to ProductForm, ProductPackaging, ProductPackagingSupplierProduct, Distribution)
+        // 2. Delete Products (cascades to ProductForm, ProductPackaging, Distribution)
         var products = await context.Products
             .Where(p => p.DatasetKey == datasetKey)
             .ToListAsync();
         context.Products.RemoveRange(products);
+        await context.SaveChangesAsync();
 
-        // 3. Delete PackagingGroups (null out self-FK first to avoid Restrict violation)
+        // 3. Delete PackagingGroupItems, then PackagingGroups (null out self-FK first)
         var groups = await context.PackagingGroups
             .Where(g => g.DatasetKey == datasetKey)
+            .Include(g => g.Items)
             .ToListAsync();
+        var groupItems = groups.SelectMany(g => g.Items).ToList();
+        context.PackagingGroupItems.RemoveRange(groupItems);
+
         foreach (var g in groups)
             g.ParentPackagingGroupId = null;
         await context.SaveChangesAsync();
-        context.PackagingGroups.RemoveRange(groups);
 
-        // 4. Delete PackagingLibraries (cascades to PackagingLibraryMaterials, PackagingLibrarySupplierProducts)
+        context.PackagingGroups.RemoveRange(groups);
+        await context.SaveChangesAsync();
+
+        // 4. Now safe to delete PackagingLibraries
         var libraries = await context.PackagingLibraries
             .Where(l => l.DatasetKey == datasetKey)
             .ToListAsync();
-        context.PackagingLibraries.RemoveRange(libraries);
+        if (libraries.Any())
+        {
+            var libIds = libraries.Select(l => l.Id).ToHashSet();
+            var libMaterials = await context.PackagingLibraryMaterials
+                .Where(m => libIds.Contains(m.PackagingLibraryId))
+                .ToListAsync();
+            context.PackagingLibraryMaterials.RemoveRange(libMaterials);
 
-        // Distributions cascade-delete when Products are removed
+            var libSupplierProducts = await context.PackagingLibrarySupplierProducts
+                .Where(sp => libIds.Contains(sp.PackagingLibraryId))
+                .ToListAsync();
+            context.PackagingLibrarySupplierProducts.RemoveRange(libSupplierProducts);
+
+            context.PackagingLibraries.RemoveRange(libraries);
+            await context.SaveChangesAsync();
+        }
     }
 
     private static async Task DeleteDummyPackagingGroupsAsync(EPRDbContext context)
     {
-        // Delete dummy PackagingLibraries (null DatasetKey) and their join-table rows
+        // 1. Delete dummy PackagingGroups (null DatasetKey) and their items first,
+        //    because PackagingGroupItems FK-reference PackagingLibraries.
+        var dummyGroups = await context.PackagingGroups
+            .Where(g => g.DatasetKey == null)
+            .Include(g => g.Items)
+            .ToListAsync();
+
+        if (dummyGroups.Any())
+        {
+            var allGroupItems = dummyGroups.SelectMany(g => g.Items).ToList();
+            context.PackagingGroupItems.RemoveRange(allGroupItems);
+
+            foreach (var g in dummyGroups)
+                g.ParentPackagingGroupId = null;
+            await context.SaveChangesAsync();
+
+            context.PackagingGroups.RemoveRange(dummyGroups);
+            await context.SaveChangesAsync();
+        }
+
+        // 2. Now safe to delete dummy PackagingLibraries (null DatasetKey)
         var dummyLibraries = await context.PackagingLibraries
             .Where(l => l.DatasetKey == null)
             .ToListAsync();
@@ -143,23 +183,5 @@ public static class ReseedDatasets
             context.PackagingLibraries.RemoveRange(dummyLibraries);
             await context.SaveChangesAsync();
         }
-
-        // Delete dummy PackagingGroups (null DatasetKey)
-        var dummyGroups = await context.PackagingGroups
-            .Where(g => g.DatasetKey == null)
-            .Include(g => g.Items)
-            .ToListAsync();
-
-        if (!dummyGroups.Any()) return;
-
-        var allItems = dummyGroups.SelectMany(g => g.Items).ToList();
-        context.PackagingGroupItems.RemoveRange(allItems);
-
-        foreach (var g in dummyGroups)
-            g.ParentPackagingGroupId = null;
-        await context.SaveChangesAsync();
-
-        context.PackagingGroups.RemoveRange(dummyGroups);
-        await context.SaveChangesAsync();
     }
 }
