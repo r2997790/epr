@@ -875,6 +875,26 @@ using (var scope = app.Services.CreateScope())
             }
             catch (Exception ex) { Console.WriteLine($"⚠ PackagingGroup hierarchy PostgreSQL: {ex.Message}"); }
         }
+        // PostgreSQL: ensure PackagingGroupSupplierProducts table exists (EnsureCreated won't add it to existing DBs)
+        if (isPostgres)
+        {
+            try
+            {
+                await context.Database.ExecuteSqlRawAsync(@"
+                    CREATE TABLE IF NOT EXISTS ""PackagingGroupSupplierProducts"" (
+                        ""Id"" serial PRIMARY KEY,
+                        ""PackagingGroupId"" integer NOT NULL REFERENCES ""PackagingGroups""(""Id"") ON DELETE CASCADE,
+                        ""PackagingSupplierProductId"" integer NOT NULL REFERENCES ""PackagingSupplierProducts""(""Id"") ON DELETE CASCADE,
+                        ""IsPrimary"" boolean NOT NULL DEFAULT false,
+                        ""CreatedAt"" timestamp with time zone NOT NULL
+                    );
+                    CREATE UNIQUE INDEX IF NOT EXISTS ""IX_PackagingGroupSupplierProducts_PackagingGroupId_PackagingSupplierProductId""
+                        ON ""PackagingGroupSupplierProducts""(""PackagingGroupId"", ""PackagingSupplierProductId"");
+                ");
+                Console.WriteLine("✓ PackagingGroupSupplierProducts table verified (PostgreSQL)");
+            }
+            catch (Exception ex) { Console.WriteLine($"⚠ PackagingGroupSupplierProducts PostgreSQL: {ex.Message}"); }
+        }
         }
 
             // Always ensure admin user exists with correct password
