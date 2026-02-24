@@ -78,6 +78,28 @@ public class ElectronicsDatasetSeeder
         await LinkPackagingSupplier(productBox.Id, spPBox.Id, true);
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
 
+        // Multiple suppliers per packaging item: product display box also from LabelTech UK
+        var spPBox2 = await EnsureSupplierProduct(supplierLabelsUK.Id, "Display Box A4 UK", "ELEC-PBOX-002");
+        await LinkPackagingSupplier(productBox.Id, spPBox2.Id, false);
+
+        // Multiple suppliers per raw material: MaterialTaxonomySupplierProduct links
+        var spPaperTechPack = await EnsureSupplierProduct(supplierBox.Id, "Paper Rolls 500mm", "ELEC-PAPER-001");
+        var spPaperLabelTech = await EnsureSupplierProduct(supplierLabels.Id, "Cardboard Sheets A4", "ELEC-PAPER-002");
+        await LinkMaterialTaxonomySupplier(paperTax.Id, spPaperTechPack.Id, true);
+        await LinkMaterialTaxonomySupplier(paperTax.Id, spPaperLabelTech.Id, false);
+
+        var spPlasticPlastiForm = await EnsureSupplierProduct(supplierPlastic.Id, "Plastic Pellets LDPE", "ELEC-PLASTIC-001");
+        var spPlasticLabelTech = await EnsureSupplierProduct(supplierLabels.Id, "Plastic Film 200mic", "ELEC-PLASTIC-002");
+        await LinkMaterialTaxonomySupplier(plasticTax.Id, spPlasticPlastiForm.Id, true);
+        await LinkMaterialTaxonomySupplier(plasticTax.Id, spPlasticLabelTech.Id, false);
+
+        // Upstream suppliers: LabelTech UK supplied by LabelTech Australia
+        if (!supplierLabelsUK.SuppliedBySupplierId.HasValue)
+        {
+            supplierLabelsUK.SuppliedBySupplierId = supplierLabels.Id;
+            await _context.SaveChangesAsync();
+        }
+
         // Pallet packaging items
         var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
         var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
@@ -481,8 +503,65 @@ public class ElectronicsDatasetSeeder
             }
         }
 
+        // Multiple suppliers per raw material: MaterialTaxonomySupplierProduct links
+        var paperTax = await _context.MaterialTaxonomies.FirstOrDefaultAsync(m => m.Code == "PAPER");
+        var plasticTax = await _context.MaterialTaxonomies.FirstOrDefaultAsync(m => m.Code == "PLASTIC");
+        var supplierLabels = await _context.PackagingSuppliers.FirstOrDefaultAsync(s => s.Name == "LabelTech Australia");
+        var supplierLabelsUK = await _context.PackagingSuppliers.FirstOrDefaultAsync(s => s.Name == "LabelTech UK");
+        if (paperTax != null && supplierBox != null && supplierLabels != null)
+        {
+            var spPaperTechPack = await EnsureSupplierProduct(supplierBox.Id, "Paper Rolls 500mm", "ELEC-PAPER-001");
+            var spPaperLabelTech = await EnsureSupplierProduct(supplierLabels.Id, "Cardboard Sheets A4", "ELEC-PAPER-002");
+            if (!await _context.MaterialTaxonomySupplierProducts.AnyAsync(m => m.MaterialTaxonomyId == paperTax.Id && m.PackagingSupplierProductId == spPaperTechPack.Id))
+            {
+                await LinkMaterialTaxonomySupplier(paperTax.Id, spPaperTechPack.Id, true);
+                changed = true;
+            }
+            if (!await _context.MaterialTaxonomySupplierProducts.AnyAsync(m => m.MaterialTaxonomyId == paperTax.Id && m.PackagingSupplierProductId == spPaperLabelTech.Id))
+            {
+                await LinkMaterialTaxonomySupplier(paperTax.Id, spPaperLabelTech.Id, false);
+                changed = true;
+            }
+        }
+        if (plasticTax != null && supplierPlastic != null && supplierLabels != null)
+        {
+            var spPlasticPlastiForm = await EnsureSupplierProduct(supplierPlastic.Id, "Plastic Pellets LDPE", "ELEC-PLASTIC-001");
+            var spPlasticLabelTech = await EnsureSupplierProduct(supplierLabels.Id, "Plastic Film 200mic", "ELEC-PLASTIC-002");
+            if (!await _context.MaterialTaxonomySupplierProducts.AnyAsync(m => m.MaterialTaxonomyId == plasticTax.Id && m.PackagingSupplierProductId == spPlasticPlastiForm.Id))
+            {
+                await LinkMaterialTaxonomySupplier(plasticTax.Id, spPlasticPlastiForm.Id, true);
+                changed = true;
+            }
+            if (!await _context.MaterialTaxonomySupplierProducts.AnyAsync(m => m.MaterialTaxonomyId == plasticTax.Id && m.PackagingSupplierProductId == spPlasticLabelTech.Id))
+            {
+                await LinkMaterialTaxonomySupplier(plasticTax.Id, spPlasticLabelTech.Id, false);
+                changed = true;
+            }
+        }
+
+        // Multiple suppliers per packaging item: product display box
+        if (productBoxLib != null && supplierLabelsUK != null)
+        {
+            var spPBox2 = await EnsureSupplierProduct(supplierLabelsUK.Id, "Display Box A4 UK", "ELEC-PBOX-002");
+            if (!await _context.PackagingLibrarySupplierProducts.AnyAsync(plsp => plsp.PackagingLibraryId == productBoxLib.Id && plsp.PackagingSupplierProductId == spPBox2.Id))
+            {
+                await LinkPackagingSupplier(productBoxLib.Id, spPBox2.Id, false);
+                changed = true;
+            }
+        }
+
+        // Upstream suppliers: LabelTech UK supplied by LabelTech Australia
+        if (supplierLabels != null && supplierLabelsUK != null && !supplierLabelsUK.SuppliedBySupplierId.HasValue)
+        {
+            supplierLabelsUK.SuppliedBySupplierId = supplierLabels.Id;
+            changed = true;
+        }
+
         if (changed)
-            Console.WriteLine("  ✓ Electronics supply chain matrix data fixed (supplier links + multi-material)");
+        {
+            await _context.SaveChangesAsync();
+            Console.WriteLine("  ✓ Electronics supply chain matrix data fixed (supplier links + multi-material + multi-supplier)");
+        }
     }
 
     private async Task<MaterialTaxonomy> EnsureMaterialTaxonomy(string code, string displayName, int level)
@@ -564,6 +643,19 @@ public class ElectronicsDatasetSeeder
         _context.PackagingLibrarySupplierProducts.Add(new PackagingLibrarySupplierProduct
         {
             PackagingLibraryId = packagingLibraryId,
+            PackagingSupplierProductId = supplierProductId,
+            IsPrimary = isPrimary
+        });
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task LinkMaterialTaxonomySupplier(int materialTaxonomyId, int supplierProductId, bool isPrimary = true)
+    {
+        if (await _context.MaterialTaxonomySupplierProducts.AnyAsync(mtsp => mtsp.MaterialTaxonomyId == materialTaxonomyId && mtsp.PackagingSupplierProductId == supplierProductId))
+            return;
+        _context.MaterialTaxonomySupplierProducts.Add(new MaterialTaxonomySupplierProduct
+        {
+            MaterialTaxonomyId = materialTaxonomyId,
             PackagingSupplierProductId = supplierProductId,
             IsPrimary = isPrimary
         });

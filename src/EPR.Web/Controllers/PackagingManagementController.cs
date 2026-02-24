@@ -1663,7 +1663,7 @@ public class PackagingManagementController : Controller
 
     [HttpGet]
     [Route("api/packaging-management/supply-chain-matrix")]
-    public async Task<IActionResult> GetSupplyChainMatrix(int page = 1, int pageSize = 50, string groupBy = "group", string filter = "", string sortBy = "group", string sortDir = "asc")
+    public async Task<IActionResult> GetSupplyChainMatrix(int page = 1, int pageSize = 50, string groupBy = "group", string filter = "", string sortBy = "material", string sortDir = "asc")
     {
         try
         {
@@ -1716,44 +1716,58 @@ public class PackagingManagementController : Controller
                     ? rawMaterials.Select(m => (MaterialTaxonomy?)m).ToList()
                     : new List<MaterialTaxonomy?> { null };
 
-                var spList = supplierProducts.Count > 0
-                    ? supplierProducts.Select(sp => (PackagingSupplierProduct?)sp).ToList()
-                    : new List<PackagingSupplierProduct?> { null };
+                var itemSuppliersList = supplierProducts
+                    .Where(sp => sp != null)
+                    .Select(sp => new
+                    {
+                        id = sp!.PackagingSupplier?.Id,
+                        name = sp.PackagingSupplier?.Name,
+                        productId = sp.Id,
+                        productName = sp.Name,
+                        upstreamId = sp.PackagingSupplier?.SuppliedBySupplier?.Id,
+                        upstreamName = sp.PackagingSupplier?.SuppliedBySupplier?.Name
+                    })
+                    .ToList();
 
                 foreach (var group in groupsList)
                 {
                     foreach (var mat in matsList)
                     {
-                        var matSupplierProduct = mat?.MaterialTaxonomySupplierProducts
-                            ?.FirstOrDefault()?.PackagingSupplierProduct;
-
-                        foreach (var sp in spList)
+                        var rawMaterialSuppliersList = new List<object>();
+                        foreach (var mtsp in (mat?.MaterialTaxonomySupplierProducts ?? Enumerable.Empty<MaterialTaxonomySupplierProduct>()).Where(mtsp => mtsp.PackagingSupplierProduct != null))
                         {
-                            rows.Add(new SupplyChainMatrixRow
-                            {
-                                PackagingGroupId = group?.Id,
-                                PackagingGroupName = group?.Name,
-                                PackagingGroupPackId = group?.PackId,
-                                PackagingGroupLayer = group?.PackagingLayer,
-                                PackagingItemId = item.Id,
-                                PackagingItemName = item.Name,
-                                PackagingItemTaxonomyCode = item.TaxonomyCode,
-                                PackagingItemWeight = item.Weight,
-                                RawMaterialId = mat?.Id,
-                                RawMaterialName = mat?.DisplayName,
-                                RawMaterialCode = mat?.Code,
-                                SupplierId = sp?.PackagingSupplier?.Id,
-                                SupplierName = sp?.PackagingSupplier?.Name,
-                                SupplierProductId = sp?.Id,
-                                SupplierProductName = sp?.Name,
-                                UpstreamSupplierId = sp?.PackagingSupplier?.SuppliedBySupplier?.Id,
-                                UpstreamSupplierName = sp?.PackagingSupplier?.SuppliedBySupplier?.Name,
-                                RawMaterialSupplierId = matSupplierProduct?.PackagingSupplier?.Id,
-                                RawMaterialSupplierName = matSupplierProduct?.PackagingSupplier?.Name,
-                                RawMaterialSupplierProductId = matSupplierProduct?.Id,
-                                RawMaterialSupplierProductName = matSupplierProduct?.Name
-                            });
+                            var psp = mtsp.PackagingSupplierProduct!;
+                            rawMaterialSuppliersList.Add(new { id = psp.PackagingSupplier?.Id, name = psp.PackagingSupplier?.Name, productName = psp.Name });
                         }
+
+                        var itemSuppliersObjList = new List<object>();
+                        foreach (var s in itemSuppliersList)
+                        {
+                            itemSuppliersObjList.Add(new { id = s.id, name = s.name, productName = s.productName });
+                        }
+
+                        rows.Add(new SupplyChainMatrixRow
+                        {
+                            PackagingGroupId = group?.Id,
+                            PackagingGroupName = group?.Name,
+                            PackagingGroupPackId = group?.PackId,
+                            PackagingGroupLayer = group?.PackagingLayer,
+                            PackagingItemId = item.Id,
+                            PackagingItemName = item.Name,
+                            PackagingItemTaxonomyCode = item.TaxonomyCode,
+                            PackagingItemWeight = item.Weight,
+                            RawMaterialId = mat?.Id,
+                            RawMaterialName = mat?.DisplayName,
+                            RawMaterialCode = mat?.Code,
+                            SupplierId = itemSuppliersList.FirstOrDefault()?.id,
+                            SupplierName = itemSuppliersList.FirstOrDefault()?.name,
+                            SupplierProductId = itemSuppliersList.FirstOrDefault()?.productId,
+                            SupplierProductName = itemSuppliersList.FirstOrDefault()?.productName,
+                            UpstreamSupplierId = itemSuppliersList.FirstOrDefault(s => s.upstreamId != null)?.upstreamId ?? default,
+                            UpstreamSupplierName = itemSuppliersList.FirstOrDefault(s => s.upstreamId != null)?.upstreamName,
+                            RawMaterialSuppliers = rawMaterialSuppliersList,
+                            PackagingItemSuppliers = itemSuppliersObjList
+                        });
                     }
                 }
             }
@@ -1766,6 +1780,7 @@ public class PackagingManagementController : Controller
                     || (r.PackagingItemName?.ToLower().Contains(f) == true)
                     || (r.RawMaterialName?.ToLower().Contains(f) == true)
                     || (r.SupplierName?.ToLower().Contains(f) == true)
+                    || (r.RawMaterialSupplierName?.ToLower().Contains(f) == true)
                     || (r.UpstreamSupplierName?.ToLower().Contains(f) == true)
                     || (r.PackagingItemTaxonomyCode?.ToLower().Contains(f) == true)
                     || (r.RawMaterialCode?.ToLower().Contains(f) == true)
@@ -1777,12 +1792,26 @@ public class PackagingManagementController : Controller
             {
                 "item" => r => r.PackagingItemName,
                 "material" => r => r.RawMaterialName,
-                "supplier" => r => r.SupplierName,
+                "supplier" => r => r.SupplierName ?? r.RawMaterialSupplierName,
                 _ => r => r.PackagingGroupName
             };
+            var thenBy1 = sortBy.ToLower() switch
+            {
+                "item" => (Func<SupplyChainMatrixRow, string?>)(r => r.RawMaterialName),
+                "material" => r => r.PackagingItemName,
+                "supplier" => r => r.RawMaterialName,
+                _ => r => r.RawMaterialName
+            };
+            var thenBy2 = sortBy.ToLower() switch
+            {
+                "item" => (Func<SupplyChainMatrixRow, string?>)(r => r.PackagingGroupName),
+                "material" => r => r.PackagingGroupName,
+                "supplier" => r => r.PackagingItemName,
+                _ => r => r.PackagingItemName
+            };
             rows = (sortDir == "desc"
-                ? rows.OrderByDescending(sortKeySelector).ThenBy(r => r.PackagingGroupName).ThenBy(r => r.PackagingItemName)
-                : rows.OrderBy(sortKeySelector).ThenBy(r => r.PackagingGroupName).ThenBy(r => r.PackagingItemName)
+                ? rows.OrderByDescending(sortKeySelector).ThenBy(thenBy1).ThenBy(thenBy2)
+                : rows.OrderBy(sortKeySelector).ThenBy(thenBy1).ThenBy(thenBy2)
             ).ToList();
 
             var totalCount = rows.Count;
@@ -1808,7 +1837,9 @@ public class PackagingManagementController : Controller
                 rawMaterialSupplierId = r.RawMaterialSupplierId,
                 rawMaterialSupplierName = r.RawMaterialSupplierName,
                 rawMaterialSupplierProductId = r.RawMaterialSupplierProductId,
-                rawMaterialSupplierProductName = r.RawMaterialSupplierProductName
+                rawMaterialSupplierProductName = r.RawMaterialSupplierProductName,
+                rawMaterialSuppliers = r.RawMaterialSuppliers,
+                packagingItemSuppliers = r.PackagingItemSuppliers
             }).ToList();
 
             return Json(new
@@ -1850,6 +1881,8 @@ public class PackagingManagementController : Controller
         public string? RawMaterialSupplierName { get; set; }
         public int? RawMaterialSupplierProductId { get; set; }
         public string? RawMaterialSupplierProductName { get; set; }
+        public List<object>? RawMaterialSuppliers { get; set; }
+        public List<object>? PackagingItemSuppliers { get; set; }
     }
 
     [HttpPost]
