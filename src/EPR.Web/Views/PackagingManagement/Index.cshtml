@@ -955,19 +955,39 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border: 1px solid #dee2e6;
-            border-radius: 4px;
+            border-radius: 5px;
             background: #fff;
             color: #6c757d;
             cursor: pointer;
             transition: all 0.15s;
-            font-size: 0.75rem;
+            font-size: 0.85rem;
             padding: 0;
+            vertical-align: middle;
         }
         .matrix-action-btn:hover { border-color: #0d6efd; color: #0d6efd; background: #e7f3ff; }
+        .matrix-action-btn.danger { color: #adb5bd; }
         .matrix-action-btn.danger:hover { border-color: #dc3545; color: #dc3545; background: #fff5f5; }
+        .matrix-plus-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border: 1px dashed #adb5bd;
+            border-radius: 50%;
+            background: transparent;
+            color: #adb5bd;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.7rem;
+            padding: 0;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+        .matrix-plus-btn:hover { border-color: #198754; color: #198754; background: #d1e7dd; border-style: solid; }
         .matrix-inline-select {
             font-size: 0.8rem;
             padding: 0.15rem 0.35rem;

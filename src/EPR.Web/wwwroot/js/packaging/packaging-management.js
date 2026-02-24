@@ -1970,7 +1970,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.rawMaterialId + ', \'raw-materials\')" title="View material">' + escapeHtml(row.rawMaterialName) + '</span>';
                     if (row.rawMaterialCode) html += ' <small class="text-muted">[' + escapeHtml(row.rawMaterialCode) + ']</small>';
                     if (row.rawMaterialSupplierName) html += ' <small class="badge bg-info bg-opacity-10 text-info ms-1" title="Material supplier">' + escapeHtml(row.rawMaterialSupplierName) + '</small>';
-                    html += ' <button class="matrix-action-btn ms-1" title="Add another material" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-sm"></i></button>';
+                    html += ' <button class="matrix-plus-btn" title="Add another material" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus"></i></button>';
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign material</span></td>';
@@ -1981,7 +1981,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<td>';
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.supplierId + ', \'suppliers\')" title="View supplier">' + escapeHtml(row.supplierName) + '</span>';
                     if (row.supplierProductName) html += ' <small class="text-muted">(' + escapeHtml(row.supplierProductName) + ')</small>';
-                    html += ' <button class="matrix-action-btn ms-1" title="Add another supplier" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-sm"></i></button>';
+                    html += ' <button class="matrix-plus-btn" title="Add another supplier" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus"></i></button>';
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign supplier</span></td>';
@@ -1998,12 +1998,12 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
 
                 // Actions column
                 html += '<td class="text-nowrap">';
-                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-box-seam"></i></button>';
+                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-link-45deg"></i></button>';
                 if (row.rawMaterialId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-lg"></i></button>';
+                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-trash"></i></button>';
                 }
                 if (row.supplierProductId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-x-lg"></i></button>';
+                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-trash"></i></button>';
                 }
                 html += '</td>';
 

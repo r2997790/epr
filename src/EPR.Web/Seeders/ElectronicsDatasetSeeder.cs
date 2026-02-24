@@ -28,7 +28,8 @@ public class ElectronicsDatasetSeeder
         {
             await UpdateProductImagesIfMissing();
             await UpdateGeographyIfNeeded();
-            Console.WriteLine("Electronics dataset verified (images + geography updated if needed)");
+            await EnsureSupplyChainMatrixDataAsync();
+            Console.WriteLine("Electronics dataset verified (images + geography + matrix links updated if needed)");
             return;
         }
 
@@ -80,10 +81,23 @@ public class ElectronicsDatasetSeeder
         // Pallet packaging items
         var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
         var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var inkTax = await EnsureMaterialTaxonomy("INK", "Printing Ink", 1);
+        var adhesiveTax = await EnsureMaterialTaxonomy("ADHESIVE", "Packaging Adhesive", 1);
         var palletLib = await EnsurePackagingLibrary("Wood Pallet", "ELEC-PLT-001", 22000m, woodTax.Id, DatasetKey);
         var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "ELEC-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
         await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
         await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
+        // Multi-material: cardboard box uses both paper and printing ink
+        await LinkPackagingMaterial(boxCardboard.Id, inkTax.Id);
+        // Product display box uses paper and adhesive
+        await LinkPackagingMaterial(productBox.Id, adhesiveTax.Id);
+
+        // Supplier products for pallet items
+        var spPallet = await EnsureSupplierProduct(supplierBox.Id, "Standard Pallet 1200x1000", "ELEC-PLT-001");
+        var spStretchWrap = await EnsureSupplierProduct(supplierPlastic.Id, "Stretch Wrap 500mm", "ELEC-WRAP-PLT-001");
+        await LinkPackagingSupplier(palletLib.Id, spPallet.Id, true);
+        await LinkPackagingSupplier(wrapLib.Id, spStretchWrap.Id, true);
 
         // Packaging Groups (Tertiary first, then Secondary, then Primary)
         var groupPallet = await EnsurePackagingGroup("ELEC-PLT-001", "Electronics Pallet", "Tertiary", 22300m, DatasetKey);
@@ -398,6 +412,77 @@ public class ElectronicsDatasetSeeder
             await _context.SaveChangesAsync();
             Console.WriteLine("  ✓ Electronics geography updated to 80% AU / 20% international");
         }
+    }
+
+    /// <summary>
+    /// Ensures all packaging items have supplier links and demonstrates multi-material relationships.
+    /// Runs as a fixup when the dataset already exists.
+    /// </summary>
+    private async Task EnsureSupplyChainMatrixDataAsync()
+    {
+        var changed = false;
+
+        // Ensure Printing Ink and Adhesive material taxonomies exist
+        var inkTax = await EnsureMaterialTaxonomy("INK", "Printing Ink", 1);
+        var adhesiveTax = await EnsureMaterialTaxonomy("ADHESIVE", "Packaging Adhesive", 1);
+
+        // Find existing packaging items that need fixup
+        var palletLib = await _context.PackagingLibraries
+            .FirstOrDefaultAsync(l => l.TaxonomyCode == "ELEC-PLT-001" && l.DatasetKey == DatasetKey && l.IsActive);
+        var wrapLib = await _context.PackagingLibraries
+            .FirstOrDefaultAsync(l => l.TaxonomyCode == "ELEC-WRAP-PLT-001" && l.DatasetKey == DatasetKey && l.IsActive);
+        var boxLib = await _context.PackagingLibraries
+            .FirstOrDefaultAsync(l => l.TaxonomyCode == "ELEC-BOX-001" && l.DatasetKey == DatasetKey && l.IsActive);
+        var productBoxLib = await _context.PackagingLibraries
+            .FirstOrDefaultAsync(l => l.TaxonomyCode == "ELEC-PBOX-001" && l.DatasetKey == DatasetKey && l.IsActive);
+
+        // Find suppliers for linking
+        var supplierBox = await _context.PackagingSuppliers.FirstOrDefaultAsync(s => s.Name == "TechPack Solutions Pty Ltd");
+        var supplierPlastic = await _context.PackagingSuppliers.FirstOrDefaultAsync(s => s.Name == "PlastiForm Industries Australia");
+
+        // Ensure pallet items have supplier products
+        if (palletLib != null && supplierBox != null)
+        {
+            var spPallet = await EnsureSupplierProduct(supplierBox.Id, "Standard Pallet 1200x1000", "ELEC-PLT-001");
+            if (!await _context.PackagingLibrarySupplierProducts.AnyAsync(x => x.PackagingLibraryId == palletLib.Id))
+            {
+                await LinkPackagingSupplier(palletLib.Id, spPallet.Id, true);
+                changed = true;
+            }
+        }
+
+        if (wrapLib != null && supplierPlastic != null)
+        {
+            var spWrap = await EnsureSupplierProduct(supplierPlastic.Id, "Stretch Wrap 500mm", "ELEC-WRAP-PLT-001");
+            if (!await _context.PackagingLibrarySupplierProducts.AnyAsync(x => x.PackagingLibraryId == wrapLib.Id))
+            {
+                await LinkPackagingSupplier(wrapLib.Id, spWrap.Id, true);
+                changed = true;
+            }
+        }
+
+        // Multi-material: cardboard box also uses printing ink
+        if (boxLib != null)
+        {
+            if (!await _context.PackagingLibraryMaterials.AnyAsync(x => x.PackagingLibraryId == boxLib.Id && x.MaterialTaxonomyId == inkTax.Id))
+            {
+                await LinkPackagingMaterial(boxLib.Id, inkTax.Id);
+                changed = true;
+            }
+        }
+
+        // Multi-material: product display box also uses adhesive
+        if (productBoxLib != null)
+        {
+            if (!await _context.PackagingLibraryMaterials.AnyAsync(x => x.PackagingLibraryId == productBoxLib.Id && x.MaterialTaxonomyId == adhesiveTax.Id))
+            {
+                await LinkPackagingMaterial(productBoxLib.Id, adhesiveTax.Id);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            Console.WriteLine("  ✓ Electronics supply chain matrix data fixed (supplier links + multi-material)");
     }
 
     private async Task<MaterialTaxonomy> EnsureMaterialTaxonomy(string code, string displayName, int level)
