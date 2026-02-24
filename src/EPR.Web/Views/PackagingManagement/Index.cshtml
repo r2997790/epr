@@ -96,6 +96,7 @@
                 <small class="text-muted">Full relational view of packaging supply chain</small>
             </div>
             <div class="d-flex gap-2 align-items-center flex-wrap">
+                <span class="text-muted small align-self-center me-1">Show:</span>
                 <div class="btn-group btn-group-sm" role="group" aria-label="Filter by packaging layer">
                     <input type="checkbox" class="btn-check" id="matrixFilterPrimary" checked autocomplete="off">
                     <label class="btn btn-outline-secondary" for="matrixFilterPrimary">Primary</label>
@@ -120,7 +121,7 @@
             </div>
         </div>
         <div class="p-0 flex-grow-1" style="overflow: auto; min-height: 0;">
-            <table class="table table-bordered table-hover mb-0" id="matrixTable" style="font-size: 0.875rem;">
+            <table class="table table-bordered table-hover mb-0" id="matrixTable" style="font-size: 0.95rem;">
                 <thead class="table-light" id="matrixTableHead" style="position: sticky; top: 0; z-index: 2;">
                     <tr>
                         <th>Raw Material</th>
@@ -130,7 +131,7 @@
                         <th>Packaging Group</th>
                         <th>Packaging Group Supplier(s)</th>
                         <th>Upstream Supplier</th>
-                        <th style="width: 80px;">Actions</th>
+                        <th style="width: 130px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="matrixTableBody">
@@ -138,7 +139,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-3 border-top flex-shrink-0 d-flex justify-content-between align-items-center" style="font-size: 0.8rem;">
+        <div class="p-3 border-top flex-shrink-0 d-flex justify-content-between align-items-center" style="font-size: 0.85rem;">
             <div><span id="matrixRecordCount">0</span> rows</div>
             <nav>
                 <ul class="pagination pagination-sm mb-0" id="matrixPagination"></ul>
@@ -1027,7 +1028,7 @@
             background-color: #fff8e1 !important;
         }
         #matrixTable thead th {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
         }
         .matrix-assign-link {
@@ -1035,7 +1036,7 @@
             align-items: center;
             gap: 0.25rem;
             color: #e6a100;
-            font-size: 0.85rem;
+            font-size: 0.875rem;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.15s;
@@ -1043,10 +1044,11 @@
         .matrix-assign-link:hover { color: #b57d00; text-decoration: underline; }
         .matrix-action-btn {
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
+            width: 38px;
+            min-height: 36px;
             border: 1px solid #dee2e6;
             border-radius: 5px;
             background: #fff;
@@ -1054,12 +1056,18 @@
             cursor: pointer;
             transition: all 0.15s;
             font-size: 0.9rem;
-            padding: 0;
+            padding: 2px 4px;
             vertical-align: middle;
         }
         .matrix-action-btn:hover { border-color: #0d6efd; color: #0d6efd; background: #e7f3ff; }
         .matrix-action-btn.danger { color: #adb5bd; }
         .matrix-action-btn.danger:hover { border-color: #dc3545; color: #dc3545; background: #fff5f5; }
+        .matrix-action-btn .matrix-action-label {
+            font-size: 0.6rem;
+            display: block;
+            line-height: 1.1;
+            margin-top: 1px;
+        }
         .matrix-plus-btn {
             display: inline-flex;
             align-items: center;

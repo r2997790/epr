@@ -1002,6 +1002,32 @@ public class PackagingManagementController : Controller
         return Json(new { success = true });
     }
 
+    [HttpPost]
+    [Route("api/packaging-management/packaging-groups/{id}/suppliers")]
+    public async Task<IActionResult> AddSupplierToPackagingGroup(int id, [FromBody] AddSupplierProductRequest request)
+    {
+        var group = await _context.PackagingGroups.FindAsync(id);
+        if (group == null) return NotFound();
+        var product = await _context.PackagingSupplierProducts.FindAsync(request.PackagingSupplierProductId);
+        if (product == null) return BadRequest("Supplier product not found");
+        var exists = await _context.PackagingGroupSupplierProducts.AnyAsync(pgsp => pgsp.PackagingGroupId == id && pgsp.PackagingSupplierProductId == request.PackagingSupplierProductId);
+        if (exists) return BadRequest("Supplier product already linked");
+        _context.PackagingGroupSupplierProducts.Add(new PackagingGroupSupplierProduct { PackagingGroupId = id, PackagingSupplierProductId = request.PackagingSupplierProductId });
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
+    [HttpDelete]
+    [Route("api/packaging-management/packaging-groups/{id}/suppliers/{productId}")]
+    public async Task<IActionResult> RemoveSupplierFromPackagingGroup(int id, int productId)
+    {
+        var link = await _context.PackagingGroupSupplierProducts.FirstOrDefaultAsync(pgsp => pgsp.PackagingGroupId == id && pgsp.PackagingSupplierProductId == productId);
+        if (link == null) return NotFound();
+        _context.PackagingGroupSupplierProducts.Remove(link);
+        await _context.SaveChangesAsync();
+        return Json(new { success = true });
+    }
+
     [HttpGet]
     [Route("api/packaging-management/taxonomy-tree")]
     public async Task<IActionResult> GetTaxonomyTree()
@@ -1675,6 +1701,9 @@ public class PackagingManagementController : Controller
             var packagingItems = await _context.PackagingLibraries
                 .Where(l => l.IsActive && (string.IsNullOrEmpty(datasetKey) || l.DatasetKey == datasetKey))
                 .Include(l => l.PackagingGroupItems).ThenInclude(gi => gi.PackagingGroup)
+                    .ThenInclude(g => g!.PackagingGroupSupplierProducts)
+                        .ThenInclude(pgsp => pgsp.PackagingSupplierProduct)
+                            .ThenInclude(psp => psp.PackagingSupplier)
                 .Include(l => l.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
                     .ThenInclude(mt => mt!.MaterialTaxonomySupplierProducts)
                         .ThenInclude(mtsp => mtsp.PackagingSupplierProduct)
@@ -1746,6 +1775,16 @@ public class PackagingManagementController : Controller
                             itemSuppliersObjList.Add(new { id = s.id, name = s.name, productName = s.productName });
                         }
 
+                        var groupSuppliersList = new List<object>();
+                        if (group != null)
+                        {
+                            foreach (var pgsp in (group.PackagingGroupSupplierProducts ?? Enumerable.Empty<PackagingGroupSupplierProduct>()).Where(pgsp => pgsp.PackagingSupplierProduct != null))
+                            {
+                                var psp = pgsp.PackagingSupplierProduct!;
+                                groupSuppliersList.Add(new { id = psp.PackagingSupplier?.Id, name = psp.PackagingSupplier?.Name, productName = psp.Name });
+                            }
+                        }
+
                         rows.Add(new SupplyChainMatrixRow
                         {
                             PackagingGroupId = group?.Id,
@@ -1766,7 +1805,8 @@ public class PackagingManagementController : Controller
                             UpstreamSupplierId = itemSuppliersList.FirstOrDefault(s => s.upstreamId != null)?.upstreamId ?? default,
                             UpstreamSupplierName = itemSuppliersList.FirstOrDefault(s => s.upstreamId != null)?.upstreamName,
                             RawMaterialSuppliers = rawMaterialSuppliersList,
-                            PackagingItemSuppliers = itemSuppliersObjList
+                            PackagingItemSuppliers = itemSuppliersObjList,
+                            PackagingGroupSuppliers = groupSuppliersList
                         });
                     }
                 }
@@ -1856,7 +1896,8 @@ public class PackagingManagementController : Controller
                 rawMaterialSupplierProductId = r.RawMaterialSupplierProductId,
                 rawMaterialSupplierProductName = r.RawMaterialSupplierProductName,
                 rawMaterialSuppliers = r.RawMaterialSuppliers,
-                packagingItemSuppliers = r.PackagingItemSuppliers
+                packagingItemSuppliers = r.PackagingItemSuppliers,
+                packagingGroupSuppliers = r.PackagingGroupSuppliers
             }).ToList();
 
             return Json(new
@@ -1900,6 +1941,7 @@ public class PackagingManagementController : Controller
         public string? RawMaterialSupplierProductName { get; set; }
         public List<object>? RawMaterialSuppliers { get; set; }
         public List<object>? PackagingItemSuppliers { get; set; }
+        public List<object>? PackagingGroupSuppliers { get; set; }
     }
 
     [HttpPost]

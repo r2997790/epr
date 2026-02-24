@@ -55,6 +55,7 @@ public class EPRDbContext : DbContext
     public DbSet<PackagingLibraryMaterial> PackagingLibraryMaterials { get; set; }
     public DbSet<PackagingLibrarySupplierProduct> PackagingLibrarySupplierProducts { get; set; }
     public DbSet<MaterialTaxonomySupplierProduct> MaterialTaxonomySupplierProducts { get; set; }
+    public DbSet<PackagingGroupSupplierProduct> PackagingGroupSupplierProducts { get; set; }
 
     // ASN (Advanced Shipping Notice) entities
     public DbSet<AsnShipment> AsnShipments { get; set; }
@@ -650,6 +651,20 @@ public class EPRDbContext : DbContext
                 .HasForeignKey(e => e.PackagingSupplierProductId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => new { e.MaterialTaxonomyId, e.PackagingSupplierProductId }).IsUnique();
+        });
+
+        modelBuilder.Entity<PackagingGroupSupplierProduct>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.PackagingGroup)
+                .WithMany(g => g.PackagingGroupSupplierProducts)
+                .HasForeignKey(e => e.PackagingGroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PackagingSupplierProduct)
+                .WithMany(p => p.PackagingGroupSupplierProducts)
+                .HasForeignKey(e => e.PackagingSupplierProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.PackagingGroupId, e.PackagingSupplierProductId }).IsUnique();
         });
 
         // AsnLineItem configuration

@@ -2089,10 +2089,11 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
         }
 
         function loadMatrixData() {
-            const layers = [];
+            let layers = [];
             if (matrixLayerFilter.primary) layers.push('Primary');
             if (matrixLayerFilter.secondary) layers.push('Secondary');
             if (matrixLayerFilter.tertiary) layers.push('Tertiary');
+            if (layers.length === 0) layers = ['Primary', 'Secondary', 'Tertiary'];
             const packagingLayer = layers.join(',');
             const url = `/api/packaging-management/supply-chain-matrix?page=${matrixPage}&pageSize=${matrixPageSize}&groupBy=${matrixGroupBy}&filter=${encodeURIComponent(matrixFilter)}&sortBy=${matrixSortBy}&sortDir=${matrixSortDir}&packagingLayer=${encodeURIComponent(packagingLayer)}`;
             const tbody = document.getElementById('matrixTableBody');
@@ -2222,9 +2223,25 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<td class="matrix-cell-merged"></td>';
                 }
 
-                // Packaging Group Supplier(s) column (immediately follows Packaging Group, placeholder)
+                // Packaging Group Supplier(s) column (immediately follows Packaging Group)
                 if (showGroup) {
-                    html += '<td><span class="matrix-cell-secondary">-</span></td>';
+                    html += '<td>';
+                    const groupSuppliers = row.packagingGroupSuppliers || [];
+                    if (row.packagingGroupId) {
+                        if (groupSuppliers.length > 0) {
+                            groupSuppliers.forEach(s => {
+                                html += '<span class="badge bg-success bg-opacity-10 text-success me-1"><span class="matrix-nav-link" onclick="window.navigateToRecord(' + s.id + ', \'suppliers\')">' + escapeHtml(s.name || '') + '</span>';
+                                if (s.productName) html += ' <span class="matrix-cell-secondary">(' + escapeHtml(s.productName) + ')</span>';
+                                html += '</span>';
+                            });
+                            html += ' <button class="matrix-plus-btn" title="Add supplier" onclick="matrixInlineAdd(\'group-supplier\', ' + row.packagingGroupId + ', this)"><i class="bi bi-plus-square"></i></button>';
+                        } else {
+                            html += '<span class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'group-supplier\', ' + row.packagingGroupId + ', this)"><i class="bi bi-plus-circle-fill"></i> Assign</span></span>';
+                        }
+                    } else {
+                        html += '<span class="matrix-cell-secondary">-</span>';
+                    }
+                    html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-merged"></td>';
                 }
@@ -2240,12 +2257,12 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
 
                 // Actions column
                 html += '<td class="text-nowrap">';
-                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-box-arrow-up-right"></i></button>';
+                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-diagram-3"></i><span class="matrix-action-label">Products</span></button>';
                 if (row.rawMaterialId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-circle"></i></button>';
+                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-circle"></i><span class="matrix-action-label">Unlink mat</span></button>';
                 }
                 if (row.supplierProductId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-x-circle"></i></button>';
+                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-x-circle"></i><span class="matrix-action-label">Unlink sup</span></button>';
                 }
                 html += '</td>';
 
@@ -2298,7 +2315,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                 items = options.rawMaterials.map(m => ({ id: m.id, label: (m.code ? m.code + ' - ' : '') + m.name }));
             } else if (linkType === 'supplier') {
                 items = options.supplierProducts.map(sp => ({ id: sp.id, label: sp.name + (sp.supplierName ? ' (' + sp.supplierName + ')' : '') }));
-            } else if (linkType === 'material-supplier') {
+            } else if (linkType === 'material-supplier' || linkType === 'group-supplier') {
                 items = options.supplierProducts.map(sp => ({ id: sp.id, label: sp.name + (sp.supplierName ? ' (' + sp.supplierName + ')' : '') }));
             }
             if (items.length === 0) {
@@ -2324,6 +2341,9 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                             body = JSON.stringify({ materialTaxonomyId: val });
                         } else if (linkType === 'material-supplier') {
                             url = '/api/packaging-management/raw-materials/' + entityId + '/suppliers';
+                            body = JSON.stringify({ packagingSupplierProductId: val });
+                        } else if (linkType === 'group-supplier') {
+                            url = '/api/packaging-management/packaging-groups/' + entityId + '/suppliers';
                             body = JSON.stringify({ packagingSupplierProductId: val });
                         } else {
                             url = '/api/packaging-management/packaging-items/' + entityId + '/suppliers';

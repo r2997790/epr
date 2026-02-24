@@ -536,6 +536,18 @@ using (var scope = app.Services.CreateScope())
                 );
                 CREATE UNIQUE INDEX IF NOT EXISTS IX_MaterialTaxonomySupplierProducts_MaterialTaxonomyId_PackagingSupplierProductId 
                     ON MaterialTaxonomySupplierProducts(MaterialTaxonomyId, PackagingSupplierProductId);
+
+                CREATE TABLE IF NOT EXISTS PackagingGroupSupplierProducts (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    PackagingGroupId INTEGER NOT NULL,
+                    PackagingSupplierProductId INTEGER NOT NULL,
+                    IsPrimary INTEGER NOT NULL DEFAULT 0,
+                    CreatedAt TEXT NOT NULL,
+                    FOREIGN KEY (PackagingGroupId) REFERENCES PackagingGroups(Id) ON DELETE CASCADE,
+                    FOREIGN KEY (PackagingSupplierProductId) REFERENCES PackagingSupplierProducts(Id) ON DELETE CASCADE
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS IX_PackagingGroupSupplierProducts_PackagingGroupId_PackagingSupplierProductId 
+                    ON PackagingGroupSupplierProducts(PackagingGroupId, PackagingSupplierProductId);
             ");
             // Add SuppliedBySupplierId to PackagingSuppliers if missing
             var conn = context.Database.GetDbConnection();

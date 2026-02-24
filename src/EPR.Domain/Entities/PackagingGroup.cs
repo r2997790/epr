@@ -110,6 +110,7 @@ public class PackagingGroup
     public virtual PackagingGroup? ParentPackagingGroup { get; set; }
     public virtual ICollection<PackagingGroup> ChildGroups { get; set; } = new List<PackagingGroup>();
     public virtual ICollection<PackagingGroupItem> Items { get; set; } = new List<PackagingGroupItem>();
+    public virtual ICollection<PackagingGroupSupplierProduct> PackagingGroupSupplierProducts { get; set; } = new List<PackagingGroupSupplierProduct>();
 }
 
 

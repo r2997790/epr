@@ -100,11 +100,14 @@ public class ElectronicsDatasetSeeder
             await _context.SaveChangesAsync();
         }
 
-        // Pallet packaging items
+        // Pallet packaging items and additional raw materials
         var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
         var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
         var inkTax = await EnsureMaterialTaxonomy("INK", "Printing Ink", 1);
         var adhesiveTax = await EnsureMaterialTaxonomy("ADHESIVE", "Packaging Adhesive", 1);
+        var aluminiumTax = await EnsureMaterialTaxonomy("ALU", "Aluminium", 1);
+        var glassTax = await EnsureMaterialTaxonomy("GLASS", "Glass", 1);
+        var metalTax = await EnsureMaterialTaxonomy("METAL", "Metal", 1);
         var palletLib = await EnsurePackagingLibrary("Wood Pallet", "ELEC-PLT-001", 22000m, woodTax.Id, DatasetKey);
         var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "ELEC-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
         await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
@@ -142,13 +145,17 @@ public class ElectronicsDatasetSeeder
         var warrantyCard = await EnsurePackagingLibrary("Warranty card", "ELEC-WARR-001", 3m, paperTax.Id, DatasetKey);
         var cableTie = await EnsurePackagingLibrary("USB cable tie", "ELEC-TIE-001", 2m, plasticTax.Id, DatasetKey);
         var recyclableBag = await EnsurePackagingLibrary("Recyclable bag", "ELEC-BAG-001", 8m, plasticTax.Id, DatasetKey);
+        var aluminiumFoil = await EnsurePackagingLibrary("Aluminium foil wrap", "ELEC-ALU-001", 12m, aluminiumTax.Id, DatasetKey);
 
         await LinkPackagingMaterial(corrugatedDivider.Id, paperTax.Id);
+        await LinkPackagingMaterial(corrugatedDivider.Id, adhesiveTax.Id);
         await LinkPackagingMaterial(bubbleWrapSleeve.Id, plasticTax.Id);
         await LinkPackagingMaterial(instructionBooklet.Id, paperTax.Id);
+        await LinkPackagingMaterial(instructionBooklet.Id, inkTax.Id);
         await LinkPackagingMaterial(warrantyCard.Id, paperTax.Id);
         await LinkPackagingMaterial(cableTie.Id, plasticTax.Id);
         await LinkPackagingMaterial(recyclableBag.Id, plasticTax.Id);
+        await LinkPackagingMaterial(recyclableBag.Id, inkTax.Id);
 
         var spDivider = await EnsureSupplierProduct(supplierBox.Id, "Corrugated Divider A4", "ELEC-DIV-001");
         var spBubble = await EnsureSupplierProduct(supplierPlastic.Id, "Bubble Sleeve 200mm", "ELEC-BUB-001");
@@ -156,6 +163,7 @@ public class ElectronicsDatasetSeeder
         var spWarranty = await EnsureSupplierProduct(supplierLabels.Id, "Warranty Card A7", "ELEC-WARR-001");
         var spTie = await EnsureSupplierProduct(supplierPlastic.Id, "Cable Tie 200mm", "ELEC-TIE-001");
         var spBag = await EnsureSupplierProduct(supplierPlastic.Id, "Recyclable Bag 300x400", "ELEC-BAG-001");
+        var spAluFoil = await EnsureSupplierProduct(supplierBox.Id, "Aluminium Foil 300x400", "ELEC-ALU-001");
 
         await LinkPackagingSupplier(corrugatedDivider.Id, spDivider.Id, true);
         await LinkPackagingSupplier(bubbleWrapSleeve.Id, spBubble.Id, true);
@@ -163,6 +171,9 @@ public class ElectronicsDatasetSeeder
         await LinkPackagingSupplier(warrantyCard.Id, spWarranty.Id, true);
         await LinkPackagingSupplier(cableTie.Id, spTie.Id, true);
         await LinkPackagingSupplier(recyclableBag.Id, spBag.Id, true);
+        await LinkPackagingSupplier(aluminiumFoil.Id, spAluFoil.Id, true);
+
+        await AddGroupItem(groupShipping.Id, aluminiumFoil.Id, 4);
 
         // Additional packaging groups
         var groupGiftBox = await EnsurePackagingGroup("ELEC-GIFT-001", "Electronics Gift Box", "Primary", 180m, DatasetKey, groupShipping.Id, 6);
@@ -181,6 +192,16 @@ public class ElectronicsDatasetSeeder
         await AddGroupItem(groupProduct.Id, instructionBooklet.Id, 2);
         await AddGroupItem(groupProduct.Id, warrantyCard.Id, 3);
         await AddGroupItem(groupProduct.Id, cableTie.Id, 4);
+
+        // Packaging group suppliers (demonstrate group-level supplier assignment)
+        await LinkPackagingGroupSupplier(groupProduct.Id, spPBox.Id, true);
+        await LinkPackagingGroupSupplier(groupShipping.Id, spBox.Id, true);
+        await LinkPackagingGroupSupplier(groupPallet.Id, spPallet.Id, true);
+
+        var spAluTechPack = await EnsureSupplierProduct(supplierBox.Id, "Aluminium Sheet 0.5mm", "ELEC-ALU-001");
+        var spGlassSupplier = await EnsureSupplierProduct(supplierLabels.Id, "Clear Glass 3mm", "ELEC-GLASS-001");
+        await LinkMaterialTaxonomySupplier(aluminiumTax.Id, spAluTechPack.Id, true);
+        await LinkMaterialTaxonomySupplier(glassTax.Id, spGlassSupplier.Id, true);
 
         // PackagingRawMaterial (bridge for PackagingType -> raw materials for GetAsnProductPackaging traceability)
         var prmPlastic = await EnsurePackagingRawMaterial("Plastics", "Plastic materials");
@@ -681,6 +702,51 @@ public class ElectronicsDatasetSeeder
                 }
             }
 
+            var adhesiveTaxForExtra = await _context.MaterialTaxonomies.FirstOrDefaultAsync(m => m.Code == "ADHESIVE");
+            if (corrugatedDivider != null && adhesiveTaxForExtra != null && !await _context.PackagingLibraryMaterials.AnyAsync(plm => plm.PackagingLibraryId == corrugatedDivider.Id && plm.MaterialTaxonomyId == adhesiveTaxForExtra.Id))
+            {
+                await LinkPackagingMaterial(corrugatedDivider.Id, adhesiveTaxForExtra.Id);
+                changed = true;
+            }
+            if (booklet != null && inkTax != null && !await _context.PackagingLibraryMaterials.AnyAsync(plm => plm.PackagingLibraryId == booklet.Id && plm.MaterialTaxonomyId == inkTax.Id))
+            {
+                await LinkPackagingMaterial(booklet.Id, inkTax.Id);
+                changed = true;
+            }
+            if (recyclableBag != null && inkTax != null && !await _context.PackagingLibraryMaterials.AnyAsync(plm => plm.PackagingLibraryId == recyclableBag.Id && plm.MaterialTaxonomyId == inkTax.Id))
+            {
+                await LinkPackagingMaterial(recyclableBag.Id, inkTax.Id);
+                changed = true;
+            }
+
+            if (groupProductForExtra != null && productBoxForExtra != null)
+            {
+                var spPBox = await EnsureSupplierProduct(supplierBox!.Id, "Display Box A4", "ELEC-PBOX-001");
+                if (!await _context.PackagingGroupSupplierProducts.AnyAsync(pgsp => pgsp.PackagingGroupId == groupProductForExtra.Id && pgsp.PackagingSupplierProductId == spPBox.Id))
+                {
+                    await LinkPackagingGroupSupplier(groupProductForExtra.Id, spPBox.Id, true);
+                    changed = true;
+                }
+            }
+            if (groupShippingForExtra != null && boxLibForExtra != null)
+            {
+                var spBox = await EnsureSupplierProduct(supplierBox!.Id, "TechBox 30x20x15", "ELEC-BOX-001");
+                if (!await _context.PackagingGroupSupplierProducts.AnyAsync(pgsp => pgsp.PackagingGroupId == groupShippingForExtra.Id && pgsp.PackagingSupplierProductId == spBox.Id))
+                {
+                    await LinkPackagingGroupSupplier(groupShippingForExtra.Id, spBox.Id, true);
+                    changed = true;
+                }
+            }
+            if (groupPalletForExtra != null)
+            {
+                var spPallet = await EnsureSupplierProduct(supplierBox!.Id, "Standard Pallet 1200x1000", "ELEC-PLT-001");
+                if (!await _context.PackagingGroupSupplierProducts.AnyAsync(pgsp => pgsp.PackagingGroupId == groupPalletForExtra.Id && pgsp.PackagingSupplierProductId == spPallet.Id))
+                {
+                    await LinkPackagingGroupSupplier(groupPalletForExtra.Id, spPallet.Id, true);
+                    changed = true;
+                }
+            }
+
             var groupGiftBox = await _context.PackagingGroups.FirstOrDefaultAsync(g => g.PackId == "ELEC-GIFT-001" && g.DatasetKey == DatasetKey && g.IsActive);
             if (groupGiftBox == null && groupShippingForExtra != null && productBoxForExtra != null && labelForExtra != null && recyclableBag != null)
             {
@@ -793,6 +859,19 @@ public class ElectronicsDatasetSeeder
         _context.PackagingLibrarySupplierProducts.Add(new PackagingLibrarySupplierProduct
         {
             PackagingLibraryId = packagingLibraryId,
+            PackagingSupplierProductId = supplierProductId,
+            IsPrimary = isPrimary
+        });
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task LinkPackagingGroupSupplier(int packagingGroupId, int supplierProductId, bool isPrimary = true)
+    {
+        if (await _context.PackagingGroupSupplierProducts.AnyAsync(pgsp => pgsp.PackagingGroupId == packagingGroupId && pgsp.PackagingSupplierProductId == supplierProductId))
+            return;
+        _context.PackagingGroupSupplierProducts.Add(new PackagingGroupSupplierProduct
+        {
+            PackagingGroupId = packagingGroupId,
             PackagingSupplierProductId = supplierProductId,
             IsPrimary = isPrimary
         });

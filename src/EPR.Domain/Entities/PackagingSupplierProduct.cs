@@ -34,4 +34,5 @@ public class PackagingSupplierProduct
     public virtual ICollection<ProductPackagingSupplierProduct> ProductPackagingSupplierProducts { get; set; } = new List<ProductPackagingSupplierProduct>();
     public virtual ICollection<PackagingLibrarySupplierProduct> PackagingLibrarySupplierProducts { get; set; } = new List<PackagingLibrarySupplierProduct>();
     public virtual ICollection<MaterialTaxonomySupplierProduct> MaterialTaxonomySupplierProducts { get; set; } = new List<MaterialTaxonomySupplierProduct>();
+    public virtual ICollection<PackagingGroupSupplierProduct> PackagingGroupSupplierProducts { get; set; } = new List<PackagingGroupSupplierProduct>();
 }
