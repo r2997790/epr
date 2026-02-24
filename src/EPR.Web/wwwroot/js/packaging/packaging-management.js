@@ -17,8 +17,19 @@
         const visualEditorUrl = init.visualEditorUrl || '/VisualEditor?embedded=1';
 
         // Initialize (run immediately if doc already loaded, e.g. when opened in browser tab)
+        let matrixPage = 1;
+        let matrixPageSize = 50;
+        let matrixFilter = '';
+        let matrixGroupBy = 'group';
+        let matrixSortBy = 'group';
+        let matrixSortDir = 'asc';
+        let matrixData = null;
+        let matrixOptionsCache = null;
+
         function initPackaging() {
-            if (currentType !== 'visual-editor' && currentType !== 'packaging-taxonomy') {
+            if (currentType === 'supply-chain-matrix') {
+                loadMatrixData();
+            } else if (currentType !== 'visual-editor' && currentType !== 'packaging-taxonomy') {
                 updateFilterPlaceholder();
                 updateFilterBadge();
                 loadData();
@@ -35,6 +46,7 @@
             setupTabSwitching();
             setupDetailNavigation();
             setupEditDeleteButtons();
+            setupMatrixEventListeners();
         }
         window.switchPackagingTab = switchTab;
         window.navigateToRecord = navigateToRecord;
@@ -95,19 +107,37 @@
             const tablePane = document.getElementById('tablePane');
             const detailPane = document.getElementById('detailPane');
 
+            const matrixContainer = document.getElementById('matrixContainer');
+            const exportCsvBtn = document.getElementById('exportMatrixCsvBtn');
+
             if (type === 'visual-editor') {
                 visualContainer.classList.remove('d-none');
                 splitContainer.classList.add('d-none');
+                if (matrixContainer) matrixContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.add('d-none');
                 const frame = document.getElementById('visualEditorFrame');
                 if (frame) {
                     const needsLoad = !frame.src || frame.src === 'about:blank' || !frame.src.includes('VisualEditor');
                     if (needsLoad) frame.src = visualEditorUrl;
                 }
+            } else if (type === 'supply-chain-matrix') {
+                visualContainer.classList.add('d-none');
+                splitContainer.classList.add('d-none');
+                if (matrixContainer) matrixContainer.classList.remove('d-none');
+                if (headerButtons) headerButtons.classList.remove('d-none');
+                if (addSupplierBtn) addSupplierBtn.classList.add('d-none');
+                if (addRawMaterialBtn) addRawMaterialBtn.classList.add('d-none');
+                if (addPackagingItemBtn) addPackagingItemBtn.classList.add('d-none');
+                if (addPackagingGroupBtn) addPackagingGroupBtn.classList.add('d-none');
+                if (addProductBtn) addProductBtn.classList.add('d-none');
+                if (exportCsvBtn) exportCsvBtn.classList.remove('d-none');
+                loadMatrixData();
             } else             if (type === 'packaging-taxonomy') {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
+                if (matrixContainer) matrixContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
+                if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
                 if (taxonomyContainer) taxonomyContainer.classList.remove('d-none');
                 if (tablePane) tablePane.classList.add('d-none');
                 if (detailPane) detailPane.classList.add('d-none');
@@ -117,7 +147,9 @@
             } else {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
+                if (matrixContainer) matrixContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
+                if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
                 if (taxonomyContainer) taxonomyContainer.classList.add('d-none');
                 if (tablePane) tablePane.classList.remove('d-none');
                 if (detailPane) detailPane.classList.remove('d-none');
@@ -417,6 +449,7 @@
 
         function loadData() {
             if (currentType === 'visual-editor') return;
+            if (currentType === 'supply-chain-matrix') { loadMatrixData(); return; }
             if (currentType === 'packaging-taxonomy') { loadTaxonomyTree(); return; }
             const url = `/api/packaging-management/list/${currentType}?page=${currentPage}&pageSize=${currentPageSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}&filter=${encodeURIComponent(currentFilter)}`;
             
@@ -1801,5 +1834,332 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     }
                 });
             }
+        }
+
+        // ============================================================
+        // SUPPLY CHAIN MATRIX
+        // ============================================================
+
+        function setupMatrixEventListeners() {
+            const filterInput = document.getElementById('matrixFilterInput');
+            if (filterInput) {
+                let timeout;
+                filterInput.addEventListener('input', function() {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        matrixFilter = this.value;
+                        matrixPage = 1;
+                        loadMatrixData();
+                    }, 300);
+                });
+            }
+            const groupBySelect = document.getElementById('matrixGroupBy');
+            if (groupBySelect) {
+                groupBySelect.addEventListener('change', function() {
+                    matrixGroupBy = this.value;
+                    matrixSortBy = this.value;
+                    matrixPage = 1;
+                    loadMatrixData();
+                });
+            }
+            const exportBtn = document.getElementById('exportMatrixCsvBtn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportMatrixCsv);
+            }
+        }
+
+        async function ensureMatrixOptions() {
+            if (matrixOptionsCache) return matrixOptionsCache;
+            try {
+                const [rmRes, piRes, spRes] = await Promise.all([
+                    fetch('/api/packaging-management/options/raw-materials').then(r => r.json()),
+                    fetch('/api/packaging-management/options/packaging-items').then(r => r.json()),
+                    fetch('/api/packaging-management/options/supplier-products').then(r => r.json())
+                ]);
+                matrixOptionsCache = { rawMaterials: rmRes, packagingItems: piRes, supplierProducts: spRes };
+                return matrixOptionsCache;
+            } catch (e) {
+                console.error('[Matrix] Failed to load options:', e);
+                return { rawMaterials: [], packagingItems: [], supplierProducts: [] };
+            }
+        }
+
+        function loadMatrixData() {
+            const url = `/api/packaging-management/supply-chain-matrix?page=${matrixPage}&pageSize=${matrixPageSize}&groupBy=${matrixGroupBy}&filter=${encodeURIComponent(matrixFilter)}&sortBy=${matrixSortBy}&sortDir=${matrixSortDir}`;
+            const tbody = document.getElementById('matrixTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading...</td></tr>';
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Error: ' + escapeHtml(data.error) + '</td></tr>';
+                        return;
+                    }
+                    matrixData = data;
+                    renderMatrix(data);
+                    renderMatrixPagination(data);
+                    const countEl = document.getElementById('matrixRecordCount');
+                    if (countEl) countEl.textContent = data.totalCount || 0;
+                })
+                .catch(err => {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Failed to load matrix data.</td></tr>';
+                    console.error('[Matrix] Load error:', err);
+                });
+        }
+
+        function renderMatrix(data) {
+            const tbody = document.getElementById('matrixTableBody');
+            if (!tbody) return;
+            if (!data.rows || data.rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No supply chain data found. Add packaging groups, items, and suppliers to populate this view.</td></tr>';
+                return;
+            }
+
+            const rows = data.rows;
+            let html = '';
+            let prevGroupId = null;
+            let prevItemId = null;
+            let groupIndex = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const isNewGroup = row.packagingGroupId !== prevGroupId;
+                const isNewItem = row.packagingItemId !== prevItemId || isNewGroup;
+                if (isNewGroup) { groupIndex++; prevItemId = null; }
+
+                const groupClass = groupIndex % 2 === 0 ? 'matrix-group-even' : 'matrix-group-odd';
+                const showGroup = isNewGroup;
+                const showItem = isNewItem;
+
+                html += '<tr class="' + groupClass + '" data-row-idx="' + i + '">';
+
+                // Packaging Group column
+                if (showGroup) {
+                    html += '<td class="matrix-cell-first">';
+                    if (row.packagingGroupId) {
+                        html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.packagingGroupId + ', \'packaging-groups\')" title="View group">' + escapeHtml(row.packagingGroupName) + '</span>';
+                        if (row.packagingGroupLayer) html += ' <small class="text-muted">(' + escapeHtml(row.packagingGroupLayer) + ')</small>';
+                    } else {
+                        html += '<span class="text-muted fst-italic">Ungrouped</span>';
+                    }
+                    html += '</td>';
+                } else {
+                    html += '<td class="matrix-cell-merged"></td>';
+                }
+
+                // Packaging Item column
+                if (showItem) {
+                    html += '<td class="matrix-cell-first">';
+                    html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.packagingItemId + ', \'packaging-items\')" title="View item">' + escapeHtml(row.packagingItemName) + '</span>';
+                    if (row.packagingItemWeight) html += ' <small class="text-muted">(' + row.packagingItemWeight + 'g)</small>';
+                    html += '</td>';
+                } else {
+                    html += '<td class="matrix-cell-merged"></td>';
+                }
+
+                // Raw Material column
+                if (row.rawMaterialId) {
+                    html += '<td>';
+                    html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.rawMaterialId + ', \'raw-materials\')" title="View material">' + escapeHtml(row.rawMaterialName) + '</span>';
+                    if (row.rawMaterialCode) html += ' <small class="text-muted">[' + escapeHtml(row.rawMaterialCode) + ']</small>';
+                    html += '</td>';
+                } else {
+                    html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign material</span></td>';
+                }
+
+                // Supplier column
+                if (row.supplierId) {
+                    html += '<td>';
+                    html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.supplierId + ', \'suppliers\')" title="View supplier">' + escapeHtml(row.supplierName) + '</span>';
+                    if (row.supplierProductName) html += ' <small class="text-muted">(' + escapeHtml(row.supplierProductName) + ')</small>';
+                    html += '</td>';
+                } else {
+                    html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign supplier</span></td>';
+                }
+
+                // Upstream Supplier column
+                if (row.upstreamSupplierId) {
+                    html += '<td>';
+                    html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.upstreamSupplierId + ', \'suppliers\')" title="View upstream supplier">' + escapeHtml(row.upstreamSupplierName) + '</span>';
+                    html += '</td>';
+                } else {
+                    html += '<td><span class="text-muted">-</span></td>';
+                }
+
+                // Actions column
+                html += '<td class="text-nowrap">';
+                if (row.rawMaterialId && row.packagingItemId) {
+                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-lg"></i></button>';
+                }
+                if (row.supplierProductId && row.packagingItemId) {
+                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-x-lg"></i></button>';
+                }
+                html += '</td>';
+
+                html += '</tr>';
+
+                prevGroupId = row.packagingGroupId;
+                prevItemId = row.packagingItemId;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function renderMatrixPagination(data) {
+            const pagination = document.getElementById('matrixPagination');
+            if (!pagination) return;
+            const totalPages = data.totalPages || 1;
+            if (totalPages <= 1) { pagination.innerHTML = ''; return; }
+            let html = '';
+            html += '<li class="page-item ' + (matrixPage === 1 ? 'disabled' : '') + '"><a class="page-link" href="#" onclick="window.changeMatrixPage(' + (matrixPage - 1) + '); return false;">Prev</a></li>';
+            const start = Math.max(1, matrixPage - 2);
+            const end = Math.min(totalPages, matrixPage + 2);
+            if (start > 1) {
+                html += '<li class="page-item"><a class="page-link" href="#" onclick="window.changeMatrixPage(1); return false;">1</a></li>';
+                if (start > 2) html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            for (let i = start; i <= end; i++) {
+                html += '<li class="page-item ' + (i === matrixPage ? 'active' : '') + '"><a class="page-link" href="#" onclick="window.changeMatrixPage(' + i + '); return false;">' + i + '</a></li>';
+            }
+            if (end < totalPages) {
+                if (end < totalPages - 1) html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                html += '<li class="page-item"><a class="page-link" href="#" onclick="window.changeMatrixPage(' + totalPages + '); return false;">' + totalPages + '</a></li>';
+            }
+            html += '<li class="page-item ' + (matrixPage === totalPages ? 'disabled' : '') + '"><a class="page-link" href="#" onclick="window.changeMatrixPage(' + (matrixPage + 1) + '); return false;">Next</a></li>';
+            pagination.innerHTML = html;
+        }
+
+        window.changeMatrixPage = function(page) {
+            if (page < 1) return;
+            matrixPage = page;
+            loadMatrixData();
+        };
+
+        // Inline add: show dropdown in the cell to assign a missing link
+        window.matrixInlineAdd = async function(linkType, packagingItemId, el) {
+            const td = el.closest('td');
+            if (!td) return;
+            const options = await ensureMatrixOptions();
+            let items = [];
+            if (linkType === 'material') {
+                items = options.rawMaterials.map(m => ({ id: m.id, label: (m.code ? m.code + ' - ' : '') + m.name }));
+            } else if (linkType === 'supplier') {
+                items = options.supplierProducts.map(sp => ({ id: sp.id, label: sp.name + (sp.supplierName ? ' (' + sp.supplierName + ')' : '') }));
+            }
+            if (items.length === 0) {
+                showToast('No options available. Create ' + (linkType === 'material' ? 'raw materials' : 'supplier products') + ' first.', 'warning');
+                return;
+            }
+            let selectHtml = '<select class="matrix-inline-select" autofocus><option value="">-- Select --</option>';
+            items.forEach(opt => {
+                selectHtml += '<option value="' + opt.id + '">' + escapeHtml(opt.label) + '</option>';
+            });
+            selectHtml += '</select>';
+            td.innerHTML = selectHtml;
+            const sel = td.querySelector('select');
+            if (sel) {
+                sel.focus();
+                sel.addEventListener('change', async function() {
+                    const val = parseInt(this.value, 10);
+                    if (!val) { loadMatrixData(); return; }
+                    try {
+                        let url, body;
+                        if (linkType === 'material') {
+                            url = '/api/packaging-management/packaging-items/' + packagingItemId + '/raw-materials';
+                            body = JSON.stringify({ materialTaxonomyId: val });
+                        } else {
+                            url = '/api/packaging-management/packaging-items/' + packagingItemId + '/suppliers';
+                            body = JSON.stringify({ packagingSupplierProductId: val });
+                        }
+                        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body });
+                        const result = await res.json();
+                        if (result.success) {
+                            td.classList.add('matrix-flash-success');
+                            matrixOptionsCache = null;
+                            dataCache = {};
+                            setTimeout(() => loadMatrixData(), 400);
+                        } else {
+                            showToast('Error: ' + (result.error || 'Failed to assign'), 'danger');
+                            loadMatrixData();
+                        }
+                    } catch (e) {
+                        showToast('Error: ' + e.message, 'danger');
+                        loadMatrixData();
+                    }
+                });
+                sel.addEventListener('blur', function() {
+                    if (!this.value) loadMatrixData();
+                });
+            }
+        };
+
+        // Unlink: remove a relationship
+        window.matrixUnlink = async function(linkType, packagingItemId, linkedId) {
+            if (!confirm('Remove this ' + linkType + ' link?')) return;
+            try {
+                let url;
+                if (linkType === 'material') {
+                    url = '/api/packaging-management/packaging-items/' + packagingItemId + '/raw-materials/' + linkedId;
+                } else {
+                    url = '/api/packaging-management/packaging-items/' + packagingItemId + '/suppliers/' + linkedId;
+                }
+                const res = await fetch(url, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.success) {
+                    showToast('Link removed successfully.');
+                    matrixOptionsCache = null;
+                    dataCache = {};
+                    loadMatrixData();
+                } else {
+                    showToast('Error: ' + (result.error || 'Failed to remove link'), 'danger');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'danger');
+            }
+        };
+
+        // CSV Export
+        function exportMatrixCsv() {
+            if (!matrixData || !matrixData.rows || matrixData.rows.length === 0) {
+                showToast('No data to export.', 'warning');
+                return;
+            }
+            const headers = ['Packaging Group', 'Pack ID', 'Layer', 'Packaging Item', 'Taxonomy Code', 'Weight (g)', 'Raw Material', 'Material Code', 'Supplier', 'Supplier Product', 'Upstream Supplier'];
+            const csvRows = [headers.join(',')];
+            matrixData.rows.forEach(row => {
+                csvRows.push([
+                    csvEscape(row.packagingGroupName),
+                    csvEscape(row.packagingGroupPackId),
+                    csvEscape(row.packagingGroupLayer),
+                    csvEscape(row.packagingItemName),
+                    csvEscape(row.packagingItemTaxonomyCode),
+                    row.packagingItemWeight != null ? row.packagingItemWeight : '',
+                    csvEscape(row.rawMaterialName),
+                    csvEscape(row.rawMaterialCode),
+                    csvEscape(row.supplierName),
+                    csvEscape(row.supplierProductName),
+                    csvEscape(row.upstreamSupplierName)
+                ].join(','));
+            });
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'supply-chain-matrix-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('CSV exported successfully.');
+        }
+
+        function csvEscape(val) {
+            if (val == null) return '';
+            const str = String(val);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return '"' + str.replace(/"/g, '""') + '"';
+            }
+            return str;
         }
 })();

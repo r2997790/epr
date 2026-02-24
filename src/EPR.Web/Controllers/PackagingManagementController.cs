@@ -1563,6 +1563,179 @@ public class PackagingManagementController : Controller
         }
     }
 
+    [HttpGet]
+    [Route("api/packaging-management/supply-chain-matrix")]
+    public async Task<IActionResult> GetSupplyChainMatrix(int page = 1, int pageSize = 50, string groupBy = "group", string filter = "", string sortBy = "group", string sortDir = "asc")
+    {
+        try
+        {
+            var datasetKey = _datasetService.GetCurrentDataset();
+            if (string.IsNullOrEmpty(datasetKey))
+                datasetKey = "Electronics";
+            await EnsureDatasetSeededIfNeededAsync(datasetKey);
+
+            var packagingItems = await _context.PackagingLibraries
+                .Where(l => l.IsActive && (string.IsNullOrEmpty(datasetKey) || l.DatasetKey == datasetKey))
+                .Include(l => l.PackagingGroupItems).ThenInclude(gi => gi.PackagingGroup)
+                .Include(l => l.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
+                .Include(l => l.MaterialTaxonomy)
+                .Include(l => l.PackagingLibrarySupplierProducts)
+                    .ThenInclude(plsp => plsp.PackagingSupplierProduct)
+                        .ThenInclude(psp => psp.PackagingSupplier)
+                            .ThenInclude(ps => ps!.SuppliedBySupplier)
+                .ToListAsync();
+
+            var rows = new List<SupplyChainMatrixRow>();
+
+            foreach (var item in packagingItems)
+            {
+                var rawMaterials = item.PackagingLibraryMaterials
+                    .Select(plm => plm.MaterialTaxonomy)
+                    .Where(mt => mt != null && mt.IsActive)
+                    .Cast<MaterialTaxonomy>()
+                    .ToList();
+                if (rawMaterials.Count == 0 && item.MaterialTaxonomy != null)
+                    rawMaterials = new List<MaterialTaxonomy> { item.MaterialTaxonomy };
+
+                var supplierProducts = item.PackagingLibrarySupplierProducts
+                    .Select(plsp => plsp.PackagingSupplierProduct)
+                    .Where(psp => psp != null)
+                    .ToList();
+
+                var groups = item.PackagingGroupItems
+                    .Where(gi => gi.PackagingGroup != null && gi.PackagingGroup.IsActive)
+                    .Select(gi => gi.PackagingGroup!)
+                    .ToList();
+
+                var groupsList = groups.Count > 0
+                    ? groups.Select(g => (PackagingGroup?)g).ToList()
+                    : new List<PackagingGroup?> { null };
+
+                var matsList = rawMaterials.Count > 0
+                    ? rawMaterials.Select(m => (MaterialTaxonomy?)m).ToList()
+                    : new List<MaterialTaxonomy?> { null };
+
+                var spList = supplierProducts.Count > 0
+                    ? supplierProducts.Select(sp => (PackagingSupplierProduct?)sp).ToList()
+                    : new List<PackagingSupplierProduct?> { null };
+
+                foreach (var group in groupsList)
+                {
+                    foreach (var mat in matsList)
+                    {
+                        foreach (var sp in spList)
+                        {
+                            rows.Add(new SupplyChainMatrixRow
+                            {
+                                PackagingGroupId = group?.Id,
+                                PackagingGroupName = group?.Name,
+                                PackagingGroupPackId = group?.PackId,
+                                PackagingGroupLayer = group?.PackagingLayer,
+                                PackagingItemId = item.Id,
+                                PackagingItemName = item.Name,
+                                PackagingItemTaxonomyCode = item.TaxonomyCode,
+                                PackagingItemWeight = item.Weight,
+                                RawMaterialId = mat?.Id,
+                                RawMaterialName = mat?.DisplayName,
+                                RawMaterialCode = mat?.Code,
+                                SupplierId = sp?.PackagingSupplier?.Id,
+                                SupplierName = sp?.PackagingSupplier?.Name,
+                                SupplierProductId = sp?.Id,
+                                SupplierProductName = sp?.Name,
+                                UpstreamSupplierId = sp?.PackagingSupplier?.SuppliedBySupplier?.Id,
+                                UpstreamSupplierName = sp?.PackagingSupplier?.SuppliedBySupplier?.Name
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter))
+            {
+                var f = filter.ToLower();
+                rows = rows.Where(r =>
+                    (r.PackagingGroupName?.ToLower().Contains(f) == true)
+                    || (r.PackagingItemName?.ToLower().Contains(f) == true)
+                    || (r.RawMaterialName?.ToLower().Contains(f) == true)
+                    || (r.SupplierName?.ToLower().Contains(f) == true)
+                    || (r.UpstreamSupplierName?.ToLower().Contains(f) == true)
+                    || (r.PackagingItemTaxonomyCode?.ToLower().Contains(f) == true)
+                    || (r.RawMaterialCode?.ToLower().Contains(f) == true)
+                    || (r.SupplierProductName?.ToLower().Contains(f) == true)
+                ).ToList();
+            }
+
+            Func<SupplyChainMatrixRow, string?> sortKeySelector = sortBy.ToLower() switch
+            {
+                "item" => r => r.PackagingItemName,
+                "material" => r => r.RawMaterialName,
+                "supplier" => r => r.SupplierName,
+                _ => r => r.PackagingGroupName
+            };
+            rows = (sortDir == "desc"
+                ? rows.OrderByDescending(sortKeySelector).ThenBy(r => r.PackagingGroupName).ThenBy(r => r.PackagingItemName)
+                : rows.OrderBy(sortKeySelector).ThenBy(r => r.PackagingGroupName).ThenBy(r => r.PackagingItemName)
+            ).ToList();
+
+            var totalCount = rows.Count;
+            var pagedRows = rows.Skip((page - 1) * pageSize).Take(pageSize).Select(r => new
+            {
+                packagingGroupId = r.PackagingGroupId,
+                packagingGroupName = r.PackagingGroupName,
+                packagingGroupPackId = r.PackagingGroupPackId,
+                packagingGroupLayer = r.PackagingGroupLayer,
+                packagingItemId = r.PackagingItemId,
+                packagingItemName = r.PackagingItemName,
+                packagingItemTaxonomyCode = r.PackagingItemTaxonomyCode,
+                packagingItemWeight = r.PackagingItemWeight,
+                rawMaterialId = r.RawMaterialId,
+                rawMaterialName = r.RawMaterialName,
+                rawMaterialCode = r.RawMaterialCode,
+                supplierId = r.SupplierId,
+                supplierName = r.SupplierName,
+                supplierProductId = r.SupplierProductId,
+                supplierProductName = r.SupplierProductName,
+                upstreamSupplierId = r.UpstreamSupplierId,
+                upstreamSupplierName = r.UpstreamSupplierName
+            }).ToList();
+
+            return Json(new
+            {
+                rows = pagedRows,
+                totalCount,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                groupBy
+            });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message });
+        }
+    }
+
+    private class SupplyChainMatrixRow
+    {
+        public int? PackagingGroupId { get; set; }
+        public string? PackagingGroupName { get; set; }
+        public string? PackagingGroupPackId { get; set; }
+        public string? PackagingGroupLayer { get; set; }
+        public int PackagingItemId { get; set; }
+        public string? PackagingItemName { get; set; }
+        public string? PackagingItemTaxonomyCode { get; set; }
+        public decimal? PackagingItemWeight { get; set; }
+        public int? RawMaterialId { get; set; }
+        public string? RawMaterialName { get; set; }
+        public string? RawMaterialCode { get; set; }
+        public int? SupplierId { get; set; }
+        public string? SupplierName { get; set; }
+        public int? SupplierProductId { get; set; }
+        public string? SupplierProductName { get; set; }
+        public int? UpstreamSupplierId { get; set; }
+        public string? UpstreamSupplierName { get; set; }
+    }
+
     private async Task<object?> GetPackagingGroupDetail(int id, string? datasetKey)
     {
         var query = _context.PackagingGroups
