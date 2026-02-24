@@ -45,6 +45,13 @@ public class PharmaceuticalsDatasetSeeder
         await LinkPackagingMaterial(label.Id, paperTax.Id);
         await LinkPackagingMaterial(cap.Id, plasticTax.Id);
 
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "PHARM-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "PHARM-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
         var spBlister = await EnsureSupplierProduct(supplierBlister.Id, "Blister Pack 10", "PHARM-BLISTER-001");
         var spBottle = await EnsureSupplierProduct(supplierBottles.Id, "Medicine Bottle 100ml", "PHARM-BOTTLE-001");
         var spCarton = await EnsureSupplierProduct(supplierBoxes.Id, "Medicine Carton", "PHARM-CARTON-001");
@@ -57,10 +64,14 @@ public class PharmaceuticalsDatasetSeeder
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
         await LinkPackagingSupplier(cap.Id, spCap.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("PHARM-SHIP-001", "Pharmaceuticals Shipping Pack", "Secondary", 96m, DatasetKey);
+        var groupPallet = await EnsurePackagingGroup("PHARM-PLT-001", "Pharmaceuticals Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("PHARM-SHIP-001", "Pharmaceuticals Shipping Pack", "Secondary", 96m, DatasetKey, groupPallet.Id, 40);
         await AddGroupItem(groupShipping.Id, carton.Id, 0);
 
-        var groupProduct = await EnsurePackagingGroup("PHARM-PROD-001", "Pharmaceuticals Product Pack", "Primary", 96m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("PHARM-PROD-001", "Pharmaceuticals Product Pack", "Primary", 96m, DatasetKey, groupShipping.Id, 24);
         await AddGroupItem(groupProduct.Id, blister.Id, 0);
         await AddGroupItem(groupProduct.Id, bottle.Id, 1);
         await AddGroupItem(groupProduct.Id, label.Id, 2);
@@ -240,9 +251,9 @@ public class PharmaceuticalsDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

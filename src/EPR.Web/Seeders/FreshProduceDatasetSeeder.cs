@@ -45,6 +45,13 @@ public class FreshProduceDatasetSeeder
         await LinkPackagingMaterial(bag.Id, plasticTax.Id);
         await LinkPackagingMaterial(tray.Id, plasticTax.Id);
 
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "FP-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "FP-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
         var spPunnet = await EnsureSupplierProduct(supplierPunnets.Id, "Berry Punnet 250g", "FP-PUNNET-001");
         var spCrate = await EnsureSupplierProduct(supplierCrates.Id, "Produce Crate 12pk", "FP-CRATE-001");
         var spLabel = await EnsureSupplierProduct(supplierLabels.Id, "Produce Label", "FP-LABEL-001");
@@ -57,11 +64,15 @@ public class FreshProduceDatasetSeeder
         await LinkPackagingSupplier(bag.Id, spBag.Id, true);
         await LinkPackagingSupplier(tray.Id, spTray.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("FP-SHIP-001", "Fresh Produce Shipping Pack", "Secondary", 510m, DatasetKey);
+        var groupPallet = await EnsurePackagingGroup("FP-PLT-001", "Fresh Produce Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("FP-SHIP-001", "Fresh Produce Shipping Pack", "Secondary", 510m, DatasetKey, groupPallet.Id, 32);
         await AddGroupItem(groupShipping.Id, crate.Id, 0);
         await AddGroupItem(groupShipping.Id, bag.Id, 1);
 
-        var groupProduct = await EnsurePackagingGroup("FP-PROD-001", "Fresh Produce Product Pack", "Primary", 60m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("FP-PROD-001", "Fresh Produce Product Pack", "Primary", 60m, DatasetKey, groupShipping.Id, 10);
         await AddGroupItem(groupProduct.Id, punnet.Id, 0);
         await AddGroupItem(groupProduct.Id, tray.Id, 1);
         await AddGroupItem(groupProduct.Id, label.Id, 2);
@@ -241,9 +252,9 @@ public class FreshProduceDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

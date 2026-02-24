@@ -44,6 +44,13 @@ public class PetCareDatasetSeeder
         await LinkPackagingMaterial(label.Id, paperTax.Id);
         await LinkPackagingMaterial(pouch.Id, plasticTax.Id);
 
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "PET-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "PET-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
         var spBag = await EnsureSupplierProduct(supplierBags.Id, "Pet Food Bag 2kg", "PET-BAG-001");
         var spCan = await EnsureSupplierProduct(supplierCans.Id, "Pet Food Can 400g", "PET-CAN-001");
         var spBox = await EnsureSupplierProduct(supplierBoxes.Id, "Treat Box 12pk", "PET-BOX-001");
@@ -56,11 +63,15 @@ public class PetCareDatasetSeeder
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
         await LinkPackagingSupplier(pouch.Id, spPouch.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("PET-SHIP-001", "Pet Care Shipping Pack", "Secondary", 265m, DatasetKey);
+        var groupPallet = await EnsurePackagingGroup("PET-PLT-001", "Pet Care Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("PET-SHIP-001", "Pet Care Shipping Pack", "Secondary", 265m, DatasetKey, groupPallet.Id, 28);
         await AddGroupItem(groupShipping.Id, box.Id, 0);
         await AddGroupItem(groupShipping.Id, bag.Id, 1);
 
-        var groupProduct = await EnsurePackagingGroup("PET-PROD-001", "Pet Care Product Pack", "Primary", 265m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("PET-PROD-001", "Pet Care Product Pack", "Primary", 265m, DatasetKey, groupShipping.Id, 8);
         await AddGroupItem(groupProduct.Id, bag.Id, 0);
         await AddGroupItem(groupProduct.Id, can.Id, 1);
         await AddGroupItem(groupProduct.Id, pouch.Id, 2);
@@ -239,9 +250,9 @@ public class PetCareDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

@@ -45,6 +45,13 @@ public class GardenDatasetSeeder
         await LinkPackagingMaterial(label.Id, plasticTax.Id);
         await LinkPackagingMaterial(tray.Id, plasticTax.Id);
 
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "GDN-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "GDN-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
         var spPot = await EnsureSupplierProduct(supplierPots.Id, "Nursery Pot 15cm", "GDN-POT-001");
         var spSeed = await EnsureSupplierProduct(supplierLabels.Id, "Seed Packet", "GDN-SEED-001");
         var spMulch = await EnsureSupplierProduct(supplierBags.Id, "Mulch Bag 25L", "GDN-MULCH-001");
@@ -57,11 +64,15 @@ public class GardenDatasetSeeder
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
         await LinkPackagingSupplier(tray.Id, spTray.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("GDN-SHIP-001", "Garden Shipping Pack", "Secondary", 845m, DatasetKey);
+        var groupPallet = await EnsurePackagingGroup("GDN-PLT-001", "Garden Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("GDN-SHIP-001", "Garden Shipping Pack", "Secondary", 845m, DatasetKey, groupPallet.Id, 24);
         await AddGroupItem(groupShipping.Id, mulchBag.Id, 0);
         await AddGroupItem(groupShipping.Id, tray.Id, 1);
 
-        var groupProduct = await EnsurePackagingGroup("GDN-PROD-001", "Garden Product Pack", "Primary", 127m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("GDN-PROD-001", "Garden Product Pack", "Primary", 127m, DatasetKey, groupShipping.Id, 6);
         await AddGroupItem(groupProduct.Id, pot.Id, 0);
         await AddGroupItem(groupProduct.Id, seedPacket.Id, 1);
         await AddGroupItem(groupProduct.Id, label.Id, 2);
@@ -239,9 +250,9 @@ public class GardenDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;

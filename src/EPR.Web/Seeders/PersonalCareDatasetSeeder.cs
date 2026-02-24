@@ -44,6 +44,13 @@ public class PersonalCareDatasetSeeder
         await LinkPackagingMaterial(label.Id, paperTax.Id);
         await LinkPackagingMaterial(cap.Id, plasticTax.Id);
 
+        var woodTax = await EnsureMaterialTaxonomy("WOOD", "Softwood Timber", 1);
+        var ldpeTax = await EnsureMaterialTaxonomy("LDPE", "Low-Density Polyethylene Film", 1);
+        var palletLib = await EnsurePackagingLibrary("Wood Pallet", "PC-PLT-001", 22000m, woodTax.Id, DatasetKey);
+        var wrapLib = await EnsurePackagingLibrary("Stretch Wrap", "PC-WRAP-PLT-001", 300m, ldpeTax.Id, DatasetKey);
+        await LinkPackagingMaterial(palletLib.Id, woodTax.Id);
+        await LinkPackagingMaterial(wrapLib.Id, ldpeTax.Id);
+
         var spTube = await EnsureSupplierProduct(supplierTubes.Id, "Plastic Tube 50ml", "PC-TUBE-001");
         var spBottle = await EnsureSupplierProduct(supplierBottles.Id, "Pump Bottle 100ml", "PC-BOTTLE-001");
         var spBox = await EnsureSupplierProduct(supplierBoxes.Id, "Product Carton", "PC-BOX-001");
@@ -56,10 +63,14 @@ public class PersonalCareDatasetSeeder
         await LinkPackagingSupplier(label.Id, spLabel.Id, true);
         await LinkPackagingSupplier(cap.Id, spCap.Id, true);
 
-        var groupShipping = await EnsurePackagingGroup("PC-SHIP-001", "Personal Care Shipping Pack", "Secondary", 105m, DatasetKey);
+        var groupPallet = await EnsurePackagingGroup("PC-PLT-001", "Personal Care Pallet", "Tertiary", 22300m, DatasetKey);
+        await AddGroupItem(groupPallet.Id, palletLib.Id, 0);
+        await AddGroupItem(groupPallet.Id, wrapLib.Id, 1);
+
+        var groupShipping = await EnsurePackagingGroup("PC-SHIP-001", "Personal Care Shipping Pack", "Secondary", 105m, DatasetKey, groupPallet.Id, 36);
         await AddGroupItem(groupShipping.Id, box.Id, 0);
 
-        var groupProduct = await EnsurePackagingGroup("PC-PROD-001", "Personal Care Product Pack", "Primary", 105m, DatasetKey);
+        var groupProduct = await EnsurePackagingGroup("PC-PROD-001", "Personal Care Product Pack", "Primary", 105m, DatasetKey, groupShipping.Id, 12);
         await AddGroupItem(groupProduct.Id, tube.Id, 0);
         await AddGroupItem(groupProduct.Id, bottle.Id, 1);
         await AddGroupItem(groupProduct.Id, label.Id, 2);
@@ -238,9 +249,9 @@ public class PersonalCareDatasetSeeder
         await _context.SaveChangesAsync();
     }
 
-    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey)
+    private async Task<PackagingGroup> EnsurePackagingGroup(string packId, string name, string layer, decimal totalWeight, string datasetKey, int? parentGroupId = null, int? quantityInParent = null)
     {
-        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true };
+        var g = new PackagingGroup { PackId = packId, Name = name, PackagingLayer = layer, TotalPackWeight = totalWeight, DatasetKey = datasetKey, IsActive = true, ParentPackagingGroupId = parentGroupId, QuantityInParent = quantityInParent };
         _context.PackagingGroups.Add(g);
         await _context.SaveChangesAsync();
         return g;
