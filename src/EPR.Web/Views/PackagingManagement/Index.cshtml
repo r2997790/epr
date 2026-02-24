@@ -19,7 +19,7 @@
                 <li class="nav-item">
                     <a href="#" class="nav-link @(type == "suppliers" ? "active" : "")" data-type="suppliers" data-no-tab="true">
                         <i class="bi bi-truck"></i> Suppliers
-                    </a>
+                    </a>h
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link @(type == "raw-materials" ? "active" : "")" data-type="raw-materials" data-no-tab="true">
@@ -1047,21 +1047,21 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 38px;
-            min-height: 36px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            background: #fff;
+            width: 34px;
+            min-height: 30px;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
             color: #6c757d;
             cursor: pointer;
             transition: all 0.15s;
-            font-size: 0.9rem;
-            padding: 2px 4px;
+            font-size: 0.75rem;
+            padding: 2px 3px;
             vertical-align: middle;
         }
-        .matrix-action-btn:hover { border-color: #0d6efd; color: #0d6efd; background: #e7f3ff; }
+        .matrix-action-btn:hover { color: #0d6efd; background: #e7f3ff; }
         .matrix-action-btn.danger { color: #adb5bd; }
-        .matrix-action-btn.danger:hover { border-color: #dc3545; color: #dc3545; background: #fff5f5; }
+        .matrix-action-btn.danger:hover { color: #dc3545; background: #fff5f5; }
         .matrix-action-btn .matrix-action-label {
             font-size: 0.6rem;
             display: block;
