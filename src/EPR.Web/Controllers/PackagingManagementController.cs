@@ -1136,6 +1136,33 @@ public class PackagingManagementController : Controller
         return Json(items);
     }
 
+    [HttpGet]
+    [Route("api/packaging-management/options/packaging-groups")]
+    public async Task<IActionResult> GetPackagingGroupOptions()
+    {
+        var datasetKey = _datasetService.GetCurrentDataset();
+        if (string.IsNullOrEmpty(datasetKey)) datasetKey = "Electronics";
+        var query = _context.PackagingGroups.Where(g => g.IsActive);
+        if (!string.IsNullOrEmpty(datasetKey))
+            query = query.Where(g => g.DatasetKey == datasetKey);
+        var items = await query.OrderBy(g => g.Name)
+            .Select(g => new { id = g.Id, name = g.Name, packId = g.PackId, layer = g.PackagingLayer })
+            .ToListAsync();
+        return Json(items);
+    }
+
+    [HttpGet]
+    [Route("api/packaging-management/options/suppliers")]
+    public async Task<IActionResult> GetSupplierOptions()
+    {
+        var items = await _context.PackagingSuppliers
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.Name)
+            .Select(s => new { id = s.Id, name = s.Name, country = s.Country })
+            .ToListAsync();
+        return Json(items);
+    }
+
     [HttpPost]
     [Route("api/packaging-management/raw-materials")]
     public async Task<IActionResult> CreateRawMaterial([FromBody] CreateRawMaterialRequest request)
@@ -1578,6 +1605,9 @@ public class PackagingManagementController : Controller
                 .Where(l => l.IsActive && (string.IsNullOrEmpty(datasetKey) || l.DatasetKey == datasetKey))
                 .Include(l => l.PackagingGroupItems).ThenInclude(gi => gi.PackagingGroup)
                 .Include(l => l.PackagingLibraryMaterials).ThenInclude(plm => plm.MaterialTaxonomy)
+                    .ThenInclude(mt => mt!.MaterialTaxonomySupplierProducts)
+                        .ThenInclude(mtsp => mtsp.PackagingSupplierProduct)
+                            .ThenInclude(psp => psp.PackagingSupplier)
                 .Include(l => l.MaterialTaxonomy)
                 .Include(l => l.PackagingLibrarySupplierProducts)
                     .ThenInclude(plsp => plsp.PackagingSupplierProduct)
@@ -1623,6 +1653,9 @@ public class PackagingManagementController : Controller
                 {
                     foreach (var mat in matsList)
                     {
+                        var matSupplierProduct = mat?.MaterialTaxonomySupplierProducts
+                            ?.FirstOrDefault()?.PackagingSupplierProduct;
+
                         foreach (var sp in spList)
                         {
                             rows.Add(new SupplyChainMatrixRow
@@ -1643,7 +1676,11 @@ public class PackagingManagementController : Controller
                                 SupplierProductId = sp?.Id,
                                 SupplierProductName = sp?.Name,
                                 UpstreamSupplierId = sp?.PackagingSupplier?.SuppliedBySupplier?.Id,
-                                UpstreamSupplierName = sp?.PackagingSupplier?.SuppliedBySupplier?.Name
+                                UpstreamSupplierName = sp?.PackagingSupplier?.SuppliedBySupplier?.Name,
+                                RawMaterialSupplierId = matSupplierProduct?.PackagingSupplier?.Id,
+                                RawMaterialSupplierName = matSupplierProduct?.PackagingSupplier?.Name,
+                                RawMaterialSupplierProductId = matSupplierProduct?.Id,
+                                RawMaterialSupplierProductName = matSupplierProduct?.Name
                             });
                         }
                     }
@@ -1696,7 +1733,11 @@ public class PackagingManagementController : Controller
                 supplierProductId = r.SupplierProductId,
                 supplierProductName = r.SupplierProductName,
                 upstreamSupplierId = r.UpstreamSupplierId,
-                upstreamSupplierName = r.UpstreamSupplierName
+                upstreamSupplierName = r.UpstreamSupplierName,
+                rawMaterialSupplierId = r.RawMaterialSupplierId,
+                rawMaterialSupplierName = r.RawMaterialSupplierName,
+                rawMaterialSupplierProductId = r.RawMaterialSupplierProductId,
+                rawMaterialSupplierProductName = r.RawMaterialSupplierProductName
             }).ToList();
 
             return Json(new
@@ -1734,6 +1775,187 @@ public class PackagingManagementController : Controller
         public string? SupplierProductName { get; set; }
         public int? UpstreamSupplierId { get; set; }
         public string? UpstreamSupplierName { get; set; }
+        public int? RawMaterialSupplierId { get; set; }
+        public string? RawMaterialSupplierName { get; set; }
+        public int? RawMaterialSupplierProductId { get; set; }
+        public string? RawMaterialSupplierProductName { get; set; }
+    }
+
+    [HttpPost]
+    [Route("api/packaging-management/supply-chain-matrix/add-row")]
+    public async Task<IActionResult> AddMatrixRow([FromBody] AddMatrixRowRequest request)
+    {
+        try
+        {
+            var datasetKey = _datasetService.GetCurrentDataset();
+            if (string.IsNullOrEmpty(datasetKey)) datasetKey = "Electronics";
+
+            int? groupId = request.PackagingGroupId;
+            if (groupId == null && !string.IsNullOrWhiteSpace(request.NewGroupName))
+            {
+                var g = new PackagingGroup
+                {
+                    Name = request.NewGroupName.Trim(),
+                    PackId = request.NewGroupPackId?.Trim() ?? "",
+                    PackagingLayer = request.NewGroupLayer?.Trim(),
+                    DatasetKey = datasetKey,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.PackagingGroups.Add(g);
+                await _context.SaveChangesAsync();
+                groupId = g.Id;
+            }
+
+            int? itemId = request.PackagingItemId;
+            if (itemId == null && !string.IsNullOrWhiteSpace(request.NewItemName))
+            {
+                var item = new PackagingLibrary
+                {
+                    Name = request.NewItemName.Trim(),
+                    TaxonomyCode = request.NewItemTaxonomyCode?.Trim() ?? "",
+                    Weight = request.NewItemWeight,
+                    DatasetKey = datasetKey,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.PackagingLibraries.Add(item);
+                await _context.SaveChangesAsync();
+                itemId = item.Id;
+            }
+
+            if (itemId == null)
+                return Json(new { success = false, error = "A packaging item is required." });
+
+            if (groupId != null)
+            {
+                var linkExists = await _context.PackagingGroupItems
+                    .AnyAsync(gi => gi.PackagingGroupId == groupId.Value && gi.PackagingLibraryId == itemId.Value);
+                if (!linkExists)
+                {
+                    var maxOrder = await _context.PackagingGroupItems
+                        .Where(gi => gi.PackagingGroupId == groupId.Value)
+                        .MaxAsync(gi => (int?)gi.SortOrder) ?? -1;
+                    _context.PackagingGroupItems.Add(new PackagingGroupItem
+                    {
+                        PackagingGroupId = groupId.Value,
+                        PackagingLibraryId = itemId.Value,
+                        SortOrder = maxOrder + 1
+                    });
+                }
+            }
+
+            if (request.MaterialTaxonomyIds != null)
+            {
+                int order = await _context.PackagingLibraryMaterials
+                    .Where(plm => plm.PackagingLibraryId == itemId.Value)
+                    .MaxAsync(plm => (int?)plm.SortOrder) ?? -1;
+                foreach (var mid in request.MaterialTaxonomyIds.Where(m => m > 0))
+                {
+                    var exists = await _context.PackagingLibraryMaterials
+                        .AnyAsync(plm => plm.PackagingLibraryId == itemId.Value && plm.MaterialTaxonomyId == mid);
+                    if (!exists)
+                    {
+                        _context.PackagingLibraryMaterials.Add(new PackagingLibraryMaterial
+                        {
+                            PackagingLibraryId = itemId.Value,
+                            MaterialTaxonomyId = mid,
+                            SortOrder = ++order
+                        });
+                    }
+                }
+            }
+
+            if (request.SupplierProductIds != null)
+            {
+                foreach (var spId in request.SupplierProductIds.Where(s => s > 0))
+                {
+                    var exists = await _context.PackagingLibrarySupplierProducts
+                        .AnyAsync(plsp => plsp.PackagingLibraryId == itemId.Value && plsp.PackagingSupplierProductId == spId);
+                    if (!exists)
+                    {
+                        _context.PackagingLibrarySupplierProducts.Add(new PackagingLibrarySupplierProduct
+                        {
+                            PackagingLibraryId = itemId.Value,
+                            PackagingSupplierProductId = spId
+                        });
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, packagingItemId = itemId, packagingGroupId = groupId });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, error = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [Route("api/packaging-management/supply-chain-matrix/product-associations")]
+    public async Task<IActionResult> GetProductAssociations(int? supplierProductId, int? packagingItemId, int? supplierId)
+    {
+        try
+        {
+            var datasetKey = _datasetService.GetCurrentDataset();
+            if (string.IsNullOrEmpty(datasetKey)) datasetKey = "Electronics";
+
+            var productIds = new HashSet<int>();
+
+            if (supplierProductId.HasValue && supplierProductId.Value > 0)
+            {
+                var ids = await _context.ProductPackagingSupplierProducts
+                    .Where(pp => pp.PackagingSupplierProductId == supplierProductId.Value)
+                    .Select(pp => pp.ProductId)
+                    .ToListAsync();
+                productIds.UnionWith(ids);
+            }
+
+            if (supplierId.HasValue && supplierId.Value > 0)
+            {
+                var spIds = await _context.PackagingSupplierProducts
+                    .Where(psp => psp.PackagingSupplierId == supplierId.Value)
+                    .Select(psp => psp.Id)
+                    .ToListAsync();
+                var ids = await _context.ProductPackagingSupplierProducts
+                    .Where(pp => spIds.Contains(pp.PackagingSupplierProductId))
+                    .Select(pp => pp.ProductId)
+                    .ToListAsync();
+                productIds.UnionWith(ids);
+            }
+
+            if (packagingItemId.HasValue && packagingItemId.Value > 0)
+            {
+                var itemSpIds = await _context.PackagingLibrarySupplierProducts
+                    .Where(plsp => plsp.PackagingLibraryId == packagingItemId.Value)
+                    .Select(plsp => plsp.PackagingSupplierProductId)
+                    .ToListAsync();
+                if (itemSpIds.Count > 0)
+                {
+                    var ids = await _context.ProductPackagingSupplierProducts
+                        .Where(pp => itemSpIds.Contains(pp.PackagingSupplierProductId))
+                        .Select(pp => pp.ProductId)
+                        .ToListAsync();
+                    productIds.UnionWith(ids);
+                }
+            }
+
+            var productsQuery = _context.Products.Where(p => productIds.Contains(p.Id));
+            if (!string.IsNullOrEmpty(datasetKey))
+                productsQuery = productsQuery.Where(p => p.DatasetKey == datasetKey);
+
+            var products = await productsQuery
+                .OrderBy(p => p.Name)
+                .Select(p => new { id = p.Id, name = p.Name, sku = p.Sku, brand = p.Brand, category = p.ProductCategory })
+                .ToListAsync();
+
+            return Json(new { products });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { error = ex.Message, products = Array.Empty<object>() });
+        }
     }
 
     private async Task<object?> GetPackagingGroupDetail(int id, string? datasetKey)
@@ -1892,5 +2114,19 @@ public class CreatePackagingGroupRequest
     public string? PackId { get; set; }
     public string? PackagingLayer { get; set; }
     public List<int>? PackagingLibraryIds { get; set; }
+}
+
+public class AddMatrixRowRequest
+{
+    public int? PackagingGroupId { get; set; }
+    public string? NewGroupName { get; set; }
+    public string? NewGroupPackId { get; set; }
+    public string? NewGroupLayer { get; set; }
+    public int? PackagingItemId { get; set; }
+    public string? NewItemName { get; set; }
+    public string? NewItemTaxonomyCode { get; set; }
+    public decimal? NewItemWeight { get; set; }
+    public List<int>? MaterialTaxonomyIds { get; set; }
+    public List<int>? SupplierProductIds { get; set; }
 }
 

@@ -109,6 +109,7 @@
 
             const matrixContainer = document.getElementById('matrixContainer');
             const exportCsvBtn = document.getElementById('exportMatrixCsvBtn');
+            const addMatrixRowBtn = document.getElementById('addMatrixRowBtn');
 
             if (type === 'visual-editor') {
                 visualContainer.classList.remove('d-none');
@@ -131,6 +132,7 @@
                 if (addPackagingGroupBtn) addPackagingGroupBtn.classList.add('d-none');
                 if (addProductBtn) addProductBtn.classList.add('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.remove('d-none');
+                if (addMatrixRowBtn) addMatrixRowBtn.classList.remove('d-none');
                 loadMatrixData();
             } else             if (type === 'packaging-taxonomy') {
                 visualContainer.classList.add('d-none');
@@ -138,6 +140,7 @@
                 if (matrixContainer) matrixContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
+                if (addMatrixRowBtn) addMatrixRowBtn.classList.add('d-none');
                 if (taxonomyContainer) taxonomyContainer.classList.remove('d-none');
                 if (tablePane) tablePane.classList.add('d-none');
                 if (detailPane) detailPane.classList.add('d-none');
@@ -150,6 +153,7 @@
                 if (matrixContainer) matrixContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
+                if (addMatrixRowBtn) addMatrixRowBtn.classList.add('d-none');
                 if (taxonomyContainer) taxonomyContainer.classList.add('d-none');
                 if (tablePane) tablePane.classList.remove('d-none');
                 if (detailPane) detailPane.classList.remove('d-none');
@@ -1871,16 +1875,18 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
         async function ensureMatrixOptions() {
             if (matrixOptionsCache) return matrixOptionsCache;
             try {
-                const [rmRes, piRes, spRes] = await Promise.all([
+                const [rmRes, piRes, spRes, pgRes, sRes] = await Promise.all([
                     fetch('/api/packaging-management/options/raw-materials').then(r => r.json()),
                     fetch('/api/packaging-management/options/packaging-items').then(r => r.json()),
-                    fetch('/api/packaging-management/options/supplier-products').then(r => r.json())
+                    fetch('/api/packaging-management/options/supplier-products').then(r => r.json()),
+                    fetch('/api/packaging-management/options/packaging-groups').then(r => r.json()),
+                    fetch('/api/packaging-management/options/suppliers').then(r => r.json())
                 ]);
-                matrixOptionsCache = { rawMaterials: rmRes, packagingItems: piRes, supplierProducts: spRes };
+                matrixOptionsCache = { rawMaterials: rmRes, packagingItems: piRes, supplierProducts: spRes, packagingGroups: pgRes, suppliers: sRes };
                 return matrixOptionsCache;
             } catch (e) {
                 console.error('[Matrix] Failed to load options:', e);
-                return { rawMaterials: [], packagingItems: [], supplierProducts: [] };
+                return { rawMaterials: [], packagingItems: [], supplierProducts: [], packagingGroups: [], suppliers: [] };
             }
         }
 
@@ -1963,6 +1969,8 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<td>';
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.rawMaterialId + ', \'raw-materials\')" title="View material">' + escapeHtml(row.rawMaterialName) + '</span>';
                     if (row.rawMaterialCode) html += ' <small class="text-muted">[' + escapeHtml(row.rawMaterialCode) + ']</small>';
+                    if (row.rawMaterialSupplierName) html += ' <small class="badge bg-info bg-opacity-10 text-info ms-1" title="Material supplier">' + escapeHtml(row.rawMaterialSupplierName) + '</small>';
+                    html += ' <button class="matrix-action-btn ms-1" title="Add another material" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-sm"></i></button>';
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign material</span></td>';
@@ -1973,6 +1981,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<td>';
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.supplierId + ', \'suppliers\')" title="View supplier">' + escapeHtml(row.supplierName) + '</span>';
                     if (row.supplierProductName) html += ' <small class="text-muted">(' + escapeHtml(row.supplierProductName) + ')</small>';
+                    html += ' <button class="matrix-action-btn ms-1" title="Add another supplier" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-sm"></i></button>';
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign supplier</span></td>';
@@ -1989,6 +1998,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
 
                 // Actions column
                 html += '<td class="text-nowrap">';
+                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-box-seam"></i></button>';
                 if (row.rawMaterialId && row.packagingItemId) {
                     html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-lg"></i></button>';
                 }
@@ -2036,8 +2046,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
             loadMatrixData();
         };
 
-        // Inline add: show dropdown in the cell to assign a missing link
-        window.matrixInlineAdd = async function(linkType, packagingItemId, el) {
+        window.matrixInlineAdd = async function(linkType, entityId, el) {
             const td = el.closest('td');
             if (!td) return;
             const options = await ensureMatrixOptions();
@@ -2045,6 +2054,8 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
             if (linkType === 'material') {
                 items = options.rawMaterials.map(m => ({ id: m.id, label: (m.code ? m.code + ' - ' : '') + m.name }));
             } else if (linkType === 'supplier') {
+                items = options.supplierProducts.map(sp => ({ id: sp.id, label: sp.name + (sp.supplierName ? ' (' + sp.supplierName + ')' : '') }));
+            } else if (linkType === 'material-supplier') {
                 items = options.supplierProducts.map(sp => ({ id: sp.id, label: sp.name + (sp.supplierName ? ' (' + sp.supplierName + ')' : '') }));
             }
             if (items.length === 0) {
@@ -2066,10 +2077,13 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     try {
                         let url, body;
                         if (linkType === 'material') {
-                            url = '/api/packaging-management/packaging-items/' + packagingItemId + '/raw-materials';
+                            url = '/api/packaging-management/packaging-items/' + entityId + '/raw-materials';
                             body = JSON.stringify({ materialTaxonomyId: val });
+                        } else if (linkType === 'material-supplier') {
+                            url = '/api/packaging-management/raw-materials/' + entityId + '/suppliers';
+                            body = JSON.stringify({ packagingSupplierProductId: val });
                         } else {
-                            url = '/api/packaging-management/packaging-items/' + packagingItemId + '/suppliers';
+                            url = '/api/packaging-management/packaging-items/' + entityId + '/suppliers';
                             body = JSON.stringify({ packagingSupplierProductId: val });
                         }
                         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body });
@@ -2125,7 +2139,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                 showToast('No data to export.', 'warning');
                 return;
             }
-            const headers = ['Packaging Group', 'Pack ID', 'Layer', 'Packaging Item', 'Taxonomy Code', 'Weight (g)', 'Raw Material', 'Material Code', 'Supplier', 'Supplier Product', 'Upstream Supplier'];
+            const headers = ['Packaging Group', 'Pack ID', 'Layer', 'Packaging Item', 'Taxonomy Code', 'Weight (g)', 'Raw Material', 'Material Code', 'Material Supplier', 'Supplier', 'Supplier Product', 'Upstream Supplier'];
             const csvRows = [headers.join(',')];
             matrixData.rows.forEach(row => {
                 csvRows.push([
@@ -2137,6 +2151,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     row.packagingItemWeight != null ? row.packagingItemWeight : '',
                     csvEscape(row.rawMaterialName),
                     csvEscape(row.rawMaterialCode),
+                    csvEscape(row.rawMaterialSupplierName),
                     csvEscape(row.supplierName),
                     csvEscape(row.supplierProductName),
                     csvEscape(row.upstreamSupplierName)
@@ -2162,4 +2177,193 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
             }
             return str;
         }
+
+        // === Add Matrix Row Modal ===
+        window.openAddMatrixRowModal = async function() {
+            const options = await ensureMatrixOptions();
+            const groupSel = document.getElementById('matrixRowGroup');
+            const itemSel = document.getElementById('matrixRowItem');
+            const matSel = document.getElementById('matrixRowMaterials');
+            const spSel = document.getElementById('matrixRowSupplierProducts');
+            const alert = document.getElementById('addMatrixRowAlert');
+            if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
+
+            if (groupSel) {
+                groupSel.innerHTML = '<option value="">(None / Ungrouped)</option><option value="__new__">-- Create New Group --</option>';
+                (options.packagingGroups || []).forEach(g => {
+                    groupSel.innerHTML += '<option value="' + g.id + '">' + escapeHtml(g.name) + (g.packId ? ' [' + escapeHtml(g.packId) + ']' : '') + '</option>';
+                });
+            }
+            if (itemSel) {
+                itemSel.innerHTML = '<option value="">-- Select Item --</option><option value="__new__">-- Create New Item --</option>';
+                (options.packagingItems || []).forEach(p => {
+                    itemSel.innerHTML += '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>';
+                });
+            }
+            if (matSel) {
+                matSel.innerHTML = '';
+                (options.rawMaterials || []).forEach(m => {
+                    matSel.innerHTML += '<option value="' + m.id + '">' + (m.code ? escapeHtml(m.code) + ' - ' : '') + escapeHtml(m.name) + '</option>';
+                });
+            }
+            if (spSel) {
+                spSel.innerHTML = '';
+                (options.supplierProducts || []).forEach(sp => {
+                    spSel.innerHTML += '<option value="' + sp.id + '">' + escapeHtml(sp.name) + (sp.supplierName ? ' (' + escapeHtml(sp.supplierName) + ')' : '') + '</option>';
+                });
+            }
+
+            document.getElementById('matrixRowNewGroupFields')?.classList.add('d-none');
+            document.getElementById('matrixRowNewItemFields')?.classList.add('d-none');
+
+            groupSel?.addEventListener('change', function() {
+                document.getElementById('matrixRowNewGroupFields')?.classList.toggle('d-none', this.value !== '__new__');
+            });
+            itemSel?.addEventListener('change', function() {
+                document.getElementById('matrixRowNewItemFields')?.classList.toggle('d-none', this.value !== '__new__');
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById('addMatrixRowModal'));
+            modal.show();
+        };
+
+        window.saveMatrixRow = async function() {
+            const spinner = document.getElementById('saveMatrixRowSpinner');
+            const alert = document.getElementById('addMatrixRowAlert');
+            const btn = document.getElementById('saveMatrixRowBtn');
+            if (spinner) spinner.classList.remove('d-none');
+            if (btn) btn.disabled = true;
+            if (alert) { alert.classList.add('d-none'); alert.textContent = ''; }
+
+            const groupVal = document.getElementById('matrixRowGroup')?.value;
+            const itemVal = document.getElementById('matrixRowItem')?.value;
+
+            const body = {};
+
+            if (groupVal === '__new__') {
+                body.newGroupName = document.getElementById('matrixRowNewGroupName')?.value?.trim();
+                body.newGroupPackId = document.getElementById('matrixRowNewGroupPackId')?.value?.trim();
+                body.newGroupLayer = document.getElementById('matrixRowNewGroupLayer')?.value?.trim();
+                if (!body.newGroupName) {
+                    showAlert(alert, 'Group name is required when creating a new group.', 'danger');
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+            } else if (groupVal) {
+                body.packagingGroupId = parseInt(groupVal, 10);
+            }
+
+            if (itemVal === '__new__') {
+                body.newItemName = document.getElementById('matrixRowNewItemName')?.value?.trim();
+                body.newItemTaxonomyCode = document.getElementById('matrixRowNewItemCode')?.value?.trim();
+                const wt = document.getElementById('matrixRowNewItemWeight')?.value;
+                if (wt) body.newItemWeight = parseFloat(wt);
+                if (!body.newItemName) {
+                    showAlert(alert, 'Item name is required when creating a new item.', 'danger');
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+            } else if (itemVal) {
+                body.packagingItemId = parseInt(itemVal, 10);
+            } else {
+                showAlert(alert, 'A packaging item is required.', 'danger');
+                if (spinner) spinner.classList.add('d-none');
+                if (btn) btn.disabled = false;
+                return;
+            }
+
+            const matSel = document.getElementById('matrixRowMaterials');
+            if (matSel) {
+                body.materialTaxonomyIds = Array.from(matSel.selectedOptions).map(o => parseInt(o.value, 10));
+            }
+
+            const spSel = document.getElementById('matrixRowSupplierProducts');
+            if (spSel) {
+                body.supplierProductIds = Array.from(spSel.selectedOptions).map(o => parseInt(o.value, 10));
+            }
+
+            try {
+                const res = await fetch('/api/packaging-management/supply-chain-matrix/add-row', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('addMatrixRowModal'))?.hide();
+                    matrixOptionsCache = null;
+                    dataCache = {};
+                    showToast('Row added successfully.');
+                    loadMatrixData();
+                } else {
+                    showAlert(alert, result.error || 'Failed to add row.', 'danger');
+                }
+            } catch (e) {
+                showAlert(alert, 'Error: ' + e.message, 'danger');
+            } finally {
+                if (spinner) spinner.classList.add('d-none');
+                if (btn) btn.disabled = false;
+            }
+        };
+
+        function showAlert(el, msg, type) {
+            if (!el) return;
+            el.className = 'alert alert-' + type + ' mb-3';
+            el.textContent = msg;
+            el.classList.remove('d-none');
+        }
+
+        // === Product Associations Modal ===
+        window.showProductAssociations = async function(packagingItemId, supplierProductId, supplierId) {
+            const modal = new bootstrap.Modal(document.getElementById('productAssociationsModal'));
+            const loading = document.getElementById('productAssocLoading');
+            const empty = document.getElementById('productAssocEmpty');
+            const table = document.getElementById('productAssocTable');
+            const tbody = document.getElementById('productAssocTableBody');
+            const context = document.getElementById('productAssocContext');
+
+            if (loading) loading.classList.remove('d-none');
+            if (empty) empty.classList.add('d-none');
+            if (table) table.classList.add('d-none');
+            if (tbody) tbody.innerHTML = '';
+            if (context) context.textContent = 'Showing products associated with this supply chain path.';
+
+            modal.show();
+
+            try {
+                const params = new URLSearchParams();
+                if (packagingItemId) params.append('packagingItemId', packagingItemId);
+                if (supplierProductId) params.append('supplierProductId', supplierProductId);
+                if (supplierId) params.append('supplierId', supplierId);
+
+                const res = await fetch('/api/packaging-management/supply-chain-matrix/product-associations?' + params.toString());
+                const data = await res.json();
+
+                if (loading) loading.classList.add('d-none');
+
+                if (!data.products || data.products.length === 0) {
+                    if (empty) empty.classList.remove('d-none');
+                    return;
+                }
+
+                let html = '';
+                data.products.forEach(p => {
+                    html += '<tr>';
+                    html += '<td>' + escapeHtml(p.name) + '</td>';
+                    html += '<td>' + escapeHtml(p.sku || '-') + '</td>';
+                    html += '<td>' + escapeHtml(p.brand || '-') + '</td>';
+                    html += '<td>' + escapeHtml(p.category || '-') + '</td>';
+                    html += '</tr>';
+                });
+                if (tbody) tbody.innerHTML = html;
+                if (table) table.classList.remove('d-none');
+                if (context) context.textContent = 'Found ' + data.products.length + ' associated product(s).';
+            } catch (e) {
+                if (loading) loading.classList.add('d-none');
+                if (empty) { empty.classList.remove('d-none'); empty.querySelector('p').textContent = 'Error loading product associations.'; }
+                console.error('[Matrix] Product associations error:', e);
+            }
+        };
 })();
