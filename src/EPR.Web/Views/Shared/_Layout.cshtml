@@ -161,7 +161,7 @@
     {
     <script>
         window.PACKAGING_INIT = {
-            type: @Html.Raw(Json.Serialize(ViewContext.ViewData["Type"] ?? "suppliers")),
+            type: @Html.Raw(Json.Serialize(ViewContext.ViewData["Type"] ?? "supply-chain-matrix")),
             page: @((int)(ViewContext.ViewData["Page"] ?? 1)),
             pageSize: @((int)(ViewContext.ViewData["PageSize"] ?? 25)),
             sortBy: @Html.Raw(Json.Serialize(ViewContext.ViewData["SortBy"] ?? "name")),

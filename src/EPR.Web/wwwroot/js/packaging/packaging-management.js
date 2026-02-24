@@ -1,7 +1,7 @@
 (function() {
     'use strict';
         const init = window.PACKAGING_INIT || {};
-        let currentType = init.type || 'suppliers';
+        let currentType = init.type || 'supply-chain-matrix';
         let currentPage = init.page ?? 1;
         let currentPageSize = init.pageSize ?? 25;
         let currentSortBy = init.sortBy || 'name';

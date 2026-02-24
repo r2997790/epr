@@ -1,6 +1,6 @@
 @{
     ViewData["Title"] = "Packaging Management";
-    var type = ViewData["Type"] as string ?? "suppliers";
+    var type = ViewData["Type"] as string ?? "supply-chain-matrix";
     var page = (int)(ViewData["Page"] ?? 1);
     var pageSize = (int)(ViewData["PageSize"] ?? 25);
     var sortBy = ViewData["SortBy"] as string ?? "name";
@@ -17,9 +17,14 @@
             </h2>
             <ul class="nav nav-tabs" role="tablist" id="packagingManagementTabs">
                 <li class="nav-item">
+                    <a href="#" class="nav-link @(type == "supply-chain-matrix" ? "active" : "")" data-type="supply-chain-matrix" data-no-tab="true">
+                        <i class="bi bi-grid-3x3"></i> Supply Chain Matrix
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#" class="nav-link @(type == "suppliers" ? "active" : "")" data-type="suppliers" data-no-tab="true">
                         <i class="bi bi-truck"></i> Suppliers
-                    </a>h
+                    </a>
                 </li>
                 <li class="nav-item">
                     <a href="#" class="nav-link @(type == "raw-materials" ? "active" : "")" data-type="raw-materials" data-no-tab="true">
@@ -49,11 +54,6 @@
                 <li class="nav-item">
                     <a href="#" class="nav-link @(type == "visual-editor" ? "active" : "")" data-type="visual-editor" data-no-tab="true">
                         <i class="bi bi-diagram-3"></i> Visual Editor
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link @(type == "supply-chain-matrix" ? "active" : "")" data-type="supply-chain-matrix" data-no-tab="true">
-                        <i class="bi bi-grid-3x3"></i> Supply Chain Matrix
                     </a>
                 </li>
             </ul>
@@ -121,7 +121,7 @@
             </div>
         </div>
         <div class="p-0 flex-grow-1" style="overflow: auto; min-height: 0;">
-            <table class="table table-bordered table-hover mb-0" id="matrixTable" style="font-size: 0.95rem;">
+            <table class="table table-bordered table-hover mb-0" id="matrixTable" style="font-size: 0.9rem;">
                 <thead class="table-light" id="matrixTableHead" style="position: sticky; top: 0; z-index: 2;">
                     <tr>
                         <th>Raw Material</th>
@@ -989,7 +989,7 @@
         #matrixTable { border-collapse: collapse; }
         #matrixTable thead th {
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.03em;
             color: #495057;
@@ -1020,23 +1020,19 @@
             color: #212529;
         }
         .matrix-cell-secondary {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             opacity: 0.85;
             color: #6c757d;
         }
         .matrix-cell-missing {
             background-color: #fff8e1 !important;
         }
-        #matrixTable thead th {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
         .matrix-assign-link {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
             color: #e6a100;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.15s;
@@ -1047,11 +1043,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 34px;
-            min-height: 30px;
+            width: 38px;
+            min-height: 36px;
             border: none;
-            border-radius: 4px;
-            background: transparent;
+            border-radius: 5px;
+            background: #f8f9fa;
             color: #6c757d;
             cursor: pointer;
             transition: all 0.15s;
@@ -1063,7 +1059,7 @@
         .matrix-action-btn.danger { color: #adb5bd; }
         .matrix-action-btn.danger:hover { color: #dc3545; background: #fff5f5; }
         .matrix-action-btn .matrix-action-label {
-            font-size: 0.6rem;
+            font-size: 0.75rem;
             display: block;
             line-height: 1.1;
             margin-top: 1px;
@@ -1074,9 +1070,9 @@
             justify-content: center;
             width: 22px;
             height: 22px;
-            border: 1px dashed #adb5bd;
+            border: none;
             border-radius: 4px;
-            background: transparent;
+            background: #f8f9fa;
             color: #adb5bd;
             cursor: pointer;
             transition: all 0.15s;
@@ -1085,9 +1081,9 @@
             vertical-align: middle;
             margin-left: 4px;
         }
-        .matrix-plus-btn:hover { border-color: #198754; color: #198754; background: #d1e7dd; border-style: solid; }
+        .matrix-plus-btn:hover { color: #198754; background: #d1e7dd; }
         .matrix-inline-select {
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             padding: 0.15rem 0.35rem;
             border: 1px solid #0d6efd;
             border-radius: 4px;
@@ -1104,6 +1100,25 @@
             text-decoration: none;
         }
         .matrix-nav-link:hover { text-decoration: underline; }
+        .packaging-management-page .btn-outline-secondary {
+            border: none;
+            background: #f8f9fa;
+            color: #495057;
+        }
+        .packaging-management-page .btn-outline-secondary:hover,
+        .packaging-management-page .btn-check:checked + .btn-outline-secondary {
+            background: #e9ecef;
+            color: #212529;
+        }
+        .packaging-management-page .btn-outline-success {
+            border: none;
+            background: #d1e7dd;
+            color: #198754;
+        }
+        .packaging-management-page .btn-outline-success:hover {
+            background: #a3cfbb;
+            color: #198754;
+        }
 
         /* Packaging Flow 3-column layout */
         .packaging-flow-column {
