@@ -37,6 +37,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#" class="nav-link @(type == "packaging-flow" ? "active" : "")" data-type="packaging-flow" data-no-tab="true">
+                        <i class="bi bi-columns-gap"></i> Packaging Flow
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#" class="nav-link @(type == "packaging-taxonomy" ? "active" : "")" data-type="packaging-taxonomy" data-no-tab="true">
                         <i class="bi bi-diagram-2"></i> Packaging Taxonomy
                     </a>
@@ -131,8 +136,71 @@
         </div>
     </div>
 
+    <!-- Packaging Flow (3-column: Raw Materials | Packaging Items | Packaging Groups) -->
+    <div id="packagingFlowContainer" class="flex-grow-1 d-flex flex-column @(type == "packaging-flow" ? "" : "d-none")" style="min-height: 0; overflow: hidden;">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-shrink-0 flex-wrap gap-2">
+            <h5 class="mb-0">Packaging Flow</h5>
+            <small class="text-muted">Raw Materials → Packaging Items → Packaging Groups</small>
+            <div class="d-flex gap-2 align-items-center flex-wrap ms-auto">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Filter by packaging layer">
+                    <input type="checkbox" class="btn-check" id="flowFilterPrimary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="flowFilterPrimary">Primary</label>
+                    <input type="checkbox" class="btn-check" id="flowFilterSecondary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="flowFilterSecondary">Secondary</label>
+                    <input type="checkbox" class="btn-check" id="flowFilterTertiary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="flowFilterTertiary">Tertiary</label>
+                </div>
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="flowFilterInput" class="form-control form-control-sm" placeholder="Filter all columns..." aria-label="Filter packaging flow">
+                </div>
+            </div>
+        </div>
+        <div id="packagingFlowColumns" class="d-flex flex-grow-1" style="min-height: 0; overflow: hidden;">
+            <!-- Raw Materials Column -->
+            <div id="flowColumnRawMaterials" class="packaging-flow-column flex-grow-1 d-flex flex-column border-end" data-column="rawMaterials" style="min-width: 200px;">
+                <div class="packaging-flow-column-header p-2 border-bottom d-flex align-items-center justify-content-between flex-shrink-0">
+                    <span class="fw-semibold"><i class="bi bi-circle me-1"></i>Raw Materials</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flow-column-toggle" title="Collapse column" aria-label="Collapse Raw Materials"><i class="bi bi-chevron-left"></i><i class="bi bi-chevron-right"></i></button>
+                </div>
+                <div class="packaging-flow-column-body flex-grow-1 overflow-auto p-2">
+                    <table class="table table-sm table-hover mb-0" id="flowTableRawMaterials">
+                        <thead><tr><th>Name</th><th>Code</th><th style="width: 32px;"></th></tr></thead>
+                        <tbody id="flowBodyRawMaterials"><tr><td colspan="3" class="text-center text-muted py-3">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Packaging Items Column -->
+            <div id="flowColumnPackagingItems" class="packaging-flow-column flex-grow-1 d-flex flex-column border-end" data-column="packagingItems" style="min-width: 200px;">
+                <div class="packaging-flow-column-header p-2 border-bottom d-flex align-items-center justify-content-between flex-shrink-0">
+                    <span class="fw-semibold"><i class="bi bi-box-seam me-1"></i>Packaging Items</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flow-column-toggle" title="Collapse column" aria-label="Collapse Packaging Items"><i class="bi bi-chevron-left"></i><i class="bi bi-chevron-right"></i></button>
+                </div>
+                <div class="packaging-flow-column-body flex-grow-1 overflow-auto p-2">
+                    <table class="table table-sm table-hover mb-0" id="flowTablePackagingItems">
+                        <thead><tr><th>Name</th><th>Taxonomy Code</th><th style="width: 32px;"></th></tr></thead>
+                        <tbody id="flowBodyPackagingItems"><tr><td colspan="3" class="text-center text-muted py-3">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Packaging Groups Column -->
+            <div id="flowColumnPackagingGroups" class="packaging-flow-column flex-grow-1 d-flex flex-column" data-column="packagingGroups" style="min-width: 200px;">
+                <div class="packaging-flow-column-header p-2 border-bottom d-flex align-items-center justify-content-between flex-shrink-0">
+                    <span class="fw-semibold"><i class="bi bi-collection me-1"></i>Packaging Groups</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary flow-column-toggle" title="Collapse column" aria-label="Collapse Packaging Groups"><i class="bi bi-chevron-left"></i><i class="bi bi-chevron-right"></i></button>
+                </div>
+                <div class="packaging-flow-column-body flex-grow-1 overflow-auto p-2">
+                    <table class="table table-sm table-hover mb-0" id="flowTablePackagingGroups">
+                        <thead><tr><th>Name</th><th>Layer</th><th style="width: 32px;"></th></tr></thead>
+                        <tbody id="flowBodyPackagingGroups"><tr><td colspan="3" class="text-center text-muted py-3">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Split Pane Container (table + detail) -->
-    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" ? "d-none" : "")" style="min-height: 0; --detail-pane-height: 40%; background: #fff;">
+    <div id="splitContainer" class="flex-grow-1 d-flex flex-column @(type == "visual-editor" || type == "packaging-flow" ? "d-none" : "")" style="min-height: 0; --detail-pane-height: 40%; background: #fff;">
         <!-- Taxonomy Tree (packaging-taxonomy tab only) -->
         <div id="taxonomyTreeContainer" class="flex-grow-1 border rounded packaging-management-pane d-flex flex-column @(type == "packaging-taxonomy" ? "" : "d-none")" style="min-height: 0; overflow: hidden;">
             <div class="p-3 border-bottom packaging-pane-header flex-shrink-0">
@@ -226,6 +294,9 @@
                     </div>
                 </div>
                 <div class="d-flex gap-1 align-items-center">
+                    <button id="viewProductsBtn" class="btn btn-outline-secondary btn-sm d-none" title="View associated products" aria-label="View products">
+                        <i class="bi bi-link-45deg"></i> View Products
+                    </button>
                     <button id="editRecordBtn" class="btn btn-outline-primary btn-sm d-none" title="Edit" aria-label="Edit record"><i class="bi bi-pencil"></i> Edit</button>
                     <button id="deleteRecordBtn" class="btn btn-outline-danger btn-sm d-none" title="Delete" aria-label="Delete record"><i class="bi bi-trash"></i> Delete</button>
                     <button id="addProductBtn" class="btn btn-success btn-sm @(type != "suppliers" ? "d-none" : "")" title="Add Product" disabled aria-label="Add product to supplier">
@@ -1006,6 +1077,50 @@
             text-decoration: none;
         }
         .matrix-nav-link:hover { text-decoration: underline; }
+
+        /* Packaging Flow 3-column layout */
+        .packaging-flow-column {
+            transition: flex 0.2s ease, min-width 0.2s ease;
+        }
+        .packaging-flow-column.collapsed {
+            flex: 0 0 52px !important;
+            min-width: 52px !important;
+            max-width: 52px !important;
+        }
+        .packaging-flow-column.collapsed .packaging-flow-column-body {
+            display: none !important;
+        }
+        .packaging-flow-column.collapsed .packaging-flow-column-header {
+            flex-direction: column;
+            padding: 0.5rem !important;
+            gap: 0.25rem;
+        }
+        .packaging-flow-column.collapsed .packaging-flow-column-header .fw-semibold {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .packaging-flow-column.collapsed .flow-column-toggle .bi-chevron-left {
+            display: none;
+        }
+        .packaging-flow-column.collapsed .flow-column-toggle .bi-chevron-right {
+            display: inline-block;
+        }
+        .flow-column-toggle .bi-chevron-right {
+            display: none;
+        }
+        #flowTableRawMaterials tbody tr,
+        #flowTablePackagingItems tbody tr,
+        #flowTablePackagingGroups tbody tr {
+            cursor: pointer;
+        }
+        #flowTableRawMaterials tbody tr:hover,
+        #flowTablePackagingItems tbody tr:hover,
+        #flowTablePackagingGroups tbody tr:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 }
 

@@ -34,7 +34,7 @@ public class PackagingManagementController : Controller
 
     [HttpGet]
     [Route("api/packaging-management/list/{type}")]
-    public async Task<IActionResult> GetList(string type, int page = 1, int pageSize = 25, string sortBy = "name", string sortDir = "asc", string filter = "")
+    public async Task<IActionResult> GetList(string type, int page = 1, int pageSize = 25, string sortBy = "name", string sortDir = "asc", string filter = "", string packagingLayer = "")
     {
         try
         {
@@ -46,9 +46,9 @@ public class PackagingManagementController : Controller
             await EnsureDatasetSeededIfNeededAsync(datasetKey);
             object result = type.ToLower() switch
             {
-                "raw-materials" => await GetRawMaterialsList(page, pageSize, sortBy, sortDir, filter, datasetKey),
-                "packaging-items" => await GetPackagingItemsList(page, pageSize, sortBy, sortDir, filter, datasetKey),
-                "packaging-groups" => await GetPackagingGroupsList(page, pageSize, sortBy, sortDir, filter, datasetKey),
+                "raw-materials" => await GetRawMaterialsList(page, pageSize, sortBy, sortDir, filter, datasetKey, packagingLayer),
+                "packaging-items" => await GetPackagingItemsList(page, pageSize, sortBy, sortDir, filter, datasetKey, packagingLayer),
+                "packaging-groups" => await GetPackagingGroupsList(page, pageSize, sortBy, sortDir, filter, datasetKey, packagingLayer),
                 "suppliers" => await GetSuppliersList(page, pageSize, sortBy, sortDir, filter, datasetKey),
                 _ => new { error = "Invalid type" }
             };
@@ -154,7 +154,7 @@ public class PackagingManagementController : Controller
         catch { /* ignore seed errors */ }
     }
 
-    private async Task<object> GetRawMaterialsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey)
+    private async Task<object> GetRawMaterialsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey, string packagingLayer = "")
     {
         var libFilter = _context.PackagingLibraries.Where(l => l.IsActive);
         if (!string.IsNullOrEmpty(datasetKey))
@@ -163,6 +163,45 @@ public class PackagingManagementController : Controller
         var query = _context.MaterialTaxonomies
             .Where(t => t.Level == 1 && t.IsActive)
             .AsQueryable();
+
+        // Filter by packaging layer (Primary, Secondary, Tertiary): raw materials used in items that belong to groups with matching layers
+        if (!string.IsNullOrEmpty(packagingLayer))
+        {
+            var layers = packagingLayer.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+            if (layers.Count > 0)
+            {
+                var groupIdsInLayers = await _context.PackagingGroups
+                    .Where(g => g.IsActive && g.PackagingLayer != null && layers.Contains(g.PackagingLayer))
+                    .Where(g => string.IsNullOrEmpty(datasetKey) || g.DatasetKey == datasetKey)
+                    .Select(g => g.Id)
+                    .ToListAsync();
+                var libraryIdsInGroups = await _context.PackagingGroupItems
+                    .Where(gi => groupIdsInLayers.Contains(gi.PackagingGroupId))
+                    .Select(gi => gi.PackagingLibraryId)
+                    .Distinct()
+                    .ToListAsync();
+                var materialIdsFromJoin = await _context.PackagingLibraryMaterials
+                    .Where(plm => libraryIdsInGroups.Contains(plm.PackagingLibraryId))
+                    .Select(plm => plm.MaterialTaxonomyId)
+                    .Distinct()
+                    .ToListAsync();
+                var materialIdsFromLegacy = await _context.PackagingLibraries
+                    .Where(l => libraryIdsInGroups.Contains(l.Id) && l.MaterialTaxonomyId != null)
+                    .Select(l => l.MaterialTaxonomyId!.Value)
+                    .Distinct()
+                    .ToListAsync();
+                var allowedMaterialIds = materialIdsFromJoin.Union(materialIdsFromLegacy).ToHashSet();
+                var rootIdsWithAllowed = await _context.MaterialTaxonomies
+                    .Where(t => t.Level == 1 && t.IsActive)
+                    .Where(t => allowedMaterialIds.Contains(t.Id) || t.ChildTaxonomies.Any(c => c.IsActive && allowedMaterialIds.Contains(c.Id)))
+                    .Select(t => t.Id)
+                    .ToListAsync();
+                query = query.Where(t => rootIdsWithAllowed.Contains(t.Id));
+            }
+        }
 
         // Apply filter
         if (!string.IsNullOrEmpty(filter))
@@ -331,13 +370,32 @@ public class PackagingManagementController : Controller
         };
     }
 
-    private async Task<object> GetPackagingItemsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey)
+    private async Task<object> GetPackagingItemsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey, string packagingLayer = "")
     {
         var query = _context.PackagingLibraries
             .Where(l => l.IsActive)
             .AsQueryable();
         if (!string.IsNullOrEmpty(datasetKey))
             query = query.Where(l => l.DatasetKey == datasetKey);
+
+        // Filter by packaging layer: items that belong to groups with matching layers
+        if (!string.IsNullOrEmpty(packagingLayer))
+        {
+            var layers = packagingLayer.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+            if (layers.Count > 0)
+            {
+                var libraryIdsInMatchingGroups = await _context.PackagingGroupItems
+                    .Where(gi => gi.PackagingGroup.IsActive && gi.PackagingGroup.PackagingLayer != null && layers.Contains(gi.PackagingGroup.PackagingLayer))
+                    .Where(gi => string.IsNullOrEmpty(datasetKey) || gi.PackagingGroup.DatasetKey == datasetKey)
+                    .Select(gi => gi.PackagingLibraryId)
+                    .Distinct()
+                    .ToListAsync();
+                query = query.Where(l => libraryIdsInMatchingGroups.Contains(l.Id));
+            }
+        }
 
         // Apply filter
         if (!string.IsNullOrEmpty(filter))
@@ -490,13 +548,26 @@ public class PackagingManagementController : Controller
         };
     }
 
-    private async Task<object> GetPackagingGroupsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey)
+    private async Task<object> GetPackagingGroupsList(int page, int pageSize, string sortBy, string sortDir, string filter, string? datasetKey, string packagingLayer = "")
     {
         var query = _context.PackagingGroups
             .Where(g => g.IsActive)
             .AsQueryable();
         if (!string.IsNullOrEmpty(datasetKey))
             query = query.Where(g => g.DatasetKey == datasetKey);
+
+        // Filter by packaging layer (Primary, Secondary, Tertiary)
+        if (!string.IsNullOrEmpty(packagingLayer))
+        {
+            var layers = packagingLayer.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToList();
+            if (layers.Count > 0)
+            {
+                query = query.Where(g => g.PackagingLayer != null && layers.Contains(g.PackagingLayer));
+            }
+        }
 
         // Apply filter
         if (!string.IsNullOrEmpty(filter))
@@ -1894,7 +1965,7 @@ public class PackagingManagementController : Controller
 
     [HttpGet]
     [Route("api/packaging-management/supply-chain-matrix/product-associations")]
-    public async Task<IActionResult> GetProductAssociations(int? supplierProductId, int? packagingItemId, int? supplierId)
+    public async Task<IActionResult> GetProductAssociations(int? supplierProductId, int? packagingItemId, int? supplierId, int? rawMaterialId, int? packagingGroupId)
     {
         try
         {
@@ -1935,6 +2006,82 @@ public class PackagingManagementController : Controller
                 {
                     var ids = await _context.ProductPackagingSupplierProducts
                         .Where(pp => itemSpIds.Contains(pp.PackagingSupplierProductId))
+                        .Select(pp => pp.ProductId)
+                        .ToListAsync();
+                    productIds.UnionWith(ids);
+                }
+                var groupNamesFromItem = await _context.PackagingGroupItems
+                    .Where(gi => gi.PackagingLibraryId == packagingItemId.Value)
+                    .Select(gi => gi.PackagingGroup.Name)
+                    .Distinct()
+                    .ToListAsync();
+                var puIdsFromItem = await _context.PackagingUnits
+                    .Where(u => groupNamesFromItem.Contains(u.Name))
+                    .Select(u => u.Id)
+                    .ToListAsync();
+                if (puIdsFromItem.Count > 0)
+                {
+                    var idsFromPu = await _context.ProductPackagings
+                        .Where(pp => puIdsFromItem.Contains(pp.PackagingUnitId))
+                        .Select(pp => pp.ProductId)
+                        .ToListAsync();
+                    productIds.UnionWith(idsFromPu);
+                }
+            }
+
+            if (packagingGroupId.HasValue && packagingGroupId.Value > 0)
+            {
+                var group = await _context.PackagingGroups.FindAsync(packagingGroupId.Value);
+                if (group != null)
+                {
+                    var puIds = await _context.PackagingUnits
+                        .Where(u => u.Name == group.Name)
+                        .Select(u => u.Id)
+                        .ToListAsync();
+                    var ids = await _context.ProductPackagings
+                        .Where(pp => puIds.Contains(pp.PackagingUnitId))
+                        .Select(pp => pp.ProductId)
+                        .ToListAsync();
+                    productIds.UnionWith(ids);
+                }
+            }
+
+            if (rawMaterialId.HasValue && rawMaterialId.Value > 0)
+            {
+                var libraryIdsUsingMaterial = await _context.PackagingLibraryMaterials
+                    .Where(plm => plm.MaterialTaxonomyId == rawMaterialId.Value)
+                    .Select(plm => plm.PackagingLibraryId)
+                    .ToListAsync();
+                var legacyLibIds = await _context.PackagingLibraries
+                    .Where(l => l.MaterialTaxonomyId == rawMaterialId.Value)
+                    .Select(l => l.Id)
+                    .ToListAsync();
+                var allLibIds = libraryIdsUsingMaterial.Union(legacyLibIds).Distinct().ToList();
+                var spIdsFromLibs = await _context.PackagingLibrarySupplierProducts
+                    .Where(plsp => allLibIds.Contains(plsp.PackagingLibraryId))
+                    .Select(plsp => plsp.PackagingSupplierProductId)
+                    .ToListAsync();
+                if (spIdsFromLibs.Count > 0)
+                {
+                    var ids = await _context.ProductPackagingSupplierProducts
+                        .Where(pp => spIdsFromLibs.Contains(pp.PackagingSupplierProductId))
+                        .Select(pp => pp.ProductId)
+                        .ToListAsync();
+                    productIds.UnionWith(ids);
+                }
+                var groupNamesFromLibs = await _context.PackagingGroupItems
+                    .Where(gi => allLibIds.Contains(gi.PackagingLibraryId))
+                    .Select(gi => gi.PackagingGroup.Name)
+                    .Distinct()
+                    .ToListAsync();
+                var puIdsFromGroups = await _context.PackagingUnits
+                    .Where(u => groupNamesFromLibs.Contains(u.Name))
+                    .Select(u => u.Id)
+                    .ToListAsync();
+                if (puIdsFromGroups.Count > 0)
+                {
+                    var ids = await _context.ProductPackagings
+                        .Where(pp => puIdsFromGroups.Contains(pp.PackagingUnitId))
                         .Select(pp => pp.ProductId)
                         .ToListAsync();
                     productIds.UnionWith(ids);

@@ -29,6 +29,9 @@
         function initPackaging() {
             if (currentType === 'supply-chain-matrix') {
                 loadMatrixData();
+            } else if (currentType === 'packaging-flow') {
+                loadPackagingFlowData();
+                setupPackagingFlowEvents();
             } else if (currentType !== 'visual-editor' && currentType !== 'packaging-taxonomy') {
                 updateFilterPlaceholder();
                 updateFilterBadge();
@@ -115,6 +118,8 @@
                 visualContainer.classList.remove('d-none');
                 splitContainer.classList.add('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                const flowContainer = document.getElementById('packagingFlowContainer');
+                if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.add('d-none');
                 const frame = document.getElementById('visualEditorFrame');
                 if (frame) {
@@ -125,6 +130,8 @@
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.add('d-none');
                 if (matrixContainer) matrixContainer.classList.remove('d-none');
+                const flowContainer = document.getElementById('packagingFlowContainer');
+                if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (addSupplierBtn) addSupplierBtn.classList.add('d-none');
                 if (addRawMaterialBtn) addRawMaterialBtn.classList.add('d-none');
@@ -134,10 +141,28 @@
                 if (exportCsvBtn) exportCsvBtn.classList.remove('d-none');
                 if (addMatrixRowBtn) addMatrixRowBtn.classList.remove('d-none');
                 loadMatrixData();
-            } else             if (type === 'packaging-taxonomy') {
+            } else if (type === 'packaging-flow') {
+                visualContainer.classList.add('d-none');
+                splitContainer.classList.add('d-none');
+                if (matrixContainer) matrixContainer.classList.add('d-none');
+                const flowContainer = document.getElementById('packagingFlowContainer');
+                if (flowContainer) flowContainer.classList.remove('d-none');
+                if (headerButtons) headerButtons.classList.remove('d-none');
+                if (addSupplierBtn) addSupplierBtn.classList.add('d-none');
+                if (addRawMaterialBtn) addRawMaterialBtn.classList.add('d-none');
+                if (addPackagingItemBtn) addPackagingItemBtn.classList.add('d-none');
+                if (addPackagingGroupBtn) addPackagingGroupBtn.classList.add('d-none');
+                if (addProductBtn) addProductBtn.classList.add('d-none');
+                if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
+                if (addMatrixRowBtn) addMatrixRowBtn.classList.add('d-none');
+                loadPackagingFlowData();
+                setupPackagingFlowEvents();
+            } else if (type === 'packaging-taxonomy') {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                const flowContainer = document.getElementById('packagingFlowContainer');
+                if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
                 if (addMatrixRowBtn) addMatrixRowBtn.classList.add('d-none');
@@ -151,6 +176,8 @@
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                const flowContainer = document.getElementById('packagingFlowContainer');
+                if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.add('d-none');
                 if (addMatrixRowBtn) addMatrixRowBtn.classList.add('d-none');
@@ -232,6 +259,7 @@
             }
             document.getElementById('editRecordBtn')?.classList.add('d-none');
             document.getElementById('deleteRecordBtn')?.classList.add('d-none');
+            document.getElementById('viewProductsBtn')?.classList.add('d-none');
         }
         function setupEventListeners() {
             // Table / Card view toggle
@@ -455,6 +483,7 @@
             if (currentType === 'visual-editor') return;
             if (currentType === 'supply-chain-matrix') { loadMatrixData(); return; }
             if (currentType === 'packaging-taxonomy') { loadTaxonomyTree(); return; }
+            if (currentType === 'packaging-flow') { loadPackagingFlowData(); return; }
             const url = `/api/packaging-management/list/${currentType}?page=${currentPage}&pageSize=${currentPageSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}&filter=${encodeURIComponent(currentFilter)}`;
             
             console.log('[Packaging Management] Loading data from:', url);
@@ -553,6 +582,141 @@
                 .catch(err => {
                     container.innerHTML = '<div class="alert alert-danger">Error loading taxonomy: ' + escapeHtml(err.message) + '</div>';
                 });
+        }
+
+        function getFlowPackagingLayerParam() {
+            const layers = [];
+            if (document.getElementById('flowFilterPrimary')?.checked) layers.push('Primary');
+            if (document.getElementById('flowFilterSecondary')?.checked) layers.push('Secondary');
+            if (document.getElementById('flowFilterTertiary')?.checked) layers.push('Tertiary');
+            return layers.length === 3 ? '' : layers.join(',');
+        }
+
+        function loadPackagingFlowData() {
+            const filter = (document.getElementById('flowFilterInput')?.value || '').trim();
+            const packagingLayer = getFlowPackagingLayerParam();
+            const baseParams = 'page=1&pageSize=100&sortBy=name&sortDir=asc';
+            const filterParam = filter ? '&filter=' + encodeURIComponent(filter) : '';
+            const layerParam = packagingLayer ? '&packagingLayer=' + encodeURIComponent(packagingLayer) : '';
+
+            const setLoading = (bodyId) => {
+                const tbody = document.getElementById(bodyId);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-1"></span>Loading...</td></tr>';
+            };
+            setLoading('flowBodyRawMaterials');
+            setLoading('flowBodyPackagingItems');
+            setLoading('flowBodyPackagingGroups');
+
+            Promise.all([
+                fetch('/api/packaging-management/list/raw-materials?' + baseParams + filterParam + layerParam).then(r => r.json()),
+                fetch('/api/packaging-management/list/packaging-items?' + baseParams + filterParam + layerParam).then(r => r.json()),
+                fetch('/api/packaging-management/list/packaging-groups?' + baseParams + filterParam + layerParam).then(r => r.json())
+            ]).then(([rmData, piData, pgData]) => {
+                renderFlowColumn('flowBodyRawMaterials', rmData, 'raw-materials', (item) => {
+                    const productsBtn = '<button type="button" class="btn btn-sm btn-link p-0 text-secondary flow-products-btn" title="View products" data-id="' + item.id + '" data-type="raw-materials"><i class="bi bi-link-45deg"></i></button>';
+                    return '<tr class="flow-row" data-id="' + item.id + '" data-type="raw-materials"><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(item.code || '-') + '</td><td>' + productsBtn + '</td></tr>';
+                });
+                renderFlowColumn('flowBodyPackagingItems', piData, 'packaging-items', (item) => {
+                    const productsBtn = '<button type="button" class="btn btn-sm btn-link p-0 text-secondary flow-products-btn" title="View products" data-id="' + item.id + '" data-type="packaging-items"><i class="bi bi-link-45deg"></i></button>';
+                    return '<tr class="flow-row" data-id="' + item.id + '" data-type="packaging-items"><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(item.taxonomyCode || '-') + '</td><td>' + productsBtn + '</td></tr>';
+                });
+                renderFlowColumn('flowBodyPackagingGroups', pgData, 'packaging-groups', (item) => {
+                    const productsBtn = '<button type="button" class="btn btn-sm btn-link p-0 text-secondary flow-products-btn" title="View products" data-id="' + item.id + '" data-type="packaging-groups"><i class="bi bi-link-45deg"></i></button>';
+                    return '<tr class="flow-row" data-id="' + item.id + '" data-type="packaging-groups"><td>' + escapeHtml(item.name || '-') + '</td><td>' + escapeHtml(item.packagingLayer || '-') + '</td><td>' + productsBtn + '</td></tr>';
+                });
+            }).catch(err => {
+                console.error('[Packaging Flow] Error:', err);
+                ['flowBodyRawMaterials', 'flowBodyPackagingItems', 'flowBodyPackagingGroups'].forEach(bodyId => {
+                    const tbody = document.getElementById(bodyId);
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Error loading data</td></tr>';
+                });
+            });
+        }
+
+        function renderFlowColumn(bodyId, data, type, rowRenderer) {
+            const tbody = document.getElementById(bodyId);
+            if (!tbody) return;
+            if (data.error) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">' + escapeHtml(data.error) + '</td></tr>';
+                return;
+            }
+            const items = data.items || [];
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No records</td></tr>';
+                return;
+            }
+            tbody.innerHTML = items.map(rowRenderer).join('');
+            if (!tbody.dataset.flowDelegated) {
+                tbody.dataset.flowDelegated = '1';
+                tbody.addEventListener('click', function(e) {
+                    const btn = e.target.closest('.flow-products-btn');
+                    if (btn) {
+                        e.stopPropagation();
+                        const id = parseInt(btn.getAttribute('data-id'), 10);
+                        const t = btn.getAttribute('data-type');
+                        if (id && t && window.showProductAssociations) {
+                            if (t === 'raw-materials') window.showProductAssociations(id, null, null, 'rawMaterial');
+                            else if (t === 'packaging-items') window.showProductAssociations(null, id, null, 'packagingItem');
+                            else if (t === 'packaging-groups') window.showProductAssociations(null, null, id, 'packagingGroup');
+                        }
+                        return;
+                    }
+                    const row = e.target.closest('.flow-row');
+                    if (row) {
+                        const id = parseInt(row.getAttribute('data-id'), 10);
+                        const t = row.getAttribute('data-type');
+                        if (id && t && window.switchPackagingTab) {
+                            switchPackagingTab(t);
+                            setTimeout(() => selectRecord(id, t), 50);
+                        }
+                    }
+                });
+            }
+        }
+
+        function setupPackagingFlowEvents() {
+            const flowFilterInput = document.getElementById('flowFilterInput');
+            if (flowFilterInput && !flowFilterInput.dataset.flowSetup) {
+                flowFilterInput.dataset.flowSetup = '1';
+                let to;
+                flowFilterInput.addEventListener('input', function() {
+                    clearTimeout(to);
+                    to = setTimeout(loadPackagingFlowData, 300);
+                });
+            }
+            document.querySelectorAll('#flowFilterPrimary, #flowFilterSecondary, #flowFilterTertiary').forEach(cb => {
+                if (cb && !cb.dataset.flowSetup) {
+                    cb.dataset.flowSetup = '1';
+                    cb.addEventListener('change', loadPackagingFlowData);
+                }
+            });
+            document.querySelectorAll('.flow-column-toggle').forEach(btn => {
+                if (btn.dataset.flowSetup) return;
+                btn.dataset.flowSetup = '1';
+                const col = btn.closest('.packaging-flow-column');
+                if (!col) return;
+                const key = col.getAttribute('data-column');
+                let stored = {};
+                try {
+                    stored = JSON.parse(sessionStorage.getItem('packaging-flow-columns') || '{}');
+                } catch (e) {}
+                if (stored[key] === false) {
+                    col.classList.add('collapsed');
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = 'bi bi-chevron-right';
+                    btn.title = 'Expand column';
+                }
+                btn.addEventListener('click', function() {
+                    col.classList.toggle('collapsed');
+                    stored[key] = !col.classList.contains('collapsed');
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.className = col.classList.contains('collapsed') ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+                    }
+                    btn.title = col.classList.contains('collapsed') ? 'Expand column' : 'Collapse column';
+                    try { sessionStorage.setItem('packaging-flow-columns', JSON.stringify(stored)); } catch (e) {}
+                });
+            });
         }
 
         function renderTaxonomyTree(tree, orphanItems, standaloneGroups, allPackagingItems, allPackagingGroups) {
@@ -1004,6 +1168,17 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
             document.getElementById('editRecordBtn')?.setAttribute('data-edit-id', String(data.id));
             document.getElementById('deleteRecordBtn')?.setAttribute('data-delete-id', String(data.id));
 
+            const viewProductsBtn = document.getElementById('viewProductsBtn');
+            if (viewProductsBtn) {
+                if (detailType === 'raw-materials' || detailType === 'packaging-items' || detailType === 'packaging-groups') {
+                    viewProductsBtn.classList.remove('d-none');
+                    viewProductsBtn.setAttribute('data-detail-type', detailType);
+                    viewProductsBtn.setAttribute('data-detail-id', String(data.id));
+                } else {
+                    viewProductsBtn.classList.add('d-none');
+                }
+            }
+
             const typeLabels = { 'suppliers': 'Supplier', 'raw-materials': 'Raw Material', 'packaging-items': 'Packaging Item', 'packaging-groups': 'Packaging Group' };
             const recordName = data.name || data.displayName || ('#' + data.id);
             const titleEl = document.getElementById('detailPaneTitle');
@@ -1341,6 +1516,17 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     const id = this.getAttribute('data-edit-id');
                     if (!id) return;
                     openEditModal(parseInt(id, 10));
+                });
+            }
+            const viewProductsBtn = document.getElementById('viewProductsBtn');
+            if (viewProductsBtn) {
+                viewProductsBtn.addEventListener('click', function() {
+                    const type = this.getAttribute('data-detail-type');
+                    const id = parseInt(this.getAttribute('data-detail-id'), 10);
+                    if (!id || !type || !window.showProductAssociations) return;
+                    if (type === 'raw-materials') window.showProductAssociations(id, null, null, 'rawMaterial');
+                    else if (type === 'packaging-items') window.showProductAssociations(null, id, null, 'packagingItem');
+                    else if (type === 'packaging-groups') window.showProductAssociations(null, null, id, 'packagingGroup');
                 });
             }
         }
@@ -2316,7 +2502,24 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
         }
 
         // === Product Associations Modal ===
-        window.showProductAssociations = async function(packagingItemId, supplierProductId, supplierId) {
+        // Signature: showProductAssociations(rawMaterialId, packagingItemId, packagingGroupId, source)
+        //    OR for matrix: showProductAssociations(packagingItemId, supplierProductId, supplierId)
+        window.showProductAssociations = async function(a, b, c, d) {
+            let rawMaterialId, packagingItemId, packagingGroupId, supplierProductId, supplierId;
+            if (typeof d === 'string') {
+                rawMaterialId = a && a > 0 ? a : null;
+                packagingItemId = b && b > 0 ? b : null;
+                packagingGroupId = c && c > 0 ? c : null;
+                supplierProductId = null;
+                supplierId = null;
+            } else {
+                rawMaterialId = null;
+                packagingItemId = a && a > 0 ? a : null;
+                supplierProductId = b && b > 0 ? b : null;
+                supplierId = c && c > 0 ? c : null;
+                packagingGroupId = null;
+            }
+
             const modal = new bootstrap.Modal(document.getElementById('productAssociationsModal'));
             const loading = document.getElementById('productAssocLoading');
             const empty = document.getElementById('productAssocEmpty');
@@ -2334,7 +2537,9 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
 
             try {
                 const params = new URLSearchParams();
+                if (rawMaterialId) params.append('rawMaterialId', rawMaterialId);
                 if (packagingItemId) params.append('packagingItemId', packagingItemId);
+                if (packagingGroupId) params.append('packagingGroupId', packagingGroupId);
                 if (supplierProductId) params.append('supplierProductId', supplierProductId);
                 if (supplierId) params.append('supplierId', supplierId);
 
