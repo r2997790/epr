@@ -23,6 +23,7 @@
         let matrixGroupBy = 'group';
         let matrixSortBy = 'material';
         let matrixSortDir = 'asc';
+        let matrixLayerFilter = { primary: true, secondary: true, tertiary: true };
         let matrixData = null;
         let matrixOptionsCache = null;
 
@@ -2043,6 +2044,17 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     }, 300);
                 });
             }
+            ['matrixFilterPrimary', 'matrixFilterSecondary', 'matrixFilterTertiary'].forEach((id, idx) => {
+                const el = document.getElementById(id);
+                const key = ['primary', 'secondary', 'tertiary'][idx];
+                if (el) {
+                    el.addEventListener('change', function() {
+                        matrixLayerFilter[key] = this.checked;
+                        matrixPage = 1;
+                        loadMatrixData();
+                    });
+                }
+            });
             const groupBySelect = document.getElementById('matrixGroupBy');
             if (groupBySelect) {
                 groupBySelect.addEventListener('change', function() {
@@ -2077,15 +2089,20 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
         }
 
         function loadMatrixData() {
-            const url = `/api/packaging-management/supply-chain-matrix?page=${matrixPage}&pageSize=${matrixPageSize}&groupBy=${matrixGroupBy}&filter=${encodeURIComponent(matrixFilter)}&sortBy=${matrixSortBy}&sortDir=${matrixSortDir}`;
+            const layers = [];
+            if (matrixLayerFilter.primary) layers.push('Primary');
+            if (matrixLayerFilter.secondary) layers.push('Secondary');
+            if (matrixLayerFilter.tertiary) layers.push('Tertiary');
+            const packagingLayer = layers.join(',');
+            const url = `/api/packaging-management/supply-chain-matrix?page=${matrixPage}&pageSize=${matrixPageSize}&groupBy=${matrixGroupBy}&filter=${encodeURIComponent(matrixFilter)}&sortBy=${matrixSortBy}&sortDir=${matrixSortDir}&packagingLayer=${encodeURIComponent(packagingLayer)}`;
             const tbody = document.getElementById('matrixTableBody');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading...</td></tr>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Loading...</td></tr>';
 
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
                     if (data.error) {
-                        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Error: ' + escapeHtml(data.error) + '</td></tr>';
+                        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Error: ' + escapeHtml(data.error) + '</td></tr>';
                         return;
                     }
                     matrixData = data;
@@ -2095,7 +2112,7 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     if (countEl) countEl.textContent = data.totalCount || 0;
                 })
                 .catch(err => {
-                    if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Failed to load matrix data.</td></tr>';
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Failed to load matrix data.</td></tr>';
                     console.error('[Matrix] Load error:', err);
                 });
         }
@@ -2129,17 +2146,35 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
 
                 html += '<tr class="' + groupClass + '" data-row-idx="' + i + '">';
 
-                // Raw Material column (first)
+                // Raw Material column
                 if (showMaterial) {
                     if (row.rawMaterialId) {
                         html += '<td class="matrix-cell-first">';
                         html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.rawMaterialId + ', \'raw-materials\')" title="View material">' + escapeHtml(row.rawMaterialName) + '</span>';
-                        if (row.rawMaterialCode) html += ' <small class="text-muted">[' + escapeHtml(row.rawMaterialCode) + ']</small>';
-                        html += ' <button class="matrix-plus-btn" title="Add another material" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus"></i></button>';
+                        if (row.rawMaterialCode) html += ' <span class="matrix-cell-secondary">[' + escapeHtml(row.rawMaterialCode) + ']</span>';
+                        html += ' <button class="matrix-plus-btn" title="Add material" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-square"></i></button>';
                         html += '</td>';
                     } else {
-                        html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign material</span></td>';
+                        html += '<td class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle-fill"></i> Assign material</span></td>';
                     }
+                } else {
+                    html += '<td class="matrix-cell-merged"></td>';
+                }
+
+                // Raw Material Supplier(s) column (immediately follows Raw Material)
+                if (showMaterial) {
+                    html += '<td>';
+                    const rmSuppliers = row.rawMaterialSuppliers || (row.rawMaterialSupplierId ? [{ id: row.rawMaterialSupplierId, name: row.rawMaterialSupplierName, productName: row.rawMaterialSupplierProductName }] : []);
+                    if (rmSuppliers.length > 0) {
+                        rmSuppliers.forEach(s => {
+                            html += '<span class="badge bg-info bg-opacity-10 text-info me-1"><span class="matrix-nav-link" onclick="window.navigateToRecord(' + s.id + ', \'suppliers\')">' + escapeHtml(s.name || '') + '</span>';
+                            if (s.productName) html += ' <span class="matrix-cell-secondary">(' + escapeHtml(s.productName) + ')</span>';
+                            html += '</span>';
+                        });
+                    } else {
+                        html += '<span class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material-supplier\', ' + (row.rawMaterialId || 0) + ', this)"><i class="bi bi-plus-circle-fill"></i> Assign</span></span>';
+                    }
+                    html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-merged"></td>';
                 }
@@ -2148,7 +2183,26 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                 if (showItem) {
                     html += '<td class="matrix-cell-first">';
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.packagingItemId + ', \'packaging-items\')" title="View item">' + escapeHtml(row.packagingItemName) + '</span>';
-                    if (row.packagingItemWeight) html += ' <small class="text-muted">(' + row.packagingItemWeight + 'g)</small>';
+                    if (row.packagingItemWeight) html += ' <span class="matrix-cell-secondary">(' + row.packagingItemWeight + 'g)</span>';
+                    html += '</td>';
+                } else {
+                    html += '<td class="matrix-cell-merged"></td>';
+                }
+
+                // Packaging Item Supplier(s) column (immediately follows Packaging Item)
+                if (showItem) {
+                    html += '<td>';
+                    const itemSuppliers = row.packagingItemSuppliers || (row.supplierId ? [{ id: row.supplierId, name: row.supplierName, productName: row.supplierProductName }] : []);
+                    if (itemSuppliers.length > 0) {
+                        itemSuppliers.forEach(s => {
+                            html += '<span class="badge bg-primary bg-opacity-10 text-primary me-1"><span class="matrix-nav-link" onclick="window.navigateToRecord(' + s.id + ', \'suppliers\')">' + escapeHtml(s.name || '') + '</span>';
+                            if (s.productName) html += ' <span class="matrix-cell-secondary">(' + escapeHtml(s.productName) + ')</span>';
+                            html += '</span>';
+                        });
+                        html += ' <button class="matrix-plus-btn" title="Add supplier" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-square"></i></button>';
+                    } else {
+                        html += '<span class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-person-plus-fill"></i> Assign supplier</span></span>';
+                    }
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-merged"></td>';
@@ -2159,46 +2213,21 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<td class="matrix-cell-first">';
                     if (row.packagingGroupId) {
                         html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.packagingGroupId + ', \'packaging-groups\')" title="View group">' + escapeHtml(row.packagingGroupName) + '</span>';
-                        if (row.packagingGroupLayer) html += ' <small class="text-muted">(' + escapeHtml(row.packagingGroupLayer) + ')</small>';
+                        if (row.packagingGroupLayer) html += ' <span class="matrix-cell-secondary">(' + escapeHtml(row.packagingGroupLayer) + ')</span>';
                     } else {
-                        html += '<span class="text-muted fst-italic">Ungrouped</span>';
+                        html += '<span class="matrix-cell-secondary fst-italic">Ungrouped</span>';
                     }
                     html += '</td>';
                 } else {
                     html += '<td class="matrix-cell-merged"></td>';
                 }
 
-                // Raw Material Supplier(s) column
-                html += '<td>';
-                const rmSuppliers = row.rawMaterialSuppliers || (row.rawMaterialSupplierId ? [{ id: row.rawMaterialSupplierId, name: row.rawMaterialSupplierName, productName: row.rawMaterialSupplierProductName }] : []);
-                if (rmSuppliers.length > 0) {
-                    rmSuppliers.forEach(s => {
-                        html += '<span class="badge bg-info bg-opacity-10 text-info me-1"><span class="matrix-nav-link" onclick="window.navigateToRecord(' + s.id + ', \'suppliers\')">' + escapeHtml(s.name || '') + '</span>';
-                        if (s.productName) html += ' <small class="text-muted">(' + escapeHtml(s.productName) + ')</small>';
-                        html += '</span>';
-                    });
+                // Packaging Group Supplier(s) column (immediately follows Packaging Group, placeholder)
+                if (showGroup) {
+                    html += '<td><span class="matrix-cell-secondary">-</span></td>';
                 } else {
-                    html += '<span class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'material-supplier\', ' + (row.rawMaterialId || 0) + ', this)"><i class="bi bi-plus-circle"></i> Assign</span></span>';
+                    html += '<td class="matrix-cell-merged"></td>';
                 }
-                html += '</td>';
-
-                // Packaging Item Supplier(s) column
-                html += '<td>';
-                const itemSuppliers = row.packagingItemSuppliers || (row.supplierId ? [{ id: row.supplierId, name: row.supplierName, productName: row.supplierProductName }] : []);
-                if (itemSuppliers.length > 0) {
-                    itemSuppliers.forEach(s => {
-                        html += '<span class="badge bg-primary bg-opacity-10 text-primary me-1"><span class="matrix-nav-link" onclick="window.navigateToRecord(' + s.id + ', \'suppliers\')">' + escapeHtml(s.name || '') + '</span>';
-                        if (s.productName) html += ' <small class="text-muted">(' + escapeHtml(s.productName) + ')</small>';
-                        html += '</span>';
-                    });
-                    html += ' <button class="matrix-plus-btn" title="Add another supplier" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus"></i></button>';
-                } else {
-                    html += '<span class="matrix-cell-missing"><span class="matrix-assign-link" onclick="matrixInlineAdd(\'supplier\', ' + row.packagingItemId + ', this)"><i class="bi bi-plus-circle"></i> Assign supplier</span></span>';
-                }
-                html += '</td>';
-
-                // Packaging Group Supplier(s) column (placeholder - Option B)
-                html += '<td><span class="text-muted">-</span></td>';
 
                 // Upstream Supplier column
                 if (row.upstreamSupplierId) {
@@ -2206,17 +2235,17 @@ return '<div class="table-card' + sel + '" onclick="selectRecord(' + item.id + '
                     html += '<span class="matrix-nav-link" onclick="window.navigateToRecord(' + row.upstreamSupplierId + ', \'suppliers\')" title="View upstream supplier">' + escapeHtml(row.upstreamSupplierName) + '</span>';
                     html += '</td>';
                 } else {
-                    html += '<td><span class="text-muted">-</span></td>';
+                    html += '<td><span class="matrix-cell-secondary">-</span></td>';
                 }
 
                 // Actions column
                 html += '<td class="text-nowrap">';
-                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-link-45deg"></i></button>';
+                html += '<button class="matrix-action-btn me-1" title="View product associations" onclick="window.showProductAssociations(' + (row.packagingItemId || 0) + ', ' + (row.supplierProductId || 0) + ', ' + (row.supplierId || 0) + ')"><i class="bi bi-box-arrow-up-right"></i></button>';
                 if (row.rawMaterialId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-trash"></i></button>';
+                    html += '<button class="matrix-action-btn danger me-1" title="Unlink material from item" onclick="matrixUnlink(\'material\', ' + row.packagingItemId + ', ' + row.rawMaterialId + ')"><i class="bi bi-x-circle"></i></button>';
                 }
                 if (row.supplierProductId && row.packagingItemId) {
-                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-trash"></i></button>';
+                    html += '<button class="matrix-action-btn danger" title="Unlink supplier from item" onclick="matrixUnlink(\'supplier\', ' + row.packagingItemId + ', ' + row.supplierProductId + ')"><i class="bi bi-x-circle"></i></button>';
                 }
                 html += '</td>';
 

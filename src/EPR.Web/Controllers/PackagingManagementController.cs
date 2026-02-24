@@ -1663,7 +1663,7 @@ public class PackagingManagementController : Controller
 
     [HttpGet]
     [Route("api/packaging-management/supply-chain-matrix")]
-    public async Task<IActionResult> GetSupplyChainMatrix(int page = 1, int pageSize = 50, string groupBy = "group", string filter = "", string sortBy = "material", string sortDir = "asc")
+    public async Task<IActionResult> GetSupplyChainMatrix(int page = 1, int pageSize = 50, string groupBy = "group", string filter = "", string sortBy = "material", string sortDir = "asc", string packagingLayer = "")
     {
         try
         {
@@ -1769,6 +1769,23 @@ public class PackagingManagementController : Controller
                             PackagingItemSuppliers = itemSuppliersObjList
                         });
                     }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(packagingLayer))
+            {
+                var allowedLayers = packagingLayer.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                if (allowedLayers.Count > 0)
+                {
+                    rows = rows.Where(r =>
+                    {
+                        if (string.IsNullOrEmpty(r.PackagingGroupLayer))
+                            return true;
+                        return allowedLayers.Contains(r.PackagingGroupLayer);
+                    }).ToList();
                 }
             }
 

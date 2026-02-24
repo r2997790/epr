@@ -96,12 +96,20 @@
                 <small class="text-muted">Full relational view of packaging supply chain</small>
             </div>
             <div class="d-flex gap-2 align-items-center flex-wrap">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Filter by packaging layer">
+                    <input type="checkbox" class="btn-check" id="matrixFilterPrimary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="matrixFilterPrimary">Primary</label>
+                    <input type="checkbox" class="btn-check" id="matrixFilterSecondary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="matrixFilterSecondary">Secondary</label>
+                    <input type="checkbox" class="btn-check" id="matrixFilterTertiary" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="matrixFilterTertiary">Tertiary</label>
+                </div>
                 <div class="input-group input-group-sm" style="width: 220px;">
                     <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" id="matrixFilterInput" class="form-control form-control-sm" placeholder="Filter all columns..." aria-label="Filter matrix">
                 </div>
                 <div class="input-group input-group-sm" style="width: 180px;">
-                    <label class="input-group-text bg-white" for="matrixGroupBy"><i class="bi bi-collection text-muted"></i></label>
+                    <label class="input-group-text bg-white" for="matrixGroupBy"><i class="bi bi-layers text-muted"></i></label>
                     <select id="matrixGroupBy" class="form-select form-select-sm">
                         <option value="group" selected>Group by Pack Group</option>
                         <option value="item">Group by Item</option>
@@ -116,10 +124,10 @@
                 <thead class="table-light" id="matrixTableHead" style="position: sticky; top: 0; z-index: 2;">
                     <tr>
                         <th>Raw Material</th>
-                        <th>Packaging Item</th>
-                        <th>Packaging Group</th>
                         <th>Raw Material Supplier(s)</th>
+                        <th>Packaging Item</th>
                         <th>Packaging Item Supplier(s)</th>
+                        <th>Packaging Group</th>
                         <th>Packaging Group Supplier(s)</th>
                         <th>Upstream Supplier</th>
                         <th style="width: 80px;">Actions</th>
@@ -130,7 +138,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="p-3 border-top flex-shrink-0 d-flex justify-content-between align-items-center">
+        <div class="p-3 border-top flex-shrink-0 d-flex justify-content-between align-items-center" style="font-size: 0.8rem;">
             <div><span id="matrixRecordCount">0</span> rows</div>
             <nav>
                 <ul class="pagination pagination-sm mb-0" id="matrixPagination"></ul>
@@ -1010,15 +1018,24 @@
             font-weight: 600;
             color: #212529;
         }
+        .matrix-cell-secondary {
+            font-size: 0.8rem;
+            opacity: 0.85;
+            color: #6c757d;
+        }
         .matrix-cell-missing {
             background-color: #fff8e1 !important;
+        }
+        #matrixTable thead th {
+            font-size: 0.85rem;
+            font-weight: 600;
         }
         .matrix-assign-link {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
             color: #e6a100;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             cursor: pointer;
             text-decoration: none;
             transition: color 0.15s;
@@ -1036,7 +1053,7 @@
             color: #6c757d;
             cursor: pointer;
             transition: all 0.15s;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             padding: 0;
             vertical-align: middle;
         }
@@ -1047,15 +1064,15 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border: 1px dashed #adb5bd;
-            border-radius: 50%;
+            border-radius: 4px;
             background: transparent;
             color: #adb5bd;
             cursor: pointer;
             transition: all 0.15s;
-            font-size: 0.7rem;
+            font-size: 0.9rem;
             padding: 0;
             vertical-align: middle;
             margin-left: 4px;
