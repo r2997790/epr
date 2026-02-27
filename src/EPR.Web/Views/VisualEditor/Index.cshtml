@@ -196,13 +196,20 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0.75rem;
-        background: #f8f9fa;
+        padding: 0.6rem 0.75rem;
+        background: linear-gradient(180deg, #f8f9fa 0%, #f1f3f5 100%);
         border-bottom: 1px solid #dee2e6;
+        border-left: 3px solid #28a745;
+        border-radius: 8px 8px 0 0;
         cursor: move;
-        font-weight: 600;
-        font-size: 0.85rem;
+        font-weight: 700;
+        font-size: 0.9rem;
         flex-shrink: 0;
+    }
+    .epr-toolbar-header-actions {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
     }
     
     .epr-btn-close-toolbar,
@@ -239,15 +246,30 @@
         overflow-y: auto;
         flex: 1;
         min-height: 0;
+        scrollbar-width: thin;
+    }
+    .epr-toolbar-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    .epr-toolbar-content::-webkit-scrollbar-track {
+        background: #f1f3f5;
+        border-radius: 3px;
+    }
+    .epr-toolbar-content::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 3px;
+    }
+    .epr-toolbar-content::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
     }
     
     /* Actions Toolbar - Initial position, but draggable */
     .epr-actions-toolbar {
         top: 186px;
         left: 40px;
-        width: 60px;
-        min-width: 60px;
-        max-width: 60px;
+        width: 64px;
+        min-width: 64px;
+        max-width: 64px;
     }
     
     .epr-actions-toolbar .epr-toolbar-content {
@@ -258,11 +280,11 @@
     }
     
     .epr-toolbar-btn {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border: 1px solid #dee2e6;
         background: white;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -392,9 +414,19 @@
         left: 1300px;
         top: auto;
     }
+    @media (max-width: 1399px) {
+        .epr-types-panel-raw-materials { left: 20px !important; }
+        .epr-types-panel-packaging { left: 300px !important; }
+        .epr-types-panel-packaging-groups { left: 520px !important; }
+        .epr-types-panel-products { left: 740px !important; }
+        .epr-types-panel-distribution { left: 960px !important; }
+        .epr-types-panel-distribution-groups { left: 1180px !important; }
+        .epr-types-panel { width: 200px !important; }
+        .epr-types-panel-raw-materials { width: 260px !important; }
+    }
     
     .epr-toolbar-section {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #e9ecef;
     }
@@ -403,14 +435,41 @@
         border-bottom: none;
         margin-bottom: 0;
     }
+    .epr-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        padding: 0.15rem 0;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+    }
+    .epr-section-header:hover {
+        background: #f1f3f5;
+    }
+    .epr-section-header .epr-section-title {
+        margin-bottom: 0;
+    }
+    .epr-section-chevron {
+        font-size: 0.75rem;
+        color: #6c757d;
+        transition: transform 0.2s;
+    }
+    .epr-toolbar-section.collapsed .epr-section-chevron {
+        transform: rotate(-90deg);
+    }
+    .epr-toolbar-section.collapsed .epr-section-content {
+        display: none;
+    }
     
     .epr-section-title {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
         color: #495057;
         margin-bottom: 0.75rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.03em;
     }
     
     .epr-material-buttons {
@@ -429,7 +488,7 @@
         width: 100%;
         min-width: 0;
         border: 1px solid #dee2e6;
-        border-radius: 4px;
+        border-radius: 6px;
         background: white;
         cursor: pointer;
         transition: all 0.2s;
@@ -443,6 +502,8 @@
     .epr-material-btn:hover {
         border-color: #28a745;
         background: #f8fff9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
     .epr-material-btn.dragging {
@@ -471,6 +532,28 @@
     .epr-toolbar-controls .btn {
         width: 100%;
         font-size: 0.85rem;
+        border: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+    .epr-toolbar-controls .btn-secondary {
+        background: #f8f9fa;
+    }
+    .epr-toolbar-controls .btn-secondary:hover {
+        background: #e9ecef;
+    }
+    .epr-toolbar-controls .btn:focus-visible {
+        outline: 2px solid #28a745;
+        outline-offset: 2px;
+    }
+    .epr-toolbar-controls .form-select,
+    .epr-toolbar-controls select {
+        border-radius: 6px;
+    }
+    .epr-toolbar-controls .form-select:focus-visible,
+    .epr-toolbar-controls select:focus-visible {
+        outline: 2px solid #28a745;
+        outline-offset: 2px;
     }
     
     /* Parameters Panel - Default position: top-right, but draggable */
@@ -479,6 +562,48 @@
         right: 20px;
         width: 300px;
         max-height: calc(100vh - 166px);
+    }
+    #eprParametersContent .parameter-group {
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    #eprParametersContent .parameter-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    #eprParametersContent .parameter-group label,
+    #eprParametersContent .parameter-group h6 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    #eprParametersContent .parameter-group input,
+    #eprParametersContent .parameter-group select,
+    #eprParametersContent .parameter-group textarea {
+        width: 100%;
+        font-size: 0.9rem;
+        border-radius: 6px;
+    }
+    .epr-parameters-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        color: #6c757d;
+    }
+    .epr-parameters-empty-state i {
+        font-size: 2rem;
+        opacity: 0.4;
+        margin-bottom: 0.75rem;
+    }
+    .epr-parameters-empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
     }
     
     /* Canvas Container - Account for project header */
@@ -1056,13 +1181,13 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                 <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
                     <i class="bi bi-unlock"></i>
                 </button>
-                <button class="epr-btn-close-toolbar" title="Minimize">
-                    <i class="bi bi-dash"></i>
+                <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize toolbar">
+                    <i class="bi bi-chevron-up"></i>
                 </button>
             </div>
         </div>
         <div class="epr-toolbar-content">
-            <button class="epr-toolbar-btn" id="eprDragModeBtn" title="Drag Mode">
+            <button class="epr-toolbar-btn" id="eprDragModeBtn" title="Drag Mode" aria-label="Drag mode">
                 <i class="bi bi-arrows-move"></i>
             </button>
             <button class="epr-toolbar-btn" id="eprZoomInBtn" title="Zoom In">
@@ -1098,29 +1223,38 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
         <div class="epr-toolbar-header">
             <span>Types</span>
             <div class="epr-toolbar-header-actions">
-                <button class="epr-btn-split-toolbar" id="eprSplitTypesBtn" title="Split Toolbars">
+                <button class="epr-btn-split-toolbar" id="eprSplitTypesBtn" title="Split into separate panels" aria-label="Split into separate panels">
                     <i class="bi bi-columns"></i>
                 </button>
-                <button class="epr-btn-lock-toolbar" title="Lock: Move together with attached palettes | Unlock: Move independently">
+                <button class="epr-btn-lock-toolbar" title="Lock palettes together" aria-label="Lock palettes together">
                     <i class="bi bi-unlock"></i>
                 </button>
-                <button class="epr-btn-close-toolbar" title="Minimize">
-                    <i class="bi bi-dash"></i>
+                <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize toolbar">
+                    <i class="bi bi-chevron-up"></i>
                 </button>
             </div>
         </div>
         <div class="epr-toolbar-content">
             <!-- Raw Materials Section -->
             <div class="epr-toolbar-section" data-section="raw-materials">
-                <h6 class="epr-section-title">Raw Materials</h6>
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="true">
+                    <h6 class="epr-section-title">Raw Materials</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div id="eprRawMaterialsButtons" class="epr-material-buttons">
                     <!-- Will be populated by JavaScript -->
+                </div>
                 </div>
             </div>
 
             <!-- Packaging Library Section -->
             <div class="epr-toolbar-section" data-section="packaging">
-                <h6 class="epr-section-title">Packaging Library</h6>
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="true">
+                    <h6 class="epr-section-title">Packaging Library</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprPackagingLibraryDropdown" class="form-select form-select-sm">
                         <option value="">Select packaging...</option>
@@ -1132,11 +1266,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-plus-circle"></i> New
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- Packaging Groups Section -->
             <div class="epr-toolbar-section" data-section="packaging-groups">
-                <h6 class="epr-section-title">Packaging Groups</h6>
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="true">
+                    <h6 class="epr-section-title">Packaging Groups</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprPackagingGroupDropdown" class="form-select form-select-sm">
                         <option value="">Select packaging group...</option>
@@ -1151,11 +1290,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-folder-open"></i> Load Group
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- Product Library Section -->
             <div class="epr-toolbar-section" data-section="products">
-                <h6 class="epr-section-title">Product Library</h6>
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="true">
+                    <h6 class="epr-section-title">Product Library</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprProductLibraryDropdown" class="form-select form-select-sm">
                         <option value="">Select product...</option>
@@ -1167,11 +1311,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-plus-circle"></i> New
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- Supplier Packaging Section -->
-            <div class="epr-toolbar-section" data-section="supplier-packaging">
-                <h6 class="epr-section-title">Supplier Packaging</h6>
+            <div class="epr-toolbar-section collapsed" data-section="supplier-packaging">
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="false">
+                    <h6 class="epr-section-title">Supplier Packaging</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprSupplierPackagingDropdown" class="form-select form-select-sm">
                         <option value="">Select supplier packaging...</option>
@@ -1181,11 +1330,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                     </button>
                 </div>
                 <small class="text-muted">Connect to products to attach supplier packaging</small>
+                </div>
             </div>
 
             <!-- Distribution Groups Section -->
-            <div class="epr-toolbar-section" data-section="distribution-groups">
-                <h6 class="epr-section-title">Distribution Groups</h6>
+            <div class="epr-toolbar-section collapsed" data-section="distribution-groups">
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="false">
+                    <h6 class="epr-section-title">Distribution Groups</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <button class="btn btn-sm btn-info" id="eprAddDistributionGroupBtn" style="width: 100%; margin-bottom: 0.25rem;">
                         <i class="bi bi-collection"></i> Add Network Distribution
@@ -1194,11 +1348,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-folder-open"></i> Load Network Distribution
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- Distribution Section -->
-            <div class="epr-toolbar-section" data-section="distribution">
-                <h6 class="epr-section-title">Distribution</h6>
+            <div class="epr-toolbar-section collapsed" data-section="distribution">
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="false">
+                    <h6 class="epr-section-title">Distribution</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprCountryDropdown" class="form-select form-select-sm">
                         <option value="">Select location...</option>
@@ -1213,11 +1372,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-plus-circle"></i> New
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- ASN Shipments Section -->
-            <div class="epr-toolbar-section" data-section="asn-shipments">
-                <h6 class="epr-section-title">ASN Shipments</h6>
+            <div class="epr-toolbar-section collapsed" data-section="asn-shipments">
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="false">
+                    <h6 class="epr-section-title">ASN Shipments</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <select id="eprAsnShipmentDropdown" class="form-select form-select-sm">
                         <option value="">Select ASN shipment...</option>
@@ -1226,15 +1390,21 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
                         <i class="bi bi-plus"></i> Add
                     </button>
                 </div>
+                </div>
             </div>
 
             <!-- Notes Section -->
-            <div class="epr-toolbar-section" data-section="notes">
-                <h6 class="epr-section-title">Notes</h6>
+            <div class="epr-toolbar-section collapsed" data-section="notes">
+                <div class="epr-section-header" role="button" tabindex="0" aria-expanded="false">
+                    <h6 class="epr-section-title">Notes</h6>
+                    <i class="bi bi-chevron-down epr-section-chevron"></i>
+                </div>
+                <div class="epr-section-content">
                 <div class="epr-toolbar-controls">
                     <button class="btn btn-sm btn-secondary" id="eprAddNoteBtn" style="width: 100%;">
                         <i class="bi bi-sticky-fill"></i> Add Note
                     </button>
+                </div>
                 </div>
             </div>
         </div>
@@ -1244,8 +1414,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelRawMaterials" class="epr-types-panel epr-types-panel-raw-materials" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Raw Materials</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1256,8 +1426,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelPackaging" class="epr-types-panel epr-types-panel-packaging" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Packaging Library</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1278,8 +1448,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelProducts" class="epr-types-panel epr-types-panel-products" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Product Library</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1300,8 +1470,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelDistribution" class="epr-types-panel epr-types-panel-distribution" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Distribution</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1325,8 +1495,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelPackagingGroups" class="epr-types-panel epr-types-panel-packaging-groups" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Packaging Groups</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1350,8 +1520,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelAsnShipments" class="epr-types-panel epr-types-panel-asn-shipments" style="display: none;">
         <div class="epr-toolbar-header">
             <span>ASN Shipments</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1369,8 +1539,8 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprTypesPanelDistributionGroups" class="epr-types-panel epr-types-panel-distribution-groups" style="display: none;">
         <div class="epr-toolbar-header">
             <span>Distribution Groups</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
@@ -1389,13 +1559,16 @@ console.log('Visual Editor script loaded - Cache Version: @cacheVersion');
     <div id="eprParametersPanel" class="epr-floating-toolbar epr-parameters-panel">
         <div class="epr-toolbar-header">
             <span>Parameters</span>
-            <button class="epr-btn-close-toolbar" title="Minimize">
-                <i class="bi bi-dash"></i>
+            <button class="epr-btn-close-toolbar" title="Minimize" aria-label="Minimize">
+                <i class="bi bi-chevron-up"></i>
             </button>
         </div>
         <div class="epr-toolbar-content">
             <div id="eprParametersContent">
-                <p class="text-muted small">Select a node to view/edit parameters</p>
+                <div class="epr-parameters-empty-state">
+                    <i class="bi bi-cursor"></i>
+                    <p>Click a node on the canvas to edit its properties</p>
+                </div>
             </div>
         </div>
     </div>

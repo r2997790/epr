@@ -26,7 +26,7 @@ class ParametersPanel {
         const container = document.getElementById('parametersContent');
         
         if (!node) {
-            container.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+            container.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
             return;
         }
 
@@ -171,7 +171,7 @@ class ParametersPanel {
     clearParameters() {
         this.currentNode = null;
         const container = document.getElementById('parametersContent');
-        container.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+        container.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
     }
 
     formatLabel(key) {

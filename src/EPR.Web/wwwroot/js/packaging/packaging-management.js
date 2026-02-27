@@ -30,6 +30,7 @@
         function initPackaging() {
             if (currentType === 'supply-chain-matrix') {
                 loadMatrixData();
+                loadData('packaging-items');
             } else if (currentType === 'packaging-flow') {
                 loadPackagingFlowData();
                 setupPackagingFlowEvents();
@@ -129,7 +130,7 @@
                 }
             } else if (type === 'supply-chain-matrix') {
                 visualContainer.classList.add('d-none');
-                splitContainer.classList.add('d-none');
+                splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.remove('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.add('d-none');
@@ -141,7 +142,17 @@
                 if (addProductBtn) addProductBtn.classList.add('d-none');
                 if (exportCsvBtn) exportCsvBtn.classList.remove('d-none');
                 if (addMatrixRowBtn) addMatrixRowBtn.classList.remove('d-none');
+                if (taxonomyContainer) taxonomyContainer.classList.add('d-none');
+                if (tablePane) tablePane.classList.remove('d-none');
+                if (detailPane) detailPane.classList.remove('d-none');
+                const resizeHandle = document.getElementById('splitResizeHandle');
+                if (resizeHandle) resizeHandle.classList.remove('d-none');
+                document.getElementById('tablePaneTitle').textContent = 'Packaging Items';
+                document.getElementById('detailPaneTitle').textContent = 'Packaging Item';
+                updateFilterPlaceholder();
+                updateFilterBadge();
                 loadMatrixData();
+                loadData('packaging-items');
             } else if (type === 'packaging-flow') {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.add('d-none');
@@ -217,7 +228,8 @@
             'suppliers': 'Filter by name, city, country...',
             'raw-materials': 'Filter by name, code...',
             'packaging-items': 'Filter by name, taxonomy code...',
-            'packaging-groups': 'Filter by name, pack ID...'
+            'packaging-groups': 'Filter by name, pack ID...',
+            'supply-chain-matrix': 'Filter by name, taxonomy code...'
         };
         const EMPTY_DETAIL_MESSAGES = {
             'suppliers': { main: 'Select a supplier to view details.', hint: 'Add your first packaging supplier to start building your supply chain.' },
@@ -480,12 +492,13 @@
             }
         }
 
-        function loadData() {
+        function loadData(overrideType) {
             if (currentType === 'visual-editor') return;
-            if (currentType === 'supply-chain-matrix') { loadMatrixData(); return; }
+            if (currentType === 'supply-chain-matrix' && !overrideType) { loadData('packaging-items'); return; }
             if (currentType === 'packaging-taxonomy') { loadTaxonomyTree(); return; }
             if (currentType === 'packaging-flow') { loadPackagingFlowData(); return; }
-            const url = `/api/packaging-management/list/${currentType}?page=${currentPage}&pageSize=${currentPageSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}&filter=${encodeURIComponent(currentFilter)}`;
+            const effectiveType = overrideType || currentType;
+            const url = `/api/packaging-management/list/${effectiveType}?page=${currentPage}&pageSize=${currentPageSize}&sortBy=${currentSortBy}&sortDir=${currentSortDir}&filter=${encodeURIComponent(currentFilter)}`;
             
             console.log('[Packaging Management] Loading data from:', url);
             
@@ -530,13 +543,13 @@
                         return;
                     }
                     
-                    renderTable(data);
+                    renderTable(data, effectiveType);
                     renderPagination(data);
                     const recordCountEl = document.getElementById('recordCount');
                     if (recordCountEl) {
                         recordCountEl.textContent = data.totalCount || 0;
                     }
-                    const cacheKey = currentType + '-' + currentPage + '-' + currentFilter;
+                    const cacheKey = effectiveType + '-' + currentPage + '-' + currentFilter;
                     dataCache[cacheKey] = { data: data, ts: Date.now() };
                 })
                 .catch(error => {
@@ -799,14 +812,15 @@
         }
 
         let isCardView = false;
-        function renderTable(data) {
+        function renderTable(data, effectiveType) {
+            const typeForRender = effectiveType || currentType;
             const tbody = document.getElementById('tableBody');
             const thead = document.getElementById('tableHead');
             const cardView = document.getElementById('cardViewContainer');
             const dataTable = document.getElementById('dataTable');
             
             if (!data.items || data.items.length === 0) {
-                const emptyCta = EMPTY_TABLE_CTAS[currentType];
+                const emptyCta = EMPTY_TABLE_CTAS[typeForRender];
                 if (emptyCta) {
                     const btn = document.getElementById(emptyCta.btnId);
                     const btnHtml = btn ? '<button type="button" class="btn btn-primary mt-3" onclick="document.getElementById(\'' + emptyCta.btnId + '\').click()"><i class="bi bi-plus-lg"></i> ' + escapeHtml(emptyCta.cta) + '</button>' : '';
@@ -822,14 +836,14 @@
 
             // Determine headers based on type
             let headers = [];
-            if (currentType === 'raw-materials') {
+            if (typeForRender === 'raw-materials') {
                 headers = [
                     { key: 'name', label: 'Name', sortable: true },
                     { key: 'code', label: 'Code', sortable: true },
                     { key: 'description', label: 'Description', sortable: true },
                     { key: 'packagingItems', label: 'Used in Packaging Items', sortable: false }
                 ];
-            } else if (currentType === 'packaging-items') {
+            } else if (typeForRender === 'packaging-items') {
                 headers = [
                     { key: 'name', label: 'Name', sortable: true },
                     { key: 'taxonomyCode', label: 'Taxonomy Code', sortable: true },
@@ -838,7 +852,7 @@
                     { key: 'supplyChain', label: 'Supply Chain', sortable: false },
                     { key: 'groups', label: 'Packaging Groups', sortable: false }
                 ];
-            } else if (currentType === 'packaging-groups') {
+            } else if (typeForRender === 'packaging-groups') {
                 headers = [
                     { key: 'name', label: 'Name', sortable: true },
                     { key: 'packId', label: 'Pack ID', sortable: true },
@@ -847,7 +861,7 @@
                     { key: 'totalPackWeight', label: 'Weight (g)', sortable: true },
                     { key: 'items', label: 'Items & Supply Chain', sortable: false }
                 ];
-            } else if (currentType === 'suppliers') {
+            } else if (typeForRender === 'suppliers') {
                 headers = [
                     { key: 'name', label: 'Name', sortable: true },
                     { key: 'city', label: 'City', sortable: true },
@@ -881,7 +895,7 @@
                 const indentPx = depth * 2; // 2rem per level
                 
                 // Determine the type for detail loading - child rows in raw-materials are always raw-materials
-                const detailType = (currentType === 'raw-materials' && isChild) ? 'raw-materials' : currentType;
+                const detailType = (typeForRender === 'raw-materials' && isChild) ? 'raw-materials' : typeForRender;
                 
                 let row = '<tr onclick="selectRecord(' + item.id + ', \'' + detailType + '\')" onkeydown="tableRowKeydown(event, ' + item.id + ', \'' + detailType + '\')" data-id="' + item.id + '" role="row" tabindex="0"';
                 if (selectedId === item.id) {

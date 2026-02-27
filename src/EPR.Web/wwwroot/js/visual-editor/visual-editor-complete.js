@@ -5665,8 +5665,46 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             }
         }
         
+        setupCollapsibleSections() {
+            const STORAGE_KEY = 'epr-palette-sections';
+            const toolbar = document.getElementById('eprTypesToolbar');
+            if (!toolbar) return;
+            let saved = {};
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) saved = JSON.parse(raw);
+            } catch (e) {}
+            const sections = toolbar.querySelectorAll('.epr-toolbar-section');
+            sections.forEach(section => {
+                const sectionId = section.getAttribute('data-section');
+                const header = section.querySelector('.epr-section-header');
+                if (!header) return;
+                if (saved[sectionId] === false) section.classList.add('collapsed');
+                else if (saved[sectionId] === true) section.classList.remove('collapsed');
+                header.setAttribute('aria-expanded', section.classList.contains('collapsed') ? 'false' : 'true');
+                header.addEventListener('click', () => {
+                    section.classList.toggle('collapsed');
+                    const expanded = !section.classList.contains('collapsed');
+                    header.setAttribute('aria-expanded', expanded);
+                    try {
+                        saved[sectionId] = expanded;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+                    } catch (e) {}
+                });
+                header.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        header.click();
+                    }
+                });
+            });
+        }
+        
         setupEventListeners() {
             console.log('[EPR Types Toolbar] Setting up event listeners...');
+            
+            // Collapsible sections - Types toolbar
+            this.setupCollapsibleSections();
             
             // Raw materials buttons are set up in renderRawMaterials
             
@@ -8640,7 +8678,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             if (!container) return;
             
             if (!node) {
-                container.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+                container.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
                 return;
             }
             
@@ -9322,7 +9360,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             this.currentNode = null;
             const container = document.getElementById('eprParametersContent');
             if (container) {
-                container.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+                container.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
             }
         }
         
@@ -9520,7 +9558,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                         // Clear parameters panel
                         const paramsContainer = document.getElementById('eprParametersContent');
                         if (paramsContainer) {
-                            paramsContainer.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+                            paramsContainer.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
                         }
                         
                         console.log('[EPR Actions] Canvas cleared');
@@ -9620,10 +9658,10 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                         const icon = btn.querySelector('i');
                         if (icon) {
                             if (toolbar.classList.contains('minimized')) {
-                                icon.className = 'bi bi-plus-lg';
+                                icon.className = 'bi bi-chevron-down';
                                 btn.title = 'Expand';
                             } else {
-                                icon.className = 'bi bi-dash';
+                                icon.className = 'bi bi-chevron-up';
                                 btn.title = 'Minimize';
                                 // If panel was minimized and is now expanded, re-render raw materials if needed
                                 if (wasMinimized && toolbar.id === 'eprTypesPanelRawMaterials') {
@@ -9689,10 +9727,10 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
                             const icon = btn.querySelector('i');
                             if (icon) {
                                 if (toolbar.classList.contains('minimized')) {
-                                    icon.className = 'bi bi-plus-lg';
+                                    icon.className = 'bi bi-chevron-down';
                                     btn.title = 'Expand';
                                 } else {
-                                    icon.className = 'bi bi-dash';
+                                    icon.className = 'bi bi-chevron-up';
                                     btn.title = 'Minimize';
                                     // If panel was minimized and is now expanded, re-render raw materials if needed
                                     if (wasMinimized && toolbar.id === 'eprTypesPanelRawMaterials') {
@@ -11348,7 +11386,7 @@ console.log('[EPR Visual Editor] Timestamp:', new Date().toISOString());
             // Clear parameters panel
             const paramsContainer = document.getElementById('eprParametersContent');
             if (paramsContainer) {
-                paramsContainer.innerHTML = '<p class="text-muted small">Select a node to view/edit parameters</p>';
+                paramsContainer.innerHTML = '<div class="epr-parameters-empty-state"><i class="bi bi-cursor"></i><p>Click a node on the canvas to edit its properties</p></div>';
             }
             
                 alert('New project created. Canvas cleared.');

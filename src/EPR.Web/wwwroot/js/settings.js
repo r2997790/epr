@@ -3,7 +3,7 @@
     'use strict';
     const SETTINGS_STORAGE_KEY = 'epr-app-settings';
     const defaultSettings = {
-        textSize: 12,
+        textSize: 14,
         dateFormat: 'YYYY-MM-DD',
         language: 'English'
     };
@@ -90,7 +90,7 @@
         }
         document.getElementById('settingsSaveBtn').addEventListener('click', function() {
             var s = {
-                textSize: parseInt(document.getElementById('settingsTextSize').value, 10) || 12,
+                textSize: parseInt(document.getElementById('settingsTextSize').value, 10) || 14,
                 dateFormat: document.getElementById('settingsDateFormat').value || 'YYYY-MM-DD',
                 language: document.getElementById('settingsLanguage').value || 'English'
             };
