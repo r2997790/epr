@@ -56,6 +56,11 @@
                         <i class="bi bi-diagram-3"></i> Visual Editor
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link @(type == "text-editor" ? "active" : "")" data-type="text-editor" data-no-tab="true">
+                        <i class="bi bi-file-text"></i> Text Editor
+                    </a>
+                </li>
             </ul>
         </div>
         <div id="packagingHeaderButtons" class="d-flex gap-2 @(type == "visual-editor" ? "d-none" : "")">
@@ -85,7 +90,43 @@
 
     <!-- Visual Editor (embedded when type=visual-editor) -->
     <div id="visualEditorContainer" class="flex-grow-1 @(type == "visual-editor" ? "" : "d-none")" style="min-height: 0; height: calc(100vh - 200px);">
-        <iframe id="visualEditorFrame" src="@(type == "visual-editor" ? (Url.Action("Index", "VisualEditor") + "?embedded=1") : "")" style="width: 100%; height: 100%; border: none;"></iframe>
+        <iframe id="visualEditorFrame" src="@(type == "visual-editor" ? (Url.Action("Index", "VisualEditor") + "?embedded=1&instance=packaging-management") : "")" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+
+    <!-- Text Editor (step-by-step text-first interface) -->
+    <div id="textEditorContainer" class="flex-grow-1 d-flex flex-column @(type == "text-editor" ? "" : "d-none")" style="min-height: 0; overflow: hidden; background: #f8f9fa;">
+        <!-- Project selector bar -->
+        <div class="te-project-bar bg-white border-bottom px-3 py-2 d-flex align-items-center gap-2 flex-shrink-0" style="min-height: 52px;">
+            <span class="text-muted fw-semibold small me-1" style="white-space: nowrap;">Project:</span>
+            <select id="teProjectSelect" class="form-select form-select-sm" style="max-width: 220px;" aria-label="Select project"></select>
+            <button id="teNewProjectBtn" class="btn btn-sm btn-outline-primary" title="New project"><i class="bi bi-plus-lg me-1"></i>New</button>
+            <button id="teRenameProjectBtn" class="btn btn-sm btn-outline-secondary" title="Rename project"><i class="bi bi-pencil me-1"></i>Rename</button>
+            <button id="teDeleteProjectBtn" class="btn btn-sm btn-outline-danger" title="Delete project"><i class="bi bi-trash"></i></button>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <span id="teSyncBadge" class="badge text-secondary border" style="background: #f0f4ff; font-size: 0.75rem; font-weight: 500; padding: 0.35em 0.65em;">
+                    <i class="bi bi-arrow-repeat me-1"></i>Synced with Visual Editor
+                </span>
+            </div>
+        </div>
+        <!-- Step navigator -->
+        <div id="teStepperBar" class="bg-white border-bottom px-4 flex-shrink-0 d-flex align-items-center overflow-auto" style="min-height: 56px; gap: 0;"></div>
+        <!-- Main two-panel layout -->
+        <div class="d-flex flex-grow-1" style="min-height: 0; overflow: hidden;">
+            <!-- Left: Supply Chain Outline -->
+            <div class="bg-white border-end flex-shrink-0 d-flex flex-column" style="width: 230px; min-width: 180px; overflow: hidden;">
+                <div class="px-3 py-2 border-bottom flex-shrink-0 d-flex align-items-center justify-content-between">
+                    <span class="fw-semibold text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.07em;">Outline</span>
+                    <button id="teTreeRefreshBtn" class="btn btn-xs p-0 text-muted border-0 bg-transparent" title="Refresh outline" style="line-height: 1; font-size: 0.85rem;"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+                <div id="teTreeContent" class="flex-grow-1 overflow-auto py-2 px-2" style="font-size: 0.82rem;"></div>
+            </div>
+            <!-- Right: Step content -->
+            <div class="d-flex flex-column flex-grow-1" style="min-width: 0; overflow: hidden;">
+                <div id="teStepHeader" class="bg-white border-bottom px-4 py-3 flex-shrink-0"></div>
+                <div id="teStepBody" class="flex-grow-1 overflow-auto p-4"></div>
+                <div id="teStepFooter" class="bg-white border-top px-4 py-3 flex-shrink-0 d-flex justify-content-between align-items-center"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Supply Chain Matrix Container -->
@@ -1119,6 +1160,129 @@
             background: #a3cfbb;
             color: #198754;
         }
+
+        /* ========== Text Editor ========== */
+        .te-step-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #6c757d;
+            border: 1.5px solid transparent;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            white-space: nowrap;
+        }
+        .te-step-pill:hover { background: #f1f3f5; color: #495057; }
+        .te-step-pill.active { background: #e7f3ff; color: #0d6efd; border-color: #b6d4fe; }
+        .te-step-pill.done .te-step-num { background: #198754 !important; color: #fff !important; }
+        .te-step-num {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #dee2e6; color: #6c757d;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+        }
+        .te-step-pill.active .te-step-num { background: #0d6efd; color: #fff; }
+        .te-step-arrow { color: #ced4da; font-size: 0.75rem; margin: 0 0.15rem; }
+
+        .te-node-card {
+            background: #fff;
+            border: 1.5px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.625rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .te-node-card:hover { border-color: #adb5bd; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .te-node-card.te-card-expanded { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+        .te-card-header { display: flex; align-items: center; gap: 0.75rem; }
+        .te-card-icon {
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; flex-shrink: 0;
+        }
+        .te-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.3rem; }
+        .te-card-body {
+            margin-top: 0.875rem; padding-top: 0.875rem;
+            border-top: 1px solid #f0f2f5;
+        }
+        .te-conn-section { margin-top: 0.75rem; }
+        .te-conn-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+        .te-conn-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+        .te-conn-pill {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.78rem;
+            background: #f0f4ff; color: #0d6efd; border: 1px solid #c8d9ff;
+            cursor: default;
+        }
+        .te-conn-pill .te-pill-remove {
+            cursor: pointer; opacity: 0.5; font-size: 0.8rem; line-height: 1;
+            margin-left: 0.1rem; transition: opacity 0.1s;
+        }
+        .te-conn-pill .te-pill-remove:hover { opacity: 1; }
+        .te-conn-add-btn {
+            display: inline-flex; align-items: center; gap: 0.2rem;
+            padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.78rem;
+            background: transparent; color: #6c757d; border: 1.5px dashed #ced4da;
+            cursor: pointer; transition: border-color 0.15s, color 0.15s;
+        }
+        .te-conn-add-btn:hover { border-color: #0d6efd; color: #0d6efd; }
+
+        .te-add-card {
+            border: 1.5px dashed #ced4da; border-radius: 10px;
+            padding: 0.875rem 1rem; margin-bottom: 0.625rem;
+            background: transparent; cursor: pointer; color: #6c757d;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .te-add-card:hover { border-color: #0d6efd; color: #0d6efd; background: #f7f9ff; }
+
+        .te-tree-item {
+            padding: 0.2rem 0.4rem; border-radius: 4px; cursor: pointer;
+            display: flex; align-items: flex-start; gap: 0.35rem; line-height: 1.35;
+            color: #495057;
+        }
+        .te-tree-item:hover { background: #f8f9fa; }
+        .te-tree-item.te-active { background: #e7f3ff; color: #0d6efd; }
+        .te-tree-item .te-tree-icon { flex-shrink: 0; margin-top: 0.05rem; }
+        .te-tree-indent { padding-left: 1rem; position: relative; }
+        .te-tree-indent::before {
+            content: ''; position: absolute; left: 0.35rem; top: 0; bottom: 0.5rem;
+            width: 1.5px; background: #dee2e6;
+        }
+        .te-tree-connector { color: #adb5bd; font-size: 0.7rem; margin-right: 0.2rem; }
+        .te-tree-section-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #adb5bd; padding: 0.5rem 0.4rem 0.15rem; }
+        .te-empty-state { text-align: center; padding: 3rem 1rem; color: #adb5bd; }
+        .te-empty-state .te-empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
+        .te-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .te-form-row.te-single { grid-template-columns: 1fr; }
+        .te-review-chain {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;
+            padding: 0.75rem 1rem; background: #fff; border-radius: 10px;
+            border: 1.5px solid #e9ecef; margin-bottom: 0.5rem; font-size: 0.875rem;
+        }
+        .te-review-chain-node {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+        }
+        .te-review-arrow { color: #adb5bd; font-size: 1rem; }
+        .te-step-header-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .te-conn-add-select {
+            appearance: none; -webkit-appearance: none;
+            border: 1.5px dashed #ced4da; border-radius: 20px;
+            padding: 0.18rem 0.6rem; font-size: 0.78rem;
+            background: transparent; color: #6c757d; cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .te-conn-add-select:hover, .te-conn-add-select:focus { border-color: #0d6efd; color: #0d6efd; outline: none; }
 
         /* Packaging Flow 3-column layout */
         .packaging-flow-column {

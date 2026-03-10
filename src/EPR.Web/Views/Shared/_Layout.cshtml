@@ -167,10 +167,11 @@
             sortBy: @Html.Raw(Json.Serialize(ViewContext.ViewData["SortBy"] ?? "name")),
             sortDir: @Html.Raw(Json.Serialize(ViewContext.ViewData["SortDir"] ?? "asc")),
             filter: @Html.Raw(Json.Serialize(ViewContext.ViewData["Filter"] ?? "")),
-            visualEditorUrl: '@(Url.Action("Index", "VisualEditor"))?embedded=1'
+            visualEditorUrl: '@(Url.Action("Index", "VisualEditor"))?embedded=1&instance=packaging-management'
         };
     </script>
     <script src="~/js/packaging/packaging-management.js" asp-append-version="true"></script>
+    <script src="~/js/packaging/text-editor.js" asp-append-version="true"></script>
     }
     @await RenderSectionAsync("Scripts", required: false)
 </body>

@@ -34,6 +34,8 @@
             } else if (currentType === 'packaging-flow') {
                 loadPackagingFlowData();
                 setupPackagingFlowEvents();
+            } else if (currentType === 'text-editor') {
+                if (window.initTextEditor) window.initTextEditor();
             } else if (currentType !== 'visual-editor' && currentType !== 'packaging-taxonomy') {
                 updateFilterPlaceholder();
                 updateFilterBadge();
@@ -116,24 +118,36 @@
             const exportCsvBtn = document.getElementById('exportMatrixCsvBtn');
             const addMatrixRowBtn = document.getElementById('addMatrixRowBtn');
 
+            const textEditorContainer = document.getElementById('textEditorContainer');
             if (type === 'visual-editor') {
                 visualContainer.classList.remove('d-none');
                 splitContainer.classList.add('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.add('d-none');
                 const frame = document.getElementById('visualEditorFrame');
                 if (frame) {
                     const needsLoad = !frame.src || frame.src === 'about:blank' || !frame.src.includes('VisualEditor');
                     if (needsLoad) frame.src = visualEditorUrl;
                 }
+            } else if (type === 'text-editor') {
+                visualContainer.classList.add('d-none');
+                splitContainer.classList.add('d-none');
+                if (matrixContainer) matrixContainer.classList.add('d-none');
+                const flowContainer2 = document.getElementById('packagingFlowContainer');
+                if (flowContainer2) flowContainer2.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.remove('d-none');
+                if (headerButtons) headerButtons.classList.add('d-none');
+                if (window.initTextEditor) window.initTextEditor();
             } else if (type === 'supply-chain-matrix') {
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.remove('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
                 if (addSupplierBtn) addSupplierBtn.classList.add('d-none');
                 if (addRawMaterialBtn) addRawMaterialBtn.classList.add('d-none');
@@ -157,6 +171,7 @@
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.add('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.add('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.remove('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
@@ -173,6 +188,7 @@
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.add('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
@@ -188,6 +204,7 @@
                 visualContainer.classList.add('d-none');
                 splitContainer.classList.remove('d-none');
                 if (matrixContainer) matrixContainer.classList.add('d-none');
+                if (textEditorContainer) textEditorContainer.classList.add('d-none');
                 const flowContainer = document.getElementById('packagingFlowContainer');
                 if (flowContainer) flowContainer.classList.add('d-none');
                 if (headerButtons) headerButtons.classList.remove('d-none');
