@@ -99,9 +99,9 @@
         <div class="te-project-bar bg-white border-bottom px-3 py-2 d-flex align-items-center gap-2 flex-shrink-0" style="min-height: 52px;">
             <span class="text-muted fw-semibold small me-1" style="white-space: nowrap;">Project:</span>
             <select id="teProjectSelect" class="form-select form-select-sm" style="max-width: 220px;" aria-label="Select project"></select>
-            <button id="teNewProjectBtn" class="btn btn-sm btn-outline-primary" title="New project"><i class="bi bi-plus-lg me-1"></i>New</button>
-            <button id="teRenameProjectBtn" class="btn btn-sm btn-outline-secondary" title="Rename project"><i class="bi bi-pencil me-1"></i>Rename</button>
-            <button id="teDeleteProjectBtn" class="btn btn-sm btn-outline-danger" title="Delete project"><i class="bi bi-trash"></i></button>
+            <button id="teNewProjectBtn" class="te-action-btn te-action-btn-primary" title="New project"><i class="bi bi-plus-lg"></i> New</button>
+            <button id="teRenameProjectBtn" class="te-action-btn" title="Rename project"><i class="bi bi-pencil"></i> Rename</button>
+            <button id="teDeleteProjectBtn" class="te-action-btn te-action-btn-danger" title="Delete project"><i class="bi bi-trash"></i></button>
             <div class="ms-auto d-flex align-items-center gap-2">
                 <span id="teSyncBadge" class="badge text-secondary border" style="background: #f0f4ff; font-size: 0.75rem; font-weight: 500; padding: 0.35em 0.65em;">
                     <i class="bi bi-arrow-repeat me-1"></i>Synced with Visual Editor
@@ -1162,22 +1162,38 @@
         }
 
         /* ========== Text Editor ========== */
+
+        /* Toolbar action buttons (New / Rename / Delete) */
+        .te-action-btn {
+            appearance: none; -webkit-appearance: none;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.3rem 0.85rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500; cursor: pointer;
+            border: none; outline: none;
+            background: #f1f3f5; color: #495057;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .te-action-btn:hover { background: #e2e6ea; color: #212529; }
+        .te-action-btn-primary { background: #e7f3ff; color: #0d6efd; }
+        .te-action-btn-primary:hover { background: #cfe2ff; color: #0a58ca; }
+        .te-action-btn-danger { background: #fff0f0; color: #dc3545; }
+        .te-action-btn-danger:hover { background: #ffdde1; color: #b02a37; }
+        .te-action-btn:disabled { opacity: 0.45; cursor: default; }
+
+        /* Step pills */
         .te-step-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.45rem 0.85rem;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            font-weight: 500;
-            cursor: pointer;
-            color: #6c757d;
-            border: 1.5px solid transparent;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            appearance: none; -webkit-appearance: none;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.35rem 0.85rem; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 500; cursor: pointer;
+            color: #6c757d; border: none; outline: none;
+            background: transparent;
+            transition: background 0.15s, color 0.15s;
             white-space: nowrap;
         }
         .te-step-pill:hover { background: #f1f3f5; color: #495057; }
-        .te-step-pill.active { background: #e7f3ff; color: #0d6efd; border-color: #b6d4fe; }
+        .te-step-pill.active { background: #e7f3ff; color: #0d6efd; }
         .te-step-pill.done .te-step-num { background: #198754 !important; color: #fff !important; }
         .te-step-num {
             width: 20px; height: 20px; border-radius: 50%;
@@ -1186,103 +1202,151 @@
             font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
         }
         .te-step-pill.active .te-step-num { background: #0d6efd; color: #fff; }
-        .te-step-arrow { color: #ced4da; font-size: 0.75rem; margin: 0 0.15rem; }
+        .te-step-arrow { color: #ced4da; font-size: 0.75rem; margin: 0 0.1rem; line-height: 1; display: flex; align-items: center; }
 
+        /* Footer nav buttons */
+        .te-nav-btn {
+            appearance: none; -webkit-appearance: none;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.45rem 1.1rem; border-radius: 20px;
+            font-size: 0.85rem; font-weight: 500; cursor: pointer;
+            border: none; outline: none;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .te-nav-btn:active { transform: scale(0.97); }
+        .te-nav-btn-secondary { background: #f1f3f5; color: #495057; }
+        .te-nav-btn-secondary:hover { background: #e2e6ea; }
+        .te-nav-btn-primary { background: #0d6efd; color: #fff; }
+        .te-nav-btn-primary:hover { background: #0b5ed7; }
+        .te-nav-btn-success { background: #198754; color: #fff; }
+        .te-nav-btn-success:hover { background: #157347; }
+        .te-nav-btn.invisible { visibility: hidden; }
+
+        /* Save / primary action buttons inside cards */
+        .te-save-btn {
+            appearance: none; -webkit-appearance: none;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.35rem 1rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500; cursor: pointer;
+            border: none; outline: none;
+            background: #0d6efd; color: #fff;
+            transition: background 0.15s;
+        }
+        .te-save-btn:hover { background: #0b5ed7; }
+        .te-cancel-btn {
+            appearance: none; -webkit-appearance: none;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.35rem 0.9rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 500; cursor: pointer;
+            border: none; outline: none;
+            background: #f1f3f5; color: #6c757d;
+            transition: background 0.15s;
+        }
+        .te-cancel-btn:hover { background: #e2e6ea; }
+
+        /* Node cards */
         .te-node-card {
             background: #fff;
             border: 1.5px solid #e9ecef;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 0.875rem 1rem;
             margin-bottom: 0.625rem;
             cursor: pointer;
             transition: border-color 0.15s, box-shadow 0.15s;
         }
         .te-node-card:hover { border-color: #adb5bd; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .te-node-card.te-card-expanded { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+        .te-node-card.te-card-expanded { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); cursor: default; }
         .te-card-header { display: flex; align-items: center; gap: 0.75rem; }
         .te-card-icon {
-            width: 34px; height: 34px; border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             font-size: 0.95rem; flex-shrink: 0;
         }
-        .te-card-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.3rem; }
-        .te-card-body {
-            margin-top: 0.875rem; padding-top: 0.875rem;
-            border-top: 1px solid #f0f2f5;
+        .te-card-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-top: 0.3rem; }
+        .te-card-body { margin-top: 0.875rem; padding-top: 0.875rem; border-top: 1px solid #f0f2f5; }
+        .te-card-actions {
+            display: inline-flex; align-items: center;
+            appearance: none; -webkit-appearance: none;
+            padding: 0.25rem 0.45rem; border-radius: 8px;
+            border: none; outline: none; cursor: pointer;
+            background: transparent; color: #adb5bd;
+            transition: background 0.12s, color 0.12s;
         }
+        .te-card-actions:hover { background: #f1f3f5; color: #495057; }
+        .te-card-actions.te-danger:hover { background: #fff0f0; color: #dc3545; }
+
+        /* Connection sections */
         .te-conn-section { margin-top: 0.75rem; }
-        .te-conn-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+        .te-conn-label { font-size: 0.72rem; font-weight: 700; color: #adb5bd; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem; }
         .te-conn-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
         .te-conn-pill {
             display: inline-flex; align-items: center; gap: 0.25rem;
             padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.78rem;
             background: #f0f4ff; color: #0d6efd; border: 1px solid #c8d9ff;
-            cursor: default;
         }
-        .te-conn-pill .te-pill-remove {
-            cursor: pointer; opacity: 0.5; font-size: 0.8rem; line-height: 1;
-            margin-left: 0.1rem; transition: opacity 0.1s;
+        .te-pill-remove {
+            cursor: pointer; opacity: 0.45; font-size: 0.85rem; line-height: 1;
+            margin-left: 0.1rem; transition: opacity 0.1s; display: inline-block;
         }
-        .te-conn-pill .te-pill-remove:hover { opacity: 1; }
-        .te-conn-add-btn {
-            display: inline-flex; align-items: center; gap: 0.2rem;
-            padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.78rem;
-            background: transparent; color: #6c757d; border: 1.5px dashed #ced4da;
-            cursor: pointer; transition: border-color 0.15s, color 0.15s;
+        .te-pill-remove:hover { opacity: 1; }
+        .te-conn-add-select {
+            appearance: none; -webkit-appearance: none;
+            border: 1.5px dashed #ced4da; border-radius: 20px;
+            padding: 0.18rem 0.65rem; font-size: 0.78rem;
+            background: transparent; color: #adb5bd; cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
         }
-        .te-conn-add-btn:hover { border-color: #0d6efd; color: #0d6efd; }
+        .te-conn-add-select:hover, .te-conn-add-select:focus { border-color: #0d6efd; color: #0d6efd; outline: none; }
 
+        /* Add new item CTA */
         .te-add-card {
-            border: 1.5px dashed #ced4da; border-radius: 10px;
-            padding: 0.875rem 1rem; margin-bottom: 0.625rem;
-            background: transparent; cursor: pointer; color: #6c757d;
+            border: 1.5px dashed #d0d5dd; border-radius: 12px;
+            padding: 0.75rem 1rem; margin-bottom: 0.625rem;
+            background: transparent; cursor: pointer; color: #adb5bd;
             transition: border-color 0.15s, color 0.15s, background 0.15s;
             display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.875rem; font-weight: 500;
+            appearance: none; -webkit-appearance: none; width: 100%; text-align: left;
+            outline: none;
         }
         .te-add-card:hover { border-color: #0d6efd; color: #0d6efd; background: #f7f9ff; }
 
+        /* Tree */
         .te-tree-item {
-            padding: 0.2rem 0.4rem; border-radius: 4px; cursor: pointer;
+            padding: 0.22rem 0.5rem; border-radius: 6px; cursor: pointer;
             display: flex; align-items: flex-start; gap: 0.35rem; line-height: 1.35;
             color: #495057;
         }
         .te-tree-item:hover { background: #f8f9fa; }
         .te-tree-item.te-active { background: #e7f3ff; color: #0d6efd; }
-        .te-tree-item .te-tree-icon { flex-shrink: 0; margin-top: 0.05rem; }
         .te-tree-indent { padding-left: 1rem; position: relative; }
-        .te-tree-indent::before {
-            content: ''; position: absolute; left: 0.35rem; top: 0; bottom: 0.5rem;
-            width: 1.5px; background: #dee2e6;
-        }
-        .te-tree-connector { color: #adb5bd; font-size: 0.7rem; margin-right: 0.2rem; }
-        .te-tree-section-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #adb5bd; padding: 0.5rem 0.4rem 0.15rem; }
+        .te-tree-indent::before { content: ''; position: absolute; left: 0.4rem; top: 0; bottom: 0.4rem; width: 1.5px; background: #e9ecef; }
+        .te-tree-section-label { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #ced4da; padding: 0.55rem 0.5rem 0.2rem; }
+
+        /* Empty state */
         .te-empty-state { text-align: center; padding: 3rem 1rem; color: #adb5bd; }
         .te-empty-state .te-empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; }
-        .te-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+        /* Forms */
+        .te-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
         .te-form-row.te-single { grid-template-columns: 1fr; }
+
+        /* Review */
         .te-review-chain {
-            display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;
-            padding: 0.75rem 1rem; background: #fff; border-radius: 10px;
-            border: 1.5px solid #e9ecef; margin-bottom: 0.5rem; font-size: 0.875rem;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;
+            padding: 0.75rem 1rem; background: #fff; border-radius: 12px;
+            border: 1.5px solid #e9ecef; margin-bottom: 0.5rem;
         }
         .te-review-chain-node {
             display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
+            padding: 0.22rem 0.65rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500;
         }
-        .te-review-arrow { color: #adb5bd; font-size: 1rem; }
+        .te-review-arrow { color: #ced4da; font-size: 1rem; line-height: 1; }
         .te-step-header-icon {
-            width: 40px; height: 40px; border-radius: 10px;
+            width: 42px; height: 42px; border-radius: 11px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; flex-shrink: 0;
+            font-size: 1.15rem; flex-shrink: 0;
         }
-        .te-conn-add-select {
-            appearance: none; -webkit-appearance: none;
-            border: 1.5px dashed #ced4da; border-radius: 20px;
-            padding: 0.18rem 0.6rem; font-size: 0.78rem;
-            background: transparent; color: #6c757d; cursor: pointer;
-            transition: border-color 0.15s, color 0.15s;
-        }
-        .te-conn-add-select:hover, .te-conn-add-select:focus { border-color: #0d6efd; color: #0d6efd; outline: none; }
 
         /* Packaging Flow 3-column layout */
         .packaging-flow-column {

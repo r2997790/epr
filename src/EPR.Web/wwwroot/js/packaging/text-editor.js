@@ -1,7 +1,6 @@
 /**
- * Text Editor — Step-by-step text-first interface for supply chain data.
- * Reads/writes the same localStorage key as the Visual Editor (embedded instance),
- * so both interfaces stay in sync automatically.
+ * Text Editor — Step-by-step text-first supply chain interface.
+ * Syncs with the Visual Editor via shared localStorage key.
  */
 (function () {
     'use strict';
@@ -10,41 +9,99 @@
     const STORAGE_KEY = 'eprSavedProjects-epr-instance-packaging-management';
 
     const STEPS = [
-        { type: 'raw-material',    label: 'Raw Materials',     icon: 'bi-circle',       color: '#6f42c1', bg: '#f3f0ff', desc: 'Define what your packaging materials are made from.' },
-        { type: 'packaging',       label: 'Packaging',         icon: 'bi-box-seam',     color: '#0d6efd', bg: '#e7f3ff', desc: 'Define the packaging items used in your supply chain.' },
-        { type: 'packaging-group', label: 'Groups',            icon: 'bi-collection',   color: '#198754', bg: '#e9f7ef', desc: 'Group packaging items by layer (Primary, Secondary, etc.).' },
-        { type: 'product',         label: 'Products',          icon: 'bi-bag',          color: '#fd7e14', bg: '#fff3e9', desc: 'Define products that use this packaging.' },
-        { type: 'distribution',    label: 'Distribution',      icon: 'bi-geo-alt',      color: '#dc3545', bg: '#fdf0f0', desc: 'Define where products are distributed.' },
-        { type: 'review',          label: 'Review',            icon: 'bi-check-circle', color: '#20c997', bg: '#e9faf5', desc: 'Review your complete supply chain.' }
+        {
+            type: 'raw-material',
+            label: 'Raw Materials',
+            icon: 'bi-circle',
+            color: '#6f42c1', bg: '#f3f0ff',
+            desc: 'Define the raw materials your packaging is made from — e.g. PET plastic, glass, aluminium.'
+        },
+        {
+            type: 'packaging',
+            label: 'Packaging',
+            icon: 'bi-box-seam',
+            color: '#0d6efd', bg: '#e7f3ff',
+            desc: 'Define the physical packaging items — bottles, cans, trays, labels, caps, etc.'
+        },
+        {
+            type: 'supplier-packaging',
+            label: 'Suppliers',
+            icon: 'bi-shop',
+            color: '#0891b2', bg: '#ecfeff',
+            desc: 'Track which supplier companies provide specific packaging to your products.'
+        },
+        {
+            type: 'packaging-group',
+            label: 'Groups',
+            icon: 'bi-collection',
+            color: '#198754', bg: '#e9f7ef',
+            desc: 'Group packaging into layers — Primary (touches product), Secondary, Tertiary, etc.'
+        },
+        {
+            type: 'product',
+            label: 'Products',
+            icon: 'bi-bag',
+            color: '#fd7e14', bg: '#fff3e9',
+            desc: 'Define the finished products. Link them to packaging groups and supplier packaging.'
+        },
+        {
+            type: 'distribution',
+            label: 'Distribution',
+            icon: 'bi-geo-alt',
+            color: '#dc3545', bg: '#fdf0f0',
+            desc: 'Define distribution points — stores, warehouses, hubs — where products are sent.'
+        },
+        {
+            type: 'review',
+            label: 'Review',
+            icon: 'bi-check-circle',
+            color: '#20c997', bg: '#e9faf5',
+            desc: 'Review the complete supply chain chains from raw material through to distribution.'
+        }
     ];
 
-    // Connection rules: which type connects to which (from → to)
-    const CONNECTION_MAP = {
-        'raw-material':    'packaging',
-        'packaging':       'packaging-group',
-        'packaging-group': 'product',
-        'product':         'distribution'
-    };
+    // Valid connections: [from, to]
+    const CONNECTION_RULES = [
+        ['raw-material',    'packaging'],
+        ['packaging',       'packaging-group'],
+        ['supplier-packaging', 'product'],
+        ['packaging-group', 'product'],
+        ['product',         'distribution']
+    ];
 
-    // Reverse lookup: to ← from
-    const REVERSE_CONNECTION_MAP = {};
-    Object.entries(CONNECTION_MAP).forEach(([from, to]) => { REVERSE_CONNECTION_MAP[to] = from; });
+    // Downstream: what types can this type connect TO?
+    const DOWNSTREAM = {};
+    // Upstream: what types can connect TO this type?
+    const UPSTREAM = {};
+    CONNECTION_RULES.forEach(([from, to]) => {
+        if (!DOWNSTREAM[from]) DOWNSTREAM[from] = [];
+        DOWNSTREAM[from].push(to);
+        if (!UPSTREAM[to]) UPSTREAM[to] = [];
+        UPSTREAM[to].push(from);
+    });
 
-    // Fields per node type
     const NODE_FIELDS = {
         'raw-material': [
             { key: 'name',        label: 'Name',         type: 'text',   required: true,  placeholder: 'e.g. PET Plastic' },
-            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'Brief description' },
+            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'e.g. Recycled PET resin' },
             { key: 'weight',      label: 'Weight (g)',   type: 'number', placeholder: '0' },
-            { key: 'notes',       label: 'Notes',        type: 'textarea' }
+            { key: 'notes',       label: 'Notes',        type: 'textarea', placeholder: 'e.g. Min 30% recycled content required' }
         ],
         'packaging': [
-            { key: 'name',        label: 'Name',         type: 'text',   required: true, placeholder: 'e.g. 500ml Bottle' },
-            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'Brief description' },
+            { key: 'name',        label: 'Name',         type: 'text',   required: true, placeholder: 'e.g. 500ml PET Bottle' },
+            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'e.g. Clear lightweight bottle' },
             { key: 'height',      label: 'Height (mm)',  type: 'number', placeholder: '0' },
             { key: 'weight',      label: 'Weight (g)',   type: 'number', placeholder: '0' },
             { key: 'depth',       label: 'Depth (mm)',   type: 'number', placeholder: '0' },
-            { key: 'notes',       label: 'Notes',        type: 'textarea' }
+            { key: 'notes',       label: 'Notes',        type: 'textarea', placeholder: 'Additional notes' }
+        ],
+        'supplier-packaging': [
+            { key: 'name',         label: 'Name',             type: 'text', required: true, placeholder: 'e.g. BevPak – 500ml Bottle' },
+            { key: 'companyName',  label: 'Supplier Company', type: 'text', placeholder: 'e.g. BevPak Ltd' },
+            { key: 'description',  label: 'Description',      type: 'text', placeholder: 'e.g. Preferred approved supplier' },
+            { key: 'contactEmail', label: 'Contact / Email',  type: 'text', placeholder: 'e.g. orders@supplier.com' },
+            { key: 'certifications', label: 'Certifications', type: 'text', placeholder: 'e.g. ISO 9001, BRC Grade A' },
+            { key: 'notes',        label: 'Notes',            type: 'textarea', placeholder: 'Lead time, MOQ, payment terms, etc.' }
         ],
         'packaging-group': [
             { key: 'name',         label: 'Name',          type: 'text',   required: true, placeholder: 'e.g. Primary Pack' },
@@ -54,14 +111,14 @@
         'product': [
             { key: 'name',        label: 'Name',         type: 'text',   required: true, placeholder: 'e.g. Sparkling Water 500ml' },
             { key: 'sku',         label: 'SKU',          type: 'text',   placeholder: 'e.g. SW-500' },
-            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'Brief description' },
-            { key: 'weight',      label: 'Weight (g)',   type: 'number', placeholder: '0' },
-            { key: 'quantity',    label: 'Quantity',     type: 'number', placeholder: '0' }
+            { key: 'description', label: 'Description',  type: 'text',   placeholder: 'e.g. Natural sparkling mineral water' },
+            { key: 'weight',      label: 'Net Weight (g)',type: 'number', placeholder: '0' },
+            { key: 'quantity',    label: 'Annual Qty',   type: 'number', placeholder: '0' }
         ],
         'distribution': [
-            { key: 'name',        label: 'Name / Location', type: 'text',   required: true, placeholder: 'e.g. London – Tesco' },
-            { key: 'companyName', label: 'Company',         type: 'text',   placeholder: 'e.g. Tesco PLC' },
-            { key: 'siteName',    label: 'Site Name',       type: 'text',   placeholder: 'e.g. Tesco Kensington' },
+            { key: 'name',        label: 'Location Name',   type: 'text',   required: true, placeholder: 'e.g. London – Central DC' },
+            { key: 'companyName', label: 'Company',         type: 'text',   placeholder: 'e.g. AquaCo Ltd' },
+            { key: 'siteName',    label: 'Site Name',       type: 'text',   placeholder: 'e.g. Canning Town Hub' },
             { key: 'city',        label: 'City',            type: 'text',   placeholder: 'e.g. London' },
             { key: 'country',     label: 'Country',         type: 'text',   placeholder: 'e.g. UK' },
             { key: 'type',        label: 'Type',            type: 'select', options: ['Store', 'Warehouse', 'Hub', 'Distribution Centre'] }
@@ -70,8 +127,8 @@
 
     // Auto-layout X positions by node type
     const LAYOUT_X = {
-        'raw-material': 80, 'packaging': 350, 'packaging-group': 620,
-        'product': 890, 'distribution': 1160
+        'raw-material': 80, 'packaging': 320, 'supplier-packaging': 480,
+        'packaging-group': 620, 'product': 890, 'distribution': 1160
     };
 
     // ─── State ────────────────────────────────────────────────────────────────
@@ -88,9 +145,7 @@
         loadFromStorage();
         if (!initialized) {
             bindProjectBarEvents();
-            document.getElementById('teTreeRefreshBtn')?.addEventListener('click', () => {
-                renderTree();
-            });
+            document.getElementById('teTreeRefreshBtn')?.addEventListener('click', renderTree);
             initialized = true;
         }
         renderAll();
@@ -105,14 +160,13 @@
         } catch (_) { allProjects = []; }
 
         if (allProjects.length === 0) {
-            const blank = createBlankProject('My Supply Chain');
-            allProjects.push(blank);
+            allProjects.push(createExampleProject());
             saveToStorage();
         }
+
         if (!currentProject) {
             currentProject = allProjects[0];
         } else {
-            // Re-sync reference after reload
             const idx = allProjects.findIndex(p => p.projectName === currentProject.projectName);
             currentProject = idx >= 0 ? allProjects[idx] : allProjects[0];
         }
@@ -129,13 +183,63 @@
         const badge = document.getElementById('teSyncBadge');
         if (!badge) return;
         badge.style.background = '#d1fae5';
-        badge.style.borderColor = '#6ee7b7';
         badge.innerHTML = '<i class="bi bi-check-circle-fill me-1" style="color:#059669"></i>Saved';
         setTimeout(() => {
             badge.style.background = '#f0f4ff';
-            badge.style.borderColor = '';
             badge.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Synced with Visual Editor';
         }, 1800);
+    }
+
+    // ─── Example data ─────────────────────────────────────────────────────────
+    function createExampleProject() {
+        const nodes = [
+            // Raw Materials
+            { id: 'ex-rm-1', type: 'raw-material', x: 80,  y: 80,  name: 'rPET Plastic',       icon: 'bi-circle', locked: false, parameters: { name: 'rPET Plastic',       description: 'Recycled PET resin, min 30% PCR', weight: 25,  notes: 'Preferred: 30–50% post-consumer recycled content' } },
+            { id: 'ex-rm-2', type: 'raw-material', x: 80,  y: 220, name: 'Recycled Cardboard',  icon: 'bi-circle', locked: false, parameters: { name: 'Recycled Cardboard',  description: 'FSC-certified corrugated board',   weight: 180, notes: 'Minimum FSC-Mix 70% certified' } },
+            { id: 'ex-rm-3', type: 'raw-material', x: 80,  y: 360, name: 'Food-Grade Ink',      icon: 'bi-circle', locked: false, parameters: { name: 'Food-Grade Ink',      description: 'Water-based label ink',           weight: 2,   notes: '' } },
+
+            // Packaging
+            { id: 'ex-pk-1', type: 'packaging', x: 320, y: 80,  name: '500ml PET Bottle',    icon: 'bi-box-seam', locked: false, parameters: { name: '500ml PET Bottle',    description: 'Clear lightweight bottle',        height: 215, weight: 25, depth: 70,  notes: '' } },
+            { id: 'ex-pk-2', type: 'packaging', x: 320, y: 220, name: 'Corrugated Shelf Tray',icon: 'bi-box-seam', locked: false, parameters: { name: 'Corrugated Shelf Tray',description: 'Holds 24 bottles, retail-ready',  height: 100, weight: 180, depth: 370, notes: '' } },
+            { id: 'ex-pk-3', type: 'packaging', x: 320, y: 360, name: 'Pressure-Sensitive Label',icon:'bi-box-seam',locked: false, parameters: { name: 'Pressure-Sensitive Label', description: 'BOPP wrap-around label',      height: 65,  weight: 2,  depth: 210, notes: '' } },
+
+            // Supplier Packaging
+            { id: 'ex-sp-1', type: 'supplier-packaging', x: 480, y: 80,  name: 'BevPak – 500ml Clear PET', icon: 'bi-shop', locked: false, parameters: { name: 'BevPak – 500ml Clear PET', companyName: 'BevPak Ltd',      description: 'Approved Tier 1 supplier',      contactEmail: 'orders@bevpak.com',    certifications: 'ISO 9001, BRC Grade A', notes: '12-week lead time; MOQ 100,000 units' } },
+            { id: 'ex-sp-2', type: 'supplier-packaging', x: 480, y: 220, name: 'PackCo – Shelf Tray',       icon: 'bi-shop', locked: false, parameters: { name: 'PackCo – Shelf Tray',       companyName: 'PackCo Europe',   description: 'Secondary packaging supplier',  contactEmail: 'sales@packco.eu',      certifications: 'ISO 14001, FSC COC',    notes: '4-week lead time' } },
+
+            // Packaging Groups
+            { id: 'ex-pg-1', type: 'packaging-group', x: 620, y: 80,  name: 'Primary Pack',          icon: 'bi-collection', locked: false, parameters: { name: 'Primary Pack',          layer: 'Primary',   holdsQuantity: 1 } },
+            { id: 'ex-pg-2', type: 'packaging-group', x: 620, y: 220, name: 'Shelf-Ready Tray (24s)', icon: 'bi-collection', locked: false, parameters: { name: 'Shelf-Ready Tray (24s)', layer: 'Secondary', holdsQuantity: 24 } },
+
+            // Products
+            { id: 'ex-pr-1', type: 'product', x: 890, y: 80, name: 'Sparkling Water 500ml', icon: 'bi-bag', locked: false, parameters: { name: 'Sparkling Water 500ml', sku: 'SW-500', description: 'Natural sparkling mineral water', weight: 500, quantity: 2400000 } },
+
+            // Distribution
+            { id: 'ex-di-1', type: 'distribution', x: 1160, y: 80,  name: 'London – Central DC',   icon: 'bi-geo-alt', locked: false, parameters: { name: 'London – Central DC',   companyName: 'AquaCo Ltd', siteName: 'Canning Town Hub',     city: 'London',     country: 'UK', type: 'Hub' } },
+            { id: 'ex-di-2', type: 'distribution', x: 1160, y: 220, name: 'Manchester – North DC',  icon: 'bi-geo-alt', locked: false, parameters: { name: 'Manchester – North DC',  companyName: 'AquaCo Ltd', siteName: 'Trafford Park Depot',  city: 'Manchester', country: 'UK', type: 'Warehouse' } }
+        ];
+
+        const connections = [
+            // Raw material → Packaging
+            { from: 'ex-rm-1', to: 'ex-pk-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-rm-2', to: 'ex-pk-2', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-rm-3', to: 'ex-pk-3', fromPort: 'right', toPort: 'left' },
+            // Packaging → Groups
+            { from: 'ex-pk-1', to: 'ex-pg-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-pk-3', to: 'ex-pg-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-pk-2', to: 'ex-pg-2', fromPort: 'right', toPort: 'left' },
+            // Groups → Product
+            { from: 'ex-pg-1', to: 'ex-pr-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-pg-2', to: 'ex-pr-1', fromPort: 'right', toPort: 'left' },
+            // Supplier Packaging → Product
+            { from: 'ex-sp-1', to: 'ex-pr-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-sp-2', to: 'ex-pr-1', fromPort: 'right', toPort: 'left' },
+            // Product → Distribution
+            { from: 'ex-pr-1', to: 'ex-di-1', fromPort: 'right', toPort: 'left' },
+            { from: 'ex-pr-1', to: 'ex-di-2', fromPort: 'right', toPort: 'left' }
+        ];
+
+        return { projectName: 'Example: Sparkling Water 500ml', nodes, connections, savedAt: new Date().toISOString() };
     }
 
     function createBlankProject(name) {
@@ -144,8 +248,7 @@
 
     // ─── Project helpers ──────────────────────────────────────────────────────
     function getNodesOfType(type) {
-        if (!currentProject) return [];
-        return (currentProject.nodes || []).filter(n => n.type === type);
+        return (currentProject?.nodes || []).filter(n => n.type === type);
     }
 
     function getNodeById(id) {
@@ -155,15 +258,13 @@
     function getConnectedTo(nodeId) {
         return (currentProject?.connections || [])
             .filter(c => c.from === nodeId)
-            .map(c => getNodeById(c.to))
-            .filter(Boolean);
+            .map(c => getNodeById(c.to)).filter(Boolean);
     }
 
     function getConnectedFrom(nodeId) {
         return (currentProject?.connections || [])
             .filter(c => c.to === nodeId)
-            .map(c => getNodeById(c.from))
-            .filter(Boolean);
+            .map(c => getNodeById(c.from)).filter(Boolean);
     }
 
     function connectionExists(fromId, toId) {
@@ -176,24 +277,21 @@
 
     function assignCoordinates(type) {
         const x = LAYOUT_X[type] || 100;
-        const peers = getNodesOfType(type);
-        const y = 80 + peers.length * 140;
+        const y = 80 + getNodesOfType(type).length * 140;
         return { x, y };
     }
 
     // ─── CRUD ─────────────────────────────────────────────────────────────────
     function addNode(type, params) {
         const { x, y } = assignCoordinates(type);
+        const step = STEPS.find(s => s.type === type);
         const node = {
-            id: generateNodeId(),
-            type,
-            x, y,
+            id: generateNodeId(), type, x, y,
             name: params.name || 'Untitled',
-            icon: STEPS.find(s => s.type === type)?.icon || 'bi-square',
+            icon: step?.icon || 'bi-square',
             locked: false,
             parameters: { ...params }
         };
-        // Store name at top level too (matches VE format)
         currentProject.nodes.push(node);
         currentProject.savedAt = new Date().toISOString();
         saveToStorage();
@@ -205,7 +303,6 @@
         if (!node) return;
         node.name = params.name || node.name;
         Object.assign(node.parameters, params);
-        node.parameters.name = params.name || node.name;
         currentProject.savedAt = new Date().toISOString();
         saveToStorage();
     }
@@ -213,9 +310,7 @@
     function deleteNode(id) {
         if (!currentProject) return;
         currentProject.nodes = currentProject.nodes.filter(n => n.id !== id);
-        currentProject.connections = currentProject.connections.filter(
-            c => c.from !== id && c.to !== id
-        );
+        currentProject.connections = currentProject.connections.filter(c => c.from !== id && c.to !== id);
         currentProject.savedAt = new Date().toISOString();
         saveToStorage();
     }
@@ -229,14 +324,12 @@
 
     function removeConnection(fromId, toId) {
         if (!currentProject) return;
-        currentProject.connections = currentProject.connections.filter(
-            c => !(c.from === fromId && c.to === toId)
-        );
+        currentProject.connections = currentProject.connections.filter(c => !(c.from === fromId && c.to === toId));
         currentProject.savedAt = new Date().toISOString();
         saveToStorage();
     }
 
-    // ─── Render all ───────────────────────────────────────────────────────────
+    // ─── Render ───────────────────────────────────────────────────────────────
     function renderAll() {
         renderProjectBar();
         renderStepper();
@@ -257,10 +350,10 @@
             sel.appendChild(opt);
         });
         const hasPrj = allProjects.length > 0;
-        const delBtn = document.getElementById('teDeleteProjectBtn');
-        const renameBtn = document.getElementById('teRenameProjectBtn');
-        if (delBtn) delBtn.disabled = !hasPrj;
-        if (renameBtn) renameBtn.disabled = !hasPrj;
+        const delBtn  = document.getElementById('teDeleteProjectBtn');
+        const renBtn  = document.getElementById('teRenameProjectBtn');
+        if (delBtn)  delBtn.disabled  = !hasPrj;
+        if (renBtn)  renBtn.disabled  = !hasPrj;
     }
 
     function bindProjectBarEvents() {
@@ -275,7 +368,7 @@
         });
 
         document.getElementById('teNewProjectBtn')?.addEventListener('click', () => {
-            const name = prompt('Project name:', 'My Supply Chain');
+            const name = prompt('New project name:', 'My Supply Chain');
             if (!name?.trim()) return;
             const p = createBlankProject(name.trim());
             allProjects.push(p);
@@ -300,9 +393,7 @@
             if (!currentProject) return;
             if (!confirm(`Delete "${currentProject.projectName}"? This cannot be undone.`)) return;
             allProjects = allProjects.filter(p => p !== currentProject);
-            if (allProjects.length === 0) {
-                allProjects.push(createBlankProject('My Supply Chain'));
-            }
+            if (allProjects.length === 0) allProjects.push(createBlankProject('My Supply Chain'));
             currentProject = allProjects[0];
             saveToStorage();
             expandedCardId = null;
@@ -327,10 +418,10 @@
             const pill = document.createElement('button');
             pill.type = 'button';
             pill.className = 'te-step-pill' + (i === currentStep ? ' active' : '');
-            const hasItems = i < 5 && getNodesOfType(step.type).length > 0;
-            if (hasItems && i !== currentStep) pill.classList.add('done');
-            pill.innerHTML = `<span class="te-step-num">${hasItems && i !== currentStep ? '<i class="bi bi-check" style="font-size:0.7rem"></i>' : i + 1}</span>${step.label}`;
-            pill.dataset.step = i;
+            const isDone = i < STEPS.length - 1 && getNodesOfType(step.type).length > 0 && i !== currentStep;
+            if (isDone) pill.classList.add('done');
+            const numContent = isDone ? '<i class="bi bi-check" style="font-size:0.7rem"></i>' : (i + 1);
+            pill.innerHTML = `<span class="te-step-num">${numContent}</span>${step.label}`;
             pill.addEventListener('click', () => goToStep(i));
             bar.appendChild(pill);
         });
@@ -348,52 +439,46 @@
     function renderTree() {
         const container = document.getElementById('teTreeContent');
         if (!container) return;
-        if (!currentProject || !currentProject.nodes || currentProject.nodes.length === 0) {
-            container.innerHTML = '<div class="text-muted text-center py-4" style="font-size:0.8rem;">No nodes yet.<br>Start by adding raw materials.</div>';
+        if (!currentProject?.nodes?.length) {
+            container.innerHTML = '<div style="padding:1rem 0.5rem; color:#ced4da; font-size:0.8rem; text-align:center;">No items yet.<br>Start at Step 1.</div>';
             return;
         }
-
-        const allNodes = currentProject.nodes;
         const html = [];
-
-        // Group by type in step order
-        const typeOrder = ['raw-material', 'packaging', 'packaging-group', 'product', 'distribution'];
+        const typeOrder = ['raw-material', 'packaging', 'supplier-packaging', 'packaging-group', 'product', 'distribution'];
         typeOrder.forEach(type => {
-            const nodes = allNodes.filter(n => n.type === type);
-            if (nodes.length === 0) return;
+            const nodes = (currentProject.nodes || []).filter(n => n.type === type);
+            if (!nodes.length) return;
             const step = STEPS.find(s => s.type === type);
             html.push(`<div class="te-tree-section-label">${step?.label || type}</div>`);
             nodes.forEach(node => {
-                const connectedTo = getConnectedTo(node.id);
+                const downstream = getConnectedTo(node.id);
                 const isActive = expandedCardId === node.id;
                 html.push(`<div class="te-tree-item${isActive ? ' te-active' : ''}" data-node-id="${node.id}" title="${esc(node.name)}">
-                    <i class="bi ${step?.icon || 'bi-dot'} te-tree-icon" style="color:${step?.color || '#6c757d'}; font-size:0.8rem;"></i>
-                    <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(node.name)}</span>
-                    ${connectedTo.length > 0 ? `<i class="bi bi-arrow-right-short" style="color:#adb5bd; font-size:0.75rem; flex-shrink:0;"></i>` : ''}
+                    <i class="bi ${step?.icon || 'bi-dot'}" style="color:${step?.color};font-size:0.8rem;flex-shrink:0;margin-top:0.05rem;"></i>
+                    <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(node.name)}</span>
+                    ${downstream.length ? '<i class="bi bi-arrow-right-short" style="color:#ced4da;flex-shrink:0;"></i>' : ''}
                 </div>`);
-                if (connectedTo.length > 0) {
+                if (downstream.length) {
                     html.push('<div class="te-tree-indent">');
-                    connectedTo.forEach(child => {
-                        const childStep = STEPS.find(s => s.type === child.type);
+                    downstream.forEach(child => {
+                        const cs = STEPS.find(s => s.type === child.type);
                         html.push(`<div class="te-tree-item${expandedCardId === child.id ? ' te-active' : ''}" data-node-id="${child.id}" title="${esc(child.name)}">
-                            <i class="bi ${childStep?.icon || 'bi-dot'} te-tree-icon" style="color:${childStep?.color || '#6c757d'}; font-size:0.8rem;"></i>
-                            <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(child.name)}</span>
+                            <i class="bi ${cs?.icon || 'bi-dot'}" style="color:${cs?.color};font-size:0.8rem;flex-shrink:0;"></i>
+                            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(child.name)}</span>
                         </div>`);
                     });
                     html.push('</div>');
                 }
             });
         });
-
         container.innerHTML = html.join('');
         container.querySelectorAll('.te-tree-item[data-node-id]').forEach(el => {
             el.addEventListener('click', () => {
-                const nodeId = el.dataset.nodeId;
-                const node = getNodeById(nodeId);
+                const node = getNodeById(el.dataset.nodeId);
                 if (!node) return;
                 const stepIdx = STEPS.findIndex(s => s.type === node.type);
                 if (stepIdx >= 0) {
-                    expandedCardId = nodeId;
+                    expandedCardId = node.id;
                     addingInStep = false;
                     goToStep(stepIdx);
                 }
@@ -412,98 +497,105 @@
     function renderStepHeader(step) {
         const el = document.getElementById('teStepHeader');
         if (!el) return;
+        const count = step.type !== 'review' ? getNodesOfType(step.type).length : null;
         el.innerHTML = `<div class="d-flex align-items-center gap-3">
-            <div class="te-step-header-icon" style="background:${step.bg}; color:${step.color};">
+            <div class="te-step-header-icon" style="background:${step.bg};color:${step.color};">
                 <i class="bi ${step.icon}"></i>
             </div>
-            <div>
-                <h5 class="mb-0" style="font-weight:600;">Step ${currentStep + 1} · ${step.label}</h5>
-                <small class="text-muted">${step.desc}</small>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.95rem;">Step ${currentStep + 1} · ${step.label}</div>
+                <div class="text-muted" style="font-size:0.82rem;margin-top:0.1rem;">${step.desc}</div>
             </div>
-            ${currentStep < 5 ? `<span class="ms-auto badge bg-light text-muted border" style="font-size:0.8rem;">${getNodesOfType(step.type).length} item${getNodesOfType(step.type).length !== 1 ? 's' : ''}</span>` : ''}
+            ${count !== null ? `<span style="font-size:0.8rem;color:#adb5bd;flex-shrink:0;">${count} item${count !== 1 ? 's' : ''}</span>` : ''}
         </div>`;
     }
 
     function renderStepBody(step) {
         const el = document.getElementById('teStepBody');
         if (!el) return;
+
         if (step.type === 'review') {
             el.innerHTML = renderReview();
             return;
         }
+
         const nodes = getNodesOfType(step.type);
-        const html = [];
+        const parts = [];
 
-        nodes.forEach(node => {
-            const isExpanded = expandedCardId === node.id;
-            html.push(renderNodeCard(node, step, isExpanded));
-        });
+        nodes.forEach(node => parts.push(renderNodeCard(node, step, expandedCardId === node.id)));
 
-        // Add button / form
         if (addingInStep) {
-            html.push(renderAddForm(step));
+            parts.push(renderAddForm(step));
         } else {
-            html.push(`<button type="button" class="te-add-card" id="teAddNodeBtn">
-                <i class="bi bi-plus-circle" style="font-size:1rem;"></i>
-                <span>Add ${step.label.replace(/s$/, '')}…</span>
+            parts.push(`<button type="button" class="te-add-card" id="teAddNodeBtn">
+                <i class="bi bi-plus-circle" style="font-size:1rem;color:#0d6efd;"></i>
+                Add ${singularise(step.label)}…
             </button>`);
         }
 
-        if (nodes.length === 0 && !addingInStep) {
+        if (!nodes.length && !addingInStep) {
             el.innerHTML = `<div class="te-empty-state">
                 <span class="te-empty-icon"><i class="bi ${step.icon}" style="color:${step.color};"></i></span>
-                <div style="font-size:0.95rem; font-weight:500; color:#6c757d;">No ${step.label.toLowerCase()} yet</div>
-                <small class="text-muted d-block mt-1 mb-3">${step.desc}</small>
-            </div>` + html.join('');
+                <div style="font-size:0.95rem;font-weight:600;color:#6c757d;margin-bottom:0.35rem;">No ${step.label.toLowerCase()} yet</div>
+                <div class="text-muted" style="font-size:0.82rem;max-width:360px;margin:0 auto;">${step.desc}</div>
+            </div>` + parts.join('');
         } else {
-            el.innerHTML = html.join('');
+            el.innerHTML = parts.join('');
         }
 
-        // Bind events
+        bindStepBodyEvents(el, step);
+    }
+
+    function bindStepBodyEvents(el, step) {
         el.querySelectorAll('.te-node-card[data-node-id]').forEach(card => {
             const nodeId = card.dataset.nodeId;
-            card.querySelector('.te-card-header')?.addEventListener('click', (e) => {
+
+            // Toggle expand on header click
+            card.querySelector('.te-card-header')?.addEventListener('click', e => {
                 if (e.target.closest('button')) return;
                 expandedCardId = expandedCardId === nodeId ? null : nodeId;
                 addingInStep = false;
                 renderStep();
                 renderTree();
             });
-            card.querySelector('.te-delete-node-btn')?.addEventListener('click', (e) => {
+
+            // Delete
+            card.querySelector('.te-delete-btn')?.addEventListener('click', e => {
                 e.stopPropagation();
                 const node = getNodeById(nodeId);
-                if (!confirm(`Delete "${node?.name}"? All connections to this item will also be removed.`)) return;
+                if (!confirm(`Delete "${node?.name}"? All connections will also be removed.`)) return;
                 if (expandedCardId === nodeId) expandedCardId = null;
                 deleteNode(nodeId);
                 renderAll();
             });
-            card.querySelector('.te-save-node-btn')?.addEventListener('click', (e) => {
+
+            // Save edit
+            card.querySelector('.te-save-node-btn')?.addEventListener('click', e => {
                 e.stopPropagation();
                 saveNodeEdit(card, nodeId);
             });
+
+            // Remove connections
             card.querySelectorAll('.te-pill-remove').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', e => {
                     e.stopPropagation();
-                    const fromId = btn.dataset.from;
-                    const toId = btn.dataset.to;
-                    removeConnection(fromId, toId);
-                    renderStep();
-                    renderTree();
+                    removeConnection(btn.dataset.from, btn.dataset.to);
+                    renderStep(); renderTree();
                 });
             });
+
+            // Add connections
             card.querySelectorAll('.te-conn-add-select').forEach(sel => {
-                sel.addEventListener('change', (e) => {
+                sel.addEventListener('change', e => {
                     const targetId = e.target.value;
                     if (!targetId) return;
                     e.target.value = '';
-                    const direction = e.target.dataset.direction;
-                    if (direction === 'to') {
+                    if (e.target.dataset.direction === 'to') {
                         addConnection(nodeId, targetId);
                     } else {
                         addConnection(targetId, nodeId);
                     }
-                    renderStep();
-                    renderTree();
+                    renderStep(); renderTree();
                 });
             });
         });
@@ -512,7 +604,6 @@
             addingInStep = true;
             expandedCardId = null;
             renderStep();
-            // Focus first input
             setTimeout(() => el.querySelector('.te-add-form input, .te-add-form select')?.focus(), 50);
         });
 
@@ -535,193 +626,195 @@
 
     // ─── Node card ────────────────────────────────────────────────────────────
     function renderNodeCard(node, step, isExpanded) {
-        const meta = buildNodeMeta(node, step.type);
-        const upstreamType = REVERSE_CONNECTION_MAP[step.type];
-        const downstreamType = CONNECTION_MAP[step.type];
+        const upstreamTypes  = UPSTREAM[step.type]  || [];
+        const downstreamTypes = DOWNSTREAM[step.type] || [];
         const connFrom = getConnectedFrom(node.id);
-        const connTo = getConnectedTo(node.id);
+        const connTo   = getConnectedTo(node.id);
 
-        let connHtml = '';
-        if (isExpanded) {
-            // Upstream connections
-            if (upstreamType) {
-                const upstreamNodes = getNodesOfType(upstreamType);
-                const upLabel = STEPS.find(s => s.type === upstreamType)?.label || upstreamType;
-                const upStep = STEPS.find(s => s.type === upstreamType);
-                const usedFromIds = connFrom.map(n => n.id);
-                connHtml += `<div class="te-conn-section">
-                    <div class="te-conn-label"><i class="bi bi-arrow-left-short"></i> From ${upLabel}</div>
-                    <div class="te-conn-pills">
-                        ${connFrom.map(n => `<span class="te-conn-pill">
-                            <i class="bi ${upStep?.icon || 'bi-dot'}" style="color:${upStep?.color};"></i>
-                            ${esc(n.name)}
-                            <span class="te-pill-remove" data-from="${n.id}" data-to="${node.id}" title="Remove connection">×</span>
-                        </span>`).join('')}
-                        ${upstreamNodes.filter(n => !usedFromIds.includes(n.id)).length > 0 ? `
-                        <select class="te-conn-add-select" data-direction="from" aria-label="Add from ${upLabel}">
-                            <option value="">+ Link ${upLabel.replace(/s$/, '')}…</option>
-                            ${upstreamNodes.filter(n => !usedFromIds.includes(n.id)).map(n =>
-                                `<option value="${n.id}">${esc(n.name)}</option>`
-                            ).join('')}
-                        </select>` : ''}
-                    </div>
-                </div>`;
-            }
-            // Downstream connections
-            if (downstreamType) {
-                const downstreamNodes = getNodesOfType(downstreamType);
-                const downLabel = STEPS.find(s => s.type === downstreamType)?.label || downstreamType;
-                const downStep = STEPS.find(s => s.type === downstreamType);
-                const usedToIds = connTo.map(n => n.id);
-                connHtml += `<div class="te-conn-section">
-                    <div class="te-conn-label"><i class="bi bi-arrow-right-short"></i> To ${downLabel}</div>
-                    <div class="te-conn-pills">
-                        ${connTo.map(n => `<span class="te-conn-pill">
-                            <i class="bi ${downStep?.icon || 'bi-dot'}" style="color:${downStep?.color};"></i>
-                            ${esc(n.name)}
-                            <span class="te-pill-remove" data-from="${node.id}" data-to="${n.id}" title="Remove connection">×</span>
-                        </span>`).join('')}
-                        ${downstreamNodes.filter(n => !usedToIds.includes(n.id)).length > 0 ? `
-                        <select class="te-conn-add-select" data-direction="to" aria-label="Add to ${downLabel}">
-                            <option value="">+ Link ${downLabel.replace(/s$/, '')}…</option>
-                            ${downstreamNodes.filter(n => !usedToIds.includes(n.id)).map(n =>
-                                `<option value="${n.id}">${esc(n.name)}</option>`
-                            ).join('')}
-                        </select>` : ''}
-                    </div>
-                </div>`;
-            }
-        } else {
-            // Collapsed: show connection summary as pills
-            const allConn = [...connFrom, ...connTo];
-            if (allConn.length > 0) {
-                connHtml = `<div class="te-conn-pills mt-2">
-                    ${connFrom.map(n => {
-                        const s = STEPS.find(st => st.type === n.type);
-                        return `<span class="te-conn-pill" style="background:#f3f0ff;color:${s?.color || '#6c757d'};border-color:#d8cff8;">
-                            <i class="bi ${s?.icon || 'bi-dot'}"></i>${esc(n.name)}
-                        </span>`;
-                    }).join('')}
-                    ${connTo.map(n => {
-                        const s = STEPS.find(st => st.type === n.type);
-                        return `<span class="te-conn-pill" style="background:${s?.bg || '#f0f4ff'};color:${s?.color || '#0d6efd'};border-color:#c8d9ff;">
-                            <i class="bi ${s?.icon || 'bi-dot'}"></i>${esc(n.name)}
-                        </span>`;
-                    }).join('')}
-                </div>`;
-            }
+        // Connection pills — shown collapsed too
+        let connSummary = '';
+        if (!isExpanded && (connFrom.length || connTo.length)) {
+            const pills = [
+                ...connFrom.map(n => { const s = STEPS.find(st => st.type === n.type); return `<span class="te-conn-pill" style="background:${s?.bg||'#f0f4ff'};color:${s?.color||'#0d6efd'};border-color:${s?.color||'#c8d9ff'}30;"><i class="bi ${s?.icon||'bi-dot'}" style="font-size:0.75rem;"></i>${esc(n.name)}</span>`; }),
+                ...connTo.map(n => { const s = STEPS.find(st => st.type === n.type); return `<span class="te-conn-pill" style="background:${s?.bg||'#f0f4ff'};color:${s?.color||'#0d6efd'};border-color:${s?.color||'#c8d9ff'}30;"><i class="bi ${s?.icon||'bi-dot'}" style="font-size:0.75rem;"></i>${esc(n.name)}</span>`; })
+            ];
+            if (pills.length) connSummary = `<div class="te-conn-pills mt-2">${pills.join('')}</div>`;
         }
 
-        const editFormHtml = isExpanded ? renderEditForm(node, step.type) : '';
+        // Detailed connections when expanded
+        let connDetails = '';
+        if (isExpanded) {
+            upstreamTypes.forEach(upType => {
+                const upStep = STEPS.find(s => s.type === upType);
+                const existing = connFrom.filter(n => n.type === upType);
+                const available = getNodesOfType(upType).filter(n => !existing.find(e => e.id === n.id));
+                connDetails += `<div class="te-conn-section">
+                    <div class="te-conn-label"><i class="bi bi-arrow-left-short" style="font-size:1rem;"></i> From ${upStep?.label || upType}</div>
+                    <div class="te-conn-pills">
+                        ${existing.map(n => `<span class="te-conn-pill" style="background:${upStep?.bg};color:${upStep?.color};border-color:${upStep?.color}30;">
+                            <i class="bi ${upStep?.icon}" style="font-size:0.75rem;"></i>${esc(n.name)}
+                            <span class="te-pill-remove" data-from="${n.id}" data-to="${node.id}" title="Remove">×</span>
+                        </span>`).join('')}
+                        ${available.length ? `<select class="te-conn-add-select" data-direction="from" aria-label="Link ${upStep?.label}">
+                            <option value="">+ Link ${singularise(upStep?.label || upType)}…</option>
+                            ${available.map(n => `<option value="${n.id}">${esc(n.name)}</option>`).join('')}
+                        </select>` : (existing.length === 0 ? `<span style="font-size:0.78rem;color:#adb5bd;font-style:italic;">None — add ${singularise(upStep?.label || upType).toLowerCase()}s in Step ${STEPS.findIndex(s => s.type === upType) + 1} first</span>` : '')}
+                    </div>
+                </div>`;
+            });
+
+            downstreamTypes.forEach(downType => {
+                const downStep = STEPS.find(s => s.type === downType);
+                const existing = connTo.filter(n => n.type === downType);
+                const available = getNodesOfType(downType).filter(n => !existing.find(e => e.id === n.id));
+                connDetails += `<div class="te-conn-section">
+                    <div class="te-conn-label"><i class="bi bi-arrow-right-short" style="font-size:1rem;"></i> To ${downStep?.label || downType}</div>
+                    <div class="te-conn-pills">
+                        ${existing.map(n => `<span class="te-conn-pill" style="background:${downStep?.bg};color:${downStep?.color};border-color:${downStep?.color}30;">
+                            <i class="bi ${downStep?.icon}" style="font-size:0.75rem;"></i>${esc(n.name)}
+                            <span class="te-pill-remove" data-from="${node.id}" data-to="${n.id}" title="Remove">×</span>
+                        </span>`).join('')}
+                        ${available.length ? `<select class="te-conn-add-select" data-direction="to" aria-label="Link ${downStep?.label}">
+                            <option value="">+ Link ${singularise(downStep?.label || downType)}…</option>
+                            ${available.map(n => `<option value="${n.id}">${esc(n.name)}</option>`).join('')}
+                        </select>` : (existing.length === 0 ? `<span style="font-size:0.78rem;color:#adb5bd;font-style:italic;">None — add ${singularise(downStep?.label || downType).toLowerCase()}s in Step ${STEPS.findIndex(s => s.type === downType) + 1} first</span>` : '')}
+                    </div>
+                </div>`;
+            });
+        }
+
+        const meta = buildNodeMeta(node, step);
+        const editForm = isExpanded ? renderEditForm(node, step.type) : '';
 
         return `<div class="te-node-card${isExpanded ? ' te-card-expanded' : ''}" data-node-id="${node.id}">
             <div class="te-card-header">
-                <div class="te-card-icon" style="background:${step.bg}; color:${step.color};">
+                <div class="te-card-icon" style="background:${step.bg};color:${step.color};">
                     <i class="bi ${step.icon}"></i>
                 </div>
-                <div style="flex:1; min-width:0;">
-                    <div style="font-weight:600; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(node.name)}</div>
-                    <div class="te-card-meta">${meta}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(node.name)}</div>
+                    ${meta ? `<div class="te-card-meta">${meta}</div>` : ''}
                 </div>
-                <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                    <button type="button" class="btn btn-sm btn-light border-0 te-delete-node-btn" title="Delete" style="color:#dc3545; padding:0.2rem 0.4rem;">
+                <div style="display:flex;gap:0.25rem;flex-shrink:0;margin-left:0.5rem;">
+                    <button type="button" class="te-card-actions te-danger te-delete-btn" title="Delete ${singularise(step.label)}">
                         <i class="bi bi-trash" style="font-size:0.8rem;"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-light border-0" title="${isExpanded ? 'Collapse' : 'Edit'}" style="padding:0.2rem 0.4rem;">
+                    <button type="button" class="te-card-actions" title="${isExpanded ? 'Collapse' : 'Edit'}">
                         <i class="bi bi-chevron-${isExpanded ? 'up' : 'down'}" style="font-size:0.8rem;"></i>
                     </button>
                 </div>
             </div>
-            ${connHtml && !isExpanded ? connHtml : ''}
-            ${isExpanded ? `<div class="te-card-body">${editFormHtml}${connHtml}</div>` : ''}
+            ${!isExpanded ? connSummary : ''}
+            ${isExpanded ? `<div class="te-card-body">${editForm}${connDetails}</div>` : ''}
         </div>`;
     }
 
-    function buildNodeMeta(node, type) {
+    function buildNodeMeta(node, step) {
         const p = node.parameters || {};
         const parts = [];
-        if (type === 'raw-material' && p.weight) parts.push(`<span class="badge bg-light text-muted border">${p.weight}g</span>`);
-        if (type === 'packaging') {
-            if (p.height) parts.push(`<span class="badge bg-light text-muted border">${p.height}mm tall</span>`);
-            if (p.weight) parts.push(`<span class="badge bg-light text-muted border">${p.weight}g</span>`);
+        const badge = (txt) => `<span style="display:inline-flex;align-items:center;padding:0.12rem 0.45rem;border-radius:10px;font-size:0.75rem;background:#f1f3f5;color:#6c757d;border:1px solid #e9ecef;">${txt}</span>`;
+        const colBadge = (txt, color) => `<span style="display:inline-flex;align-items:center;padding:0.12rem 0.45rem;border-radius:10px;font-size:0.75rem;background:${color}20;color:${color};border:1px solid ${color}30;">${txt}</span>`;
+
+        if (step.type === 'raw-material' && p.weight) parts.push(badge(`${p.weight}g`));
+        if (step.type === 'packaging') {
+            if (p.height) parts.push(badge(`${p.height}mm`));
+            if (p.weight) parts.push(badge(`${p.weight}g`));
         }
-        if (type === 'packaging-group' && p.layer) {
-            const layerColors = { Primary: '#6f42c1', Secondary: '#0d6efd', Tertiary: '#198754', Quaternary: '#fd7e14' };
-            const c = layerColors[p.layer] || '#6c757d';
-            parts.push(`<span class="badge" style="background:${c}20;color:${c};border:1px solid ${c}40;">${p.layer}</span>`);
+        if (step.type === 'supplier-packaging' && p.companyName) parts.push(badge(esc(p.companyName)));
+        if (step.type === 'packaging-group' && p.layer) {
+            const lc = { Primary: '#6f42c1', Secondary: '#0d6efd', Tertiary: '#198754', Quaternary: '#fd7e14' };
+            parts.push(colBadge(p.layer, lc[p.layer] || '#6c757d'));
+            if (p.holdsQuantity) parts.push(badge(`×${p.holdsQuantity}`));
         }
-        if (type === 'product') {
-            if (p.sku) parts.push(`<span class="badge bg-light text-muted border">${esc(p.sku)}</span>`);
-            if (p.weight) parts.push(`<span class="badge bg-light text-muted border">${p.weight}g</span>`);
+        if (step.type === 'product') {
+            if (p.sku) parts.push(badge(esc(p.sku)));
+            if (p.weight) parts.push(badge(`${p.weight}g net`));
         }
-        if (type === 'distribution') {
-            if (p.city) parts.push(`<span class="badge bg-light text-muted border"><i class="bi bi-geo-alt me-1"></i>${esc(p.city)}</span>`);
-            if (p.type) parts.push(`<span class="badge bg-light text-muted border">${esc(p.type)}</span>`);
+        if (step.type === 'distribution') {
+            if (p.city) parts.push(badge(`<i class="bi bi-geo-alt me-1"></i>${esc(p.city)}`));
+            if (p.type) parts.push(badge(esc(p.type)));
         }
-        if (p.description && !parts.length) {
-            parts.push(`<span class="text-muted" style="font-size:0.78rem;">${esc(p.description.substring(0, 60))}</span>`);
+        if (!parts.length && p.description) {
+            parts.push(`<span style="font-size:0.78rem;color:#adb5bd;">${esc(p.description.substring(0, 70))}</span>`);
         }
         return parts.join('');
     }
 
-    // ─── Edit form ────────────────────────────────────────────────────────────
+    // ─── Edit / Add forms ─────────────────────────────────────────────────────
     function renderEditForm(node, type) {
         const fields = NODE_FIELDS[type] || [];
         const p = node.parameters || {};
-        const rows = [];
-        const textFields = fields.filter(f => f.type !== 'textarea');
-        for (let i = 0; i < textFields.length; i += 2) {
-            const f1 = textFields[i];
-            const f2 = textFields[i + 1];
-            rows.push(`<div class="te-form-row${!f2 ? ' te-single' : ''}">
-                ${renderFormField(f1, p[f1.key] ?? '', 'te-edit-field')}
-                ${f2 ? renderFormField(f2, p[f2.key] ?? '', 'te-edit-field') : ''}
-            </div>`);
-        }
-        const textareas = fields.filter(f => f.type === 'textarea');
-        textareas.forEach(f => {
-            rows.push(`<div class="te-form-row te-single">${renderFormField(f, p[f.key] ?? '', 'te-edit-field')}</div>`);
-        });
-        return `<div class="te-edit-form mb-3" data-node-id="${node.id}">
-            ${rows.join('')}
-            <div class="d-flex gap-2 mt-3">
-                <button type="button" class="btn btn-sm btn-primary te-save-node-btn">Save changes</button>
+        return `<div class="te-edit-form" data-node-id="${node.id}">
+            ${buildFormFields(fields, p, 'te-edit-field')}
+            <div style="display:flex;gap:0.5rem;margin-top:0.875rem;">
+                <button type="button" class="te-save-btn te-save-node-btn">Save changes</button>
             </div>
         </div>`;
     }
 
-    function renderFormField(field, value, cls) {
-        const attrs = `class="form-control form-control-sm ${cls}" data-field="${field.key}" ${field.required ? 'required' : ''}`;
+    function renderAddForm(step) {
+        const fields = NODE_FIELDS[step.type] || [];
+        const defaults = {};
+        fields.forEach(f => { if (f.type === 'select') defaults[f.key] = f.options?.[0] || ''; });
+        return `<div class="te-node-card te-card-expanded te-add-form" style="border-style:dashed;cursor:default;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+                <div class="te-card-icon" style="background:${step.bg};color:${step.color};"><i class="bi ${step.icon}"></i></div>
+                <span style="font-weight:600;font-size:0.9rem;">New ${singularise(step.label)}</span>
+            </div>
+            ${buildFormFields(fields, defaults, 'te-add-field')}
+            <div style="display:flex;gap:0.5rem;margin-top:0.875rem;">
+                <button type="button" class="te-save-btn" id="teSaveAddBtn">Add ${singularise(step.label)}</button>
+                <button type="button" class="te-cancel-btn" id="teCancelAddBtn">Cancel</button>
+            </div>
+        </div>`;
+    }
+
+    function buildFormFields(fields, values, cls) {
+        const text = fields.filter(f => f.type !== 'textarea');
+        const areas = fields.filter(f => f.type === 'textarea');
+        const rows = [];
+        for (let i = 0; i < text.length; i += 2) {
+            const f1 = text[i], f2 = text[i + 1];
+            rows.push(`<div class="te-form-row${!f2 ? ' te-single' : ''}">
+                ${formField(f1, values[f1.key] ?? '', cls)}
+                ${f2 ? formField(f2, values[f2.key] ?? '', cls) : ''}
+            </div>`);
+        }
+        areas.forEach(f => rows.push(`<div class="te-form-row te-single">${formField(f, values[f.key] ?? '', cls)}</div>`));
+        return rows.join('');
+    }
+
+    function formField(field, value, cls) {
+        const baseAttrs = `class="form-control form-control-sm ${cls}" data-field="${field.key}" ${field.required ? 'required' : ''}`;
         let input;
         if (field.type === 'select') {
-            const opts = field.options.map(o => `<option value="${o}"${o === value ? ' selected' : ''}>${o}</option>`).join('');
-            input = `<select ${attrs}>${opts}</select>`;
+            const opts = (field.options || []).map(o => `<option value="${o}"${o === value ? ' selected' : ''}>${o}</option>`).join('');
+            input = `<select ${baseAttrs}>${opts}</select>`;
         } else if (field.type === 'textarea') {
-            input = `<textarea ${attrs} rows="2" placeholder="${field.placeholder || ''}">${esc(String(value))}</textarea>`;
+            input = `<textarea ${baseAttrs} rows="2" placeholder="${esc(field.placeholder || '')}">${esc(String(value))}</textarea>`;
         } else {
-            input = `<input type="${field.type}" ${attrs} value="${esc(String(value))}" placeholder="${field.placeholder || ''}">`;
+            input = `<input type="${field.type}" ${baseAttrs} value="${esc(String(value ?? ''))}" placeholder="${esc(field.placeholder || '')}">`;
         }
-        return `<div><label class="form-label form-label-sm mb-1" style="font-size:0.78rem;font-weight:600;color:#495057;">${field.label}${field.required ? ' <span class="text-danger">*</span>' : ''}</label>${input}</div>`;
+        return `<div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:#6c757d;margin-bottom:0.25rem;">
+                ${field.label}${field.required ? ' <span style="color:#dc3545;">*</span>' : ''}
+            </label>
+            ${input}
+        </div>`;
     }
 
     function collectFormData(form, type) {
         const fields = NODE_FIELDS[type] || [];
         const params = {};
         let valid = true;
-        fields.forEach(field => {
-            const el = form.querySelector(`[data-field="${field.key}"]`);
+        fields.forEach(f => {
+            const el = form.querySelector(`[data-field="${f.key}"]`);
             if (!el) return;
             const val = el.value.trim();
-            if (field.required && !val) {
-                el.classList.add('is-invalid');
-                valid = false;
-            } else {
-                el.classList.remove('is-invalid');
-                params[field.key] = field.type === 'number' ? (val ? parseFloat(val) : null) : val;
-            }
+            if (f.required && !val) { el.classList.add('is-invalid'); valid = false; }
+            else { el.classList.remove('is-invalid'); params[f.key] = f.type === 'number' ? (val ? parseFloat(val) : null) : val; }
         });
-        if (!valid) return null;
-        return params;
+        return valid ? params : null;
     }
 
     function saveNodeEdit(card, nodeId) {
@@ -735,130 +828,98 @@
         renderAll();
     }
 
-    // ─── Add form ─────────────────────────────────────────────────────────────
-    function renderAddForm(step) {
-        if (step.type === 'review') return '';
-        const fields = NODE_FIELDS[step.type] || [];
-        const rows = [];
-        const textFields = fields.filter(f => f.type !== 'textarea');
-        for (let i = 0; i < textFields.length; i += 2) {
-            const f1 = textFields[i];
-            const f2 = textFields[i + 1];
-            rows.push(`<div class="te-form-row${!f2 ? ' te-single' : ''}">
-                ${renderFormField(f1, f1.type === 'select' ? (f1.options?.[0] || '') : '', 'te-add-field')}
-                ${f2 ? renderFormField(f2, f2.type === 'select' ? (f2.options?.[0] || '') : '', 'te-add-field') : ''}
-            </div>`);
-        }
-        const textareas = fields.filter(f => f.type === 'textarea');
-        textareas.forEach(f => {
-            rows.push(`<div class="te-form-row te-single">${renderFormField(f, '', 'te-add-field')}</div>`);
-        });
-        return `<div class="te-node-card te-card-expanded te-add-form" style="border-style:dashed;">
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <div class="te-card-icon" style="background:${step.bg};color:${step.color};"><i class="bi ${step.icon}"></i></div>
-                <span style="font-weight:600;">New ${step.label.replace(/s$/, '')}</span>
-            </div>
-            ${rows.join('')}
-            <div class="d-flex gap-2 mt-3">
-                <button type="button" class="btn btn-sm btn-primary" id="teSaveAddBtn">Add ${step.label.replace(/s$/, '')}</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="teCancelAddBtn">Cancel</button>
-            </div>
-        </div>`;
-    }
-
-    // ─── Step footer ──────────────────────────────────────────────────────────
+    // ─── Footer ───────────────────────────────────────────────────────────────
     function renderStepFooter() {
         const el = document.getElementById('teStepFooter');
         if (!el) return;
         const isFirst = currentStep === 0;
-        const isLast = currentStep === STEPS.length - 1;
+        const isLast  = currentStep === STEPS.length - 1;
         el.innerHTML = `
-            <button type="button" class="btn btn-sm btn-outline-secondary${isFirst ? ' invisible' : ''}" id="teBackBtn">
-                <i class="bi bi-arrow-left me-1"></i> Back
+            <button type="button" class="te-nav-btn te-nav-btn-secondary${isFirst ? ' invisible' : ''}" id="teBackBtn">
+                <i class="bi bi-arrow-left"></i> Back
             </button>
-            <span class="text-muted" style="font-size:0.8rem;">${currentStep + 1} / ${STEPS.length}</span>
-            <button type="button" class="btn btn-sm btn-${isLast ? 'success' : 'primary'}" id="teNextBtn">
-                ${isLast ? '<i class="bi bi-check2 me-1"></i> Done' : 'Next <i class="bi bi-arrow-right ms-1"></i>'}
+            <span style="font-size:0.78rem;color:#adb5bd;">${currentStep + 1} of ${STEPS.length}</span>
+            <button type="button" class="te-nav-btn te-nav-btn-${isLast ? 'success' : 'primary'}" id="teNextBtn">
+                ${isLast ? '<i class="bi bi-check2"></i> Done' : 'Next <i class="bi bi-arrow-right"></i>'}
             </button>`;
         document.getElementById('teBackBtn')?.addEventListener('click', () => goToStep(currentStep - 1));
-        document.getElementById('teNextBtn')?.addEventListener('click', () => {
-            if (isLast) {
-                goToStep(0);
-            } else {
-                goToStep(currentStep + 1);
-            }
-        });
+        document.getElementById('teNextBtn')?.addEventListener('click', () => goToStep(isLast ? 0 : currentStep + 1));
     }
 
     // ─── Review ───────────────────────────────────────────────────────────────
     function renderReview() {
-        if (!currentProject || !currentProject.nodes || currentProject.nodes.length === 0) {
+        if (!currentProject?.nodes?.length) {
             return `<div class="te-empty-state">
                 <span class="te-empty-icon"><i class="bi bi-check-circle" style="color:#20c997;"></i></span>
-                <div style="font-size:0.95rem;font-weight:500;color:#6c757d;">Nothing to review yet</div>
-                <small class="text-muted">Add nodes in the previous steps to build your supply chain.</small>
+                <div style="font-size:0.95rem;font-weight:600;color:#6c757d;">Nothing to review yet</div>
+                <div class="text-muted" style="font-size:0.82rem;margin-top:0.35rem;">Add nodes in the earlier steps to build your supply chain.</div>
             </div>`;
         }
 
         const chains = buildChains();
+        const html = ['<div style="margin-bottom:1rem;"><p class="text-muted" style="font-size:0.82rem;">Each row is a complete path through your supply chain. Click any node to jump to that step.</p></div>'];
+
         if (chains.length === 0) {
-            // Show flat node list if no connections
-            const html = ['<div class="mb-3"><p class="text-muted small">No connections defined yet. The supply chain nodes are listed below.</p></div>'];
-            const typeOrder = ['raw-material', 'packaging', 'packaging-group', 'product', 'distribution'];
-            typeOrder.forEach(type => {
-                const nodes = getNodesOfType(type);
-                if (!nodes.length) return;
-                const step = STEPS.find(s => s.type === type);
-                html.push(`<div class="mb-3"><div class="te-conn-label mb-2">${step?.label}</div>`);
-                nodes.forEach(node => {
-                    html.push(`<div class="te-review-chain">
-                        <span class="te-review-chain-node" style="background:${step?.bg};color:${step?.color};">
-                            <i class="bi ${step?.icon}"></i> ${esc(node.name)}
-                        </span>
-                    </div>`);
-                });
-                html.push('</div>');
+            html.push('<div class="text-muted" style="font-size:0.85rem;padding:1rem 0;">No connections defined yet. Go back to each step and link items together using the connection dropdowns.</div>');
+        } else {
+            chains.forEach(chain => {
+                const pills = chain.map(node => {
+                    const s = STEPS.find(st => st.type === node.type);
+                    return `<span class="te-review-chain-node" style="background:${s?.bg};color:${s?.color};cursor:pointer;" data-jump-node="${node.id}" title="Go to ${esc(node.name)}">
+                        <i class="bi ${s?.icon}" style="font-size:0.78rem;"></i> ${esc(node.name)}
+                    </span>`;
+                }).join('<span class="te-review-arrow"><i class="bi bi-arrow-right"></i></span>');
+                html.push(`<div class="te-review-chain">${pills}</div>`);
             });
-            return html.join('');
         }
 
-        const html = ['<div class="mb-1"><p class="text-muted small mb-3">Each row shows a complete path through your supply chain, from raw material to distribution.</p></div>'];
-        chains.forEach(chain => {
-            const pills = chain.map(node => {
-                const step = STEPS.find(s => s.type === node.type);
-                return `<span class="te-review-chain-node" style="background:${step?.bg || '#f0f4ff'};color:${step?.color || '#0d6efd'};">
-                    <i class="bi ${step?.icon || 'bi-dot'}"></i> ${esc(node.name)}
-                </span>`;
-            }).join('<span class="te-review-arrow"><i class="bi bi-arrow-right"></i></span>');
-            html.push(`<div class="te-review-chain">${pills}</div>`);
-        });
+        // Summary counts
+        const typeOrder = ['raw-material', 'packaging', 'supplier-packaging', 'packaging-group', 'product', 'distribution'];
+        const summaryItems = typeOrder.map(type => {
+            const n = getNodesOfType(type).length;
+            if (!n) return '';
+            const s = STEPS.find(st => st.type === type);
+            return `<span style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.65rem;border-radius:20px;font-size:0.8rem;background:${s?.bg};color:${s?.color};">
+                <i class="bi ${s?.icon}" style="font-size:0.78rem;"></i> ${n} ${s?.label}
+            </span>`;
+        }).filter(Boolean).join('');
+        if (summaryItems) {
+            html.push(`<div style="margin-top:1.5rem;border-top:1px solid #f0f2f5;padding-top:1rem;">
+                <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#adb5bd;margin-bottom:0.6rem;">Summary</div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">${summaryItems}</div>
+            </div>`);
+        }
+
         return html.join('');
     }
 
     function buildChains() {
-        // Find all end-nodes (nodes with no outgoing connections or last in ORDER)
         const allNodes = currentProject?.nodes || [];
         const connections = currentProject?.connections || [];
         if (!connections.length) return [];
-
-        // Find source nodes (not pointed to by any connection → "roots")
         const pointedTo = new Set(connections.map(c => c.to));
         const sources = allNodes.filter(n => !pointedTo.has(n.id));
-
         const chains = [];
         function dfs(node, path) {
             const next = connections.filter(c => c.from === node.id).map(c => allNodes.find(n => n.id === c.to)).filter(Boolean);
-            if (next.length === 0) {
-                if (path.length > 1) chains.push([...path]);
-            } else {
-                next.forEach(child => dfs(child, [...path, child]));
-            }
+            if (!next.length) { if (path.length > 1) chains.push([...path]); }
+            else next.forEach(child => dfs(child, [...path, child]));
         }
         sources.forEach(s => dfs(s, [s]));
-        return chains.slice(0, 50); // Cap for performance
+        return chains.slice(0, 60);
     }
 
     // ─── Utilities ────────────────────────────────────────────────────────────
+    function singularise(label) {
+        if (!label) return '';
+        if (label === 'Raw Materials') return 'Raw Material';
+        if (label === 'Suppliers') return 'Supplier';
+        if (label === 'Groups') return 'Group';
+        if (label === 'Products') return 'Product';
+        if (label === 'Distribution') return 'Distribution Point';
+        return label.replace(/s$/, '');
+    }
+
     function esc(str) {
         return String(str ?? '')
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -873,10 +934,8 @@
 
     window.refreshTextEditor = function () {
         loadFromStorage();
-        const container = document.getElementById('textEditorContainer');
-        if (container && !container.classList.contains('d-none')) {
-            renderAll();
-        }
+        const c = document.getElementById('textEditorContainer');
+        if (c && !c.classList.contains('d-none')) renderAll();
     };
 
 })();
